@@ -6,7 +6,7 @@ models that answered and how many cases each measure rests on.
 
 from collections.abc import Mapping, Sequence
 
-from aiact.eval.judge import YES_AT, JudgeCheck
+from aiact.eval.judge import YES_AT, JudgeCheck, jev_holds
 from aiact.eval.judge_validation import (
     Agreement,
     CalibrationBin,
@@ -139,11 +139,17 @@ def _margins(rows: Sequence[MarginRow]) -> str:
         for row in rows
     )
     best = recommended_margin(rows)
-    choice = (
-        f"Highest agreement at the smallest margin: **{best:.1f}**."
-        if best is not None
-        else "No labelled case has a record yet, so no margin can be recommended."
-    )
+    unmeasured = max((row.unmeasured for row in rows), default=0)
+    if best is not None:
+        choice = f"Highest agreement at the smallest margin: **{best:.1f}**."
+    elif unmeasured:
+        choice = (
+            f"No margin is recommended while {unmeasured} labelled case(s) have no combined "
+            "answer at some margin (the judge that had to answer failed): the rows would rest "
+            "on different cases. Run again to answer them."
+        )
+    else:
+        choice = "No labelled case has a record yet, so no margin can be recommended."
     return (
         "## Unsure margin\n\n"
         "| Margin | Sent to the backup judge | Combined judge vs labels | Not measured |\n"
@@ -168,7 +174,7 @@ def _disagreements(scored: Sequence[Scored]) -> str:
 
 
 def _jev_disagrees(s: Scored) -> bool:
-    return s.record.p_yes is not None and (s.record.p_yes >= YES_AT) != s.label
+    return s.record.p_yes is not None and jev_holds(s.record.p_yes) != s.label
 
 
 def _agreement(value: Agreement) -> str:

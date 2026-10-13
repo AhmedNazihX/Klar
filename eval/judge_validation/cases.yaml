@@ -98,13 +98,13 @@
   language: en
   claim: The system allocates tasks to workers based on their individual behaviour or personal traits.
   source: |-
-    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills and their past absences. A supervisor checks and approves each roster before it is published.
+    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills, their certifications and preferred days. A supervisor checks and approves each roster before it is published.
 - id: jv-en-12
   check: evidence_tag
   language: en
   claim: The system is already in use.
   source: |-
-    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills and their past absences. A supervisor checks and approves each roster before it is published.
+    We plan to use an AI tool that drafts weekly shift rosters for the 300 workers in our warehouse, from their availability, their skills, their certifications and preferred days. A supervisor checks and approves each roster before it is published.
 - id: jv-en-13
   check: qa_support
   language: en

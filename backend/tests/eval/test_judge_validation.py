@@ -3,6 +3,7 @@ measures and the report. Cases built here are invented."""
 
 import json
 from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -11,9 +12,10 @@ from typer.testing import CliRunner
 
 from aiact import cli
 from aiact.corpus.eurlex import DEFAULT_PARSED_DIR, load_jsonl
-from aiact.eval import judge_report, judge_validation
+from aiact.eval import judge, judge_report, judge_validation
 from aiact.eval.judge import (
     BACKUP_INSTRUCTIONS,
+    CHECKS,
     PROMPT_TOKENS_BOUND,
     BackupJudge,
     BackupVerdict,
@@ -27,6 +29,7 @@ from aiact.eval.judge_validation import (
     JudgeValidationError,
     Route,
     Scored,
+    StopReason,
     ValidationCase,
     agreement,
     brier_score,
@@ -35,7 +38,9 @@ from aiact.eval.judge_validation import (
     combined_verdict,
     expected_calibration_error,
     input_sha256,
+    jev_pairs,
     judge_case,
+    judges_pairs,
     load_cases,
     load_labels,
     margin_rows,
@@ -94,13 +99,12 @@ def test_the_committed_set_has_48_cases_balanced_by_language_and_check() -> None
     assert len(per_cell) == 8
 
 
-def test_every_committed_case_has_a_label_slot_and_none_is_filled_by_the_agent() -> None:
-    """The labels are the user's; this story commits the empty sheet (V4 DoD)."""
+def test_the_label_sheet_has_one_slot_per_case_in_case_order() -> None:
     cases = load_cases()
     text = judge_validation.LABELS_FILE.read_text(encoding="utf-8")
     slots = [line.split(":")[0] for line in text.splitlines() if line.startswith("jv-")]
     assert slots == [case.id for case in cases]
-    assert isinstance(load_labels(cases), dict)
+    load_labels(cases)  # the sheet reads
 
 
 def test_legal_sources_quote_the_amended_act_word_for_word() -> None:
@@ -186,20 +190,29 @@ def test_an_id_must_name_the_case_language() -> None:
 class FakeJev(JevJudge):
     def __init__(self, p_yes: float | None) -> None:
         self.model, self._p_yes = JEV, p_yes
+        self.calls = 0
 
     def ask(self, item: JudgeItem) -> JevAnswer:
+        self.calls += 1
         if self._p_yes is None:
-            raise DecisionsError("decisions request failed with HTTP 503")
+            raise DecisionsError("decisions request failed with HTTP 503", 0.00003, 100)
         return JevAnswer(self._p_yes, 0.00002, 400)
 
 
 class FakeBackup(BackupJudge):
-    def __init__(self, holds: bool | None) -> None:
+    def __init__(self, holds: bool | None, *, is_call_failed: bool = True) -> None:
         self.model, self.provider, self._holds = HAIKU, EU_VERTEX, holds
+        self._is_call_failed = is_call_failed
 
     def ask(self, item: JudgeItem) -> BackupVerdict:
         if self._holds is None:
-            raise JudgeError("ConnectTimeout", 0.00066, 0, is_cost_estimated=True)
+            raise JudgeError(
+                "ConnectTimeout",
+                0.00066,
+                0,
+                is_cost_estimated=True,
+                is_call_failed=self._is_call_failed,
+            )
         return BackupVerdict(self._holds, "Not stated.", 0.0002, 800)
 
 
@@ -215,13 +228,20 @@ def test_a_case_record_holds_both_answers_and_their_summed_cost() -> None:
     )
 
 
-def test_a_failed_judge_leaves_its_error_and_the_estimate_counts() -> None:
+def test_a_failed_judge_leaves_its_error_and_both_costs_count() -> None:
     record = judge_case(make_case(), FakeJev(None), FakeBackup(None))
     assert (record.p_yes, record.holds) == (None, None)
     assert record.jev_error == "decisions request failed with HTTP 503"
     assert record.backup_error == "ConnectTimeout"
-    assert (record.cost_usd, record.is_cost_estimated) == (0.00066, True)
+    assert (record.cost_usd, record.tokens) == (pytest.approx(0.00003 + 0.00066), 100)
+    assert (record.is_cost_estimated, record.is_backup_call_failed) == (True, True)
     assert not record.is_complete
+
+
+def test_a_broken_backup_answer_is_not_a_blocked_route() -> None:
+    record = judge_case(make_case(), FakeJev(0.4), FakeBackup(None, is_call_failed=False))
+    assert record.backup_error == "ConnectTimeout"
+    assert not record.is_backup_call_failed
 
 
 def _judge_with(record_for: dict[str, JudgeRecord], calls: list[str]):
@@ -239,8 +259,28 @@ def test_the_run_appends_every_record_and_sums_the_cost(tmp_path: Path) -> None:
     summary = run_validation(cases, _judge_with({"jv-en-02": failed}, []), path=path)
     assert (summary.planned, summary.answered, summary.failed) == (2, 1, 1)
     assert (summary.cost_usd, summary.tokens) == (pytest.approx(0.0006), 1800)
-    assert not summary.stopped_by_cap
+    assert summary.stopped is None
     assert list(read_records(path)) == ["jv-en-01", "jv-en-02"]
+
+
+def test_a_backup_call_that_reaches_no_model_stops_the_run(tmp_path: Path) -> None:
+    cases = [make_case(1), make_case(2), make_case(3)]
+    blocked = make_record(cases[1], holds=None, is_backup_call_failed=True)
+    calls: list[str] = []
+    path = tmp_path / "a.jsonl"
+    summary = run_validation(cases, _judge_with({"jv-en-02": blocked}, calls), path=path)
+    assert calls == ["jv-en-01", "jv-en-02"]
+    assert summary.stopped is StopReason.NO_ROUTE
+    assert (summary.answered, summary.failed) == (1, 1)
+    assert list(read_records(path)) == ["jv-en-01", "jv-en-02"]
+
+
+def test_a_broken_backup_answer_never_stops_the_run(tmp_path: Path) -> None:
+    cases = [make_case(1), make_case(2)]
+    broken = make_record(cases[0], holds=None, backup_error="answer doesn't fit the schema")
+    calls: list[str] = []
+    summary = run_validation(cases, _judge_with({"jv-en-01": broken}, calls), path=tmp_path / "a")
+    assert (calls, summary.stopped) == (["jv-en-01", "jv-en-02"], None)
 
 
 def test_the_run_starts_no_case_the_cap_cannot_cover(tmp_path: Path) -> None:
@@ -251,12 +291,16 @@ def test_the_run_starts_no_case_the_cap_cannot_cover(tmp_path: Path) -> None:
         cases, _judge_with({}, calls), max_cost_usd=cap, path=tmp_path / "a.jsonl"
     )
     assert calls == ["jv-en-01"]
-    assert summary.stopped_by_cap
+    assert summary.stopped is StopReason.COST_CAP
 
 
 def test_the_case_estimate_is_pinned() -> None:
     assert pytest.approx(0.000786) == judge_validation.CASE_ESTIMATE_USD
-    assert judge_validation.estimate_usd(48) == pytest.approx(0.037728)
+    assert judge_validation.estimate_usd(48, HAIKU) == pytest.approx(0.037728)
+
+
+def test_no_estimate_for_a_backup_model_the_prices_dont_belong_to() -> None:
+    assert judge_validation.estimate_usd(48, "anthropic/claude-haiku-4.5") is None
 
 
 def test_only_new_edited_failed_or_rerouted_cases_are_asked_again() -> None:
@@ -269,6 +313,50 @@ def test_only_new_edited_failed_or_rerouted_cases_are_asked_again() -> None:
     }
     todo = cases_to_run([done, edited, failed, rerouted, new], records, ROUTE)
     assert [case.id for case in todo] == ["jv-en-02", "jv-en-03", "jv-en-04", "jv-en-05"]
+
+
+def test_an_edited_case_changes_the_hash_and_is_asked_again() -> None:
+    case = make_case()
+    record = {case.id: make_record(case)}
+    before = input_sha256(case)
+    assert cases_to_run([case], record, ROUTE) == ()
+    edited = [
+        case.model_copy(update={"source": "We bought it last year."}),
+        case.model_copy(update={"claim": "The system is planned."}),
+        case.model_copy(update={"check": judge.JudgeCheck.INVENTED_CONTENT}),
+    ]
+    for changed in edited:
+        assert input_sha256(changed) != before
+        assert cases_to_run([changed], record, ROUTE) == (changed,)
+
+
+def test_a_reworded_question_asks_the_case_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = make_case()
+    record, before = {case.id: make_record(case)}, input_sha256(case)
+    spec = CHECKS[case.check]
+    question = spec.question.model_copy(update={"instructions": "Is the fact in the text?"})
+    monkeypatch.setitem(CHECKS, case.check, replace(spec, question=question))
+    assert input_sha256(case) != before
+    assert cases_to_run([case], record, ROUTE) == (case,)
+
+
+def test_reworded_criteria_ask_the_case_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = make_case()
+    record, before = {case.id: make_record(case)}, input_sha256(case)
+    spec = CHECKS[case.check]
+    criteria = spec.question.criteria.model_copy(update={"false": "It is not said."})
+    question = spec.question.model_copy(update={"criteria": criteria})
+    monkeypatch.setitem(CHECKS, case.check, replace(spec, question=question))
+    assert input_sha256(case) != before
+    assert cases_to_run([case], record, ROUTE) == (case,)
+
+
+def test_reworded_backup_instructions_ask_the_case_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = make_case()
+    record, before = {case.id: make_record(case)}, input_sha256(case)
+    monkeypatch.setattr(judge, "BACKUP_INSTRUCTIONS", BACKUP_INSTRUCTIONS + "Be brief.\n")
+    assert input_sha256(case) != before
+    assert cases_to_run([case], record, ROUTE) == (case,)
 
 
 def test_a_missing_answers_file_has_no_records(tmp_path: Path) -> None:
@@ -315,6 +403,14 @@ def test_the_combined_verdict_takes_jev_when_sure_and_the_backup_otherwise() -> 
     assert combined_verdict(make_record(case, p_yes=0.6, holds=None), 0.3) is None
 
 
+def test_one_half_is_jevs_yes_in_every_measure() -> None:
+    case = make_case()
+    record = make_record(case, p_yes=0.5, holds=False)
+    assert combined_verdict(record, 0.0) is True
+    assert jev_pairs([Scored(case, record, False)]) == [(True, False)]
+    assert judges_pairs([record]) == [(True, False)]
+
+
 def _scored(rows: list[tuple[float | None, bool | None, bool]]) -> list[Scored]:
     scored = []
     for number, (p_yes, holds, label) in enumerate(rows, start=1):
@@ -335,6 +431,19 @@ def test_margins_count_hand_overs_and_the_smallest_best_margin_is_recommended() 
 def test_a_failed_backup_is_counted_apart_never_as_a_miss() -> None:
     rows = margin_rows(_scored([(0.5, None, True), (0.9, True, True)]), margins=(0.0, 0.3))
     assert [(row.with_labels.n, row.unmeasured) for row in rows] == [(2, 0), (1, 1)]
+
+
+def test_no_margin_is_recommended_while_a_row_leaves_a_case_unmeasured() -> None:
+    """Margin 0.3 would agree 1/1 against 0.0's 1/2, but over fewer cases."""
+    rows = margin_rows(_scored([(0.6, None, False), (0.9, True, True)]), margins=(0.0, 0.3))
+    assert [(row.with_labels.agreed, row.with_labels.n) for row in rows] == [(1, 2), (1, 1)]
+    assert recommended_margin(rows) is None
+
+
+def test_a_failed_jev_is_sent_to_the_backup_at_every_margin() -> None:
+    rows = margin_rows(_scored([(None, True, True)]), margins=(0.0, 0.3))
+    assert [row.sent_to_backup for row in rows] == [1, 1]
+    assert [row.with_labels.agreed for row in rows] == [1, 1]
 
 
 def test_no_margin_is_recommended_without_a_measured_case() -> None:
@@ -363,6 +472,38 @@ def test_the_report_quotes_the_measures_from_the_records() -> None:
     assert "Cost of the answers counted here: $0.0010." in text
 
 
+def test_the_report_breaks_agreement_down_by_language_check_and_bin() -> None:
+    cases = [
+        make_case(1, check="citation_support"),
+        make_case(2, "de"),
+        make_case(3, check="citation_support"),
+    ]
+    labels = {"jv-en-01": True, "jv-de-02": False, "jv-en-03": True}
+    records = {
+        "jv-en-01": make_record(cases[0], p_yes=0.9, holds=True),
+        "jv-de-02": make_record(cases[1], p_yes=0.3, holds=False),
+        "jv-en-03": make_record(cases[2], p_yes=0.8, holds=False),  # only the backup is wrong
+    }
+    text = judge_report.format_report(cases, labels, records, ROUTE)
+    assert "| EN | 2/2 (100%, κ n/a) | 1/2 (50%, κ 0.00) |" in text
+    assert "| DE | 1/1 (100%, κ n/a) | 1/1 (100%, κ n/a) |" in text
+    assert "| citation_support | 2/2 (100%, κ n/a) | 1/2 (50%, κ 0.00) |" in text
+    assert (
+        "Over 3 labelled cases: Brier score 0.047 (0 is perfect), expected calibration error 0.200."
+        in text
+    )
+    assert "| [0.8, 1.0] | 2 | 0.850 | 1.000 |" in text
+    assert "| jv-en-03 | citation_support | yes | 0.800 | no |" in text
+    assert "jv-en-01 |" not in text.split("## Cases a judge got wrong")[1]
+
+
+def test_the_report_recommends_no_margin_while_a_case_is_unmeasured() -> None:
+    case = make_case(1)
+    record = make_record(case, p_yes=0.6, holds=None)
+    text = judge_report.format_report([case], {case.id: True}, {case.id: record}, ROUTE)
+    assert "No margin is recommended while 1 labelled case(s) have no combined answer" in text
+
+
 def test_an_unlabelled_report_recommends_no_margin() -> None:
     case = make_case(1)
     text = judge_report.format_report([case], {}, {case.id: make_record(case)}, ROUTE)
@@ -370,16 +511,20 @@ def test_an_unlabelled_report_recommends_no_margin() -> None:
     assert "| all | no cases | no cases |" in text
 
 
-def _cli_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """The CLI on one invented case and the given files, with settings that read no `.env`."""
-    cases_file = _write(tmp_path, "cases.yaml", json.dumps([make_case(1).model_dump(mode="json")]))
-    monkeypatch.setattr(judge_validation, "CASES_FILE", cases_file)
+def _cli_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, count: int = 1, **values: object
+) -> None:
+    """The CLI on `count` invented cases, each labelled yes, and the given files, with settings
+    that read no `.env`."""
+    cases = [make_case(number).model_dump(mode="json") for number in range(1, count + 1)]
+    labels = "".join(f"jv-en-{number:02d}: yes\n" for number in range(1, count + 1))
     monkeypatch.setattr(
-        judge_validation, "LABELS_FILE", _write(tmp_path, "labels.yaml", "jv-en-01: yes\n")
+        judge_validation, "CASES_FILE", _write(tmp_path, "c.yaml", json.dumps(cases))
     )
+    monkeypatch.setattr(judge_validation, "LABELS_FILE", _write(tmp_path, "labels.yaml", labels))
     monkeypatch.setattr(judge_validation, "ANSWERS_FILE", tmp_path / "answers.jsonl")
     monkeypatch.setattr(judge_validation, "REPORT_FILE", tmp_path / "report.md")
-    settings = Settings(_env_file=None, openrouter_api_key=SecretStr("k"))  # pyright: ignore[reportCallIssue]
+    settings = Settings(_env_file=None, openrouter_api_key=SecretStr("k"), **values)  # pyright: ignore[reportCallIssue]
     monkeypatch.setattr(cli, "get_settings", lambda: settings)
 
 
@@ -410,3 +555,52 @@ def test_the_cli_report_only_writes_the_report_without_a_call(
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "labelled: 1 (1 yes, 0 no); answered by both judges: 0" in report
     assert not (tmp_path / "answers.jsonl").exists()
+
+
+def test_the_cli_warns_when_the_prices_dont_belong_to_the_backup_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _cli_files(tmp_path, monkeypatch, judge_backup_model="anthropic/claude-haiku-4.5")
+    result = CliRunner().invoke(cli.app, ["evaluate", "judge-validation", "--dry-run"])
+    assert result.exit_code == 0, result.output
+    assert "google-vertex/europe; COST UNKNOWN (cap $0.10)" in result.output
+    assert "WARNING: prices known for anthropic/claude-haiku-5.5 only" in result.output
+
+
+def _fake_judges(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "JevJudge", lambda settings: FakeJev(0.9))
+    monkeypatch.setattr(cli, "BackupJudge", lambda settings: FakeBackup(True))
+
+
+def test_the_cli_run_writes_the_answers_and_the_report_then_resumes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _cli_files(tmp_path, monkeypatch, count=2)
+    _fake_judges(monkeypatch)
+    result = CliRunner().invoke(cli.app, ["evaluate", "judge-validation"])
+    assert result.exit_code == 0, result.output
+    assert "2 answered by both judges, 0 with a failed judge, of 2" in result.output
+    assert list(read_records(tmp_path / "answers.jsonl")) == ["jv-en-01", "jv-en-02"]
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "answered by both judges: 2; measured (labelled, with a current record): 2" in report
+
+    monkeypatch.setattr(cli, "JevJudge", _no_judge)
+    again = CliRunner().invoke(cli.app, ["evaluate", "judge-validation"])
+    assert again.exit_code == 0, again.output
+    assert "2 cases (2 labelled), 0 to answer" in again.output
+    lines = (tmp_path / "answers.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2
+
+
+def test_the_cli_run_stops_at_the_cost_cap_and_reports_what_it_has(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _cli_files(tmp_path, monkeypatch, count=2)
+    _fake_judges(monkeypatch)
+    cap = str(judge_validation.CASE_ESTIMATE_USD + 0.0001)  # one case fits, not two
+    result = CliRunner().invoke(cli.app, ["evaluate", "judge-validation", "--max-cost-usd", cap])
+    assert result.exit_code == 0, result.output
+    assert "Stopped early: the next case would pass the cost cap" in result.output
+    assert list(read_records(tmp_path / "answers.jsonl")) == ["jv-en-01"]
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "answered by both judges: 1; measured (labelled, with a current record): 1" in report

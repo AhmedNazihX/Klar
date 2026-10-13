@@ -29,7 +29,8 @@ this table measures them on the same task.
 
 ## Running it
 
-From `backend/`, after labelling (each run asks only the cases not yet answered by both judges):
+From `backend/`, after labelling (each run asks only the cases not yet answered by both judges,
+and again any case whose texts or check wording changed):
 
 ```
 uv run aiact evaluate judge-validation --dry-run      # plan and cost estimate, no call
@@ -37,4 +38,6 @@ uv run aiact evaluate judge-validation                # both judges, then report
 uv run aiact evaluate judge-validation --report-only  # report.md again after changing labels
 ```
 
-Labels can change after the run: `--report-only` recomputes the report for free.
+Labels can change after the run: `--report-only` recomputes the report for free. A run stops at
+the first case whose backup call reaches no model (a blocked route or a wrong key): fix the route
+and run again. The report recommends no margin while a labelled case has a failed judge.

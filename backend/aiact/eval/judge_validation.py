@@ -12,9 +12,11 @@ judge agrees with the labels. The margin is the unsure threshold `aiact.eval.jud
 """
 
 import hashlib
+import json
 import logging
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 import yaml
@@ -23,15 +25,18 @@ from pydantic import Field, ValidationError, model_validator
 from aiact.eval.cases import EVAL_DIR, _UniqueKeyLoader
 from aiact.eval.judge import (
     BACKUP_CALL_ESTIMATE_USD,
+    CHECKS,
     JEV_CALL_ESTIMATE_USD,
-    YES_AT,
+    PRICED_BACKUP_MODEL,
     BackupJudge,
     JevJudge,
     JudgeCheck,
     JudgeError,
     JudgeItem,
-    failure,
-    is_unsure,
+    backup_messages,
+    jev_decision,
+    jev_holds,
+    jev_state,
     needs_backup,
 )
 from aiact.llm import DecisionsError
@@ -51,7 +56,8 @@ MARGINS = (0.0, 0.1, 0.2, 0.3, 0.4, 0.5)
 certain about (probability strictly between 0 and 1) to the backup judge."""
 CALIBRATION_BINS = 5
 CASE_ESTIMATE_USD = JEV_CALL_ESTIMATE_USD + BACKUP_CALL_ESTIMATE_USD
-"""The most one case can cost: both judges answer it."""
+"""The most one case can cost: both judges answer it (the backup at `PRICED_BACKUP_MODEL`'s
+prices)."""
 DEFAULT_MAX_COST_USD = 0.10
 
 
@@ -133,6 +139,9 @@ class JudgeRecord(ContractModel):
     holds: bool | None
     reason: str | None
     backup_error: str | None = None
+    is_backup_call_failed: bool = Field(
+        default=False, description="The backup call reached no model (key, endpoint, guardrail)."
+    )
     cost_usd: float = Field(ge=0)
     is_cost_estimated: bool = Field(
         default=False, description="The backup call reported no cost; its estimate counts."
@@ -145,9 +154,17 @@ class JudgeRecord(ContractModel):
 
 
 def input_sha256(case: ValidationCase) -> str:
-    """Identifies what both judges read of a case, so an edited case is asked again."""
-    text = "\n".join((case.check.value, case.language.value, case.claim, case.source))
-    return hashlib.sha256(text.encode()).hexdigest()
+    """Identifies everything both judges read of a case: Jev's question (its wording and
+    criteria) and named texts, and the backup judge's messages (the backup instructions with the
+    same question, then the texts). An edited case or a reworded check is asked again."""
+    parts = (
+        case.check.value,
+        case.language.value,
+        CHECKS[case.check].question.model_dump_json(),
+        json.dumps(jev_state(case), sort_keys=True),
+        *(message.text for message in backup_messages(case)),
+    )
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()
 
 
 def judge_case(case: ValidationCase, jev: JevJudge, backup: BackupJudge) -> JudgeRecord:
@@ -157,14 +174,15 @@ def judge_case(case: ValidationCase, jev: JevJudge, backup: BackupJudge) -> Judg
         answer = jev.ask(case)
         p_yes, cost, tokens = answer.p_yes, answer.cost_usd, answer.tokens
     except DecisionsError as exc:
-        jev_error, cost, tokens = failure(exc), exc.cost_usd, exc.tokens
-    holds, reason, backup_error, is_estimated = None, None, None, False
+        jev_error, cost, tokens = str(exc), exc.cost_usd, exc.tokens
+    holds, reason, backup_error, is_estimated, is_unreached = None, None, None, False, False
     try:
         verdict = backup.ask(case)
         holds, reason, is_estimated = verdict.holds, verdict.reason, verdict.is_cost_estimated
         cost, tokens = cost + verdict.cost_usd, tokens + verdict.tokens
     except JudgeError as exc:
         backup_error, is_estimated = str(exc), exc.is_cost_estimated
+        is_unreached = exc.is_call_failed
         cost, tokens = cost + exc.cost_usd, tokens + exc.tokens
     return JudgeRecord(
         case_id=case.id,
@@ -177,6 +195,7 @@ def judge_case(case: ValidationCase, jev: JevJudge, backup: BackupJudge) -> Judg
         holds=holds,
         reason=reason,
         backup_error=backup_error,
+        is_backup_call_failed=is_unreached,
         cost_usd=cost,
         is_cost_estimated=is_estimated,
         tokens=tokens,
@@ -237,6 +256,11 @@ def cases_to_run(
     return tuple(case for case in cases if case.id not in answered)
 
 
+class StopReason(StrEnum):
+    COST_CAP = "the next case would pass the cost cap"
+    NO_ROUTE = "the backup judge's call reached no model (key, endpoint, guardrail or network)"
+
+
 @dataclass(frozen=True)
 class RunSummary:
     planned: int
@@ -244,7 +268,8 @@ class RunSummary:
     failed: int
     cost_usd: float
     tokens: int
-    stopped_by_cap: bool
+    stopped: StopReason | None
+    """Why the run ended before every planned case was sent; None when it sent them all."""
 
 
 def run_validation(
@@ -255,16 +280,25 @@ def run_validation(
     path: Path = ANSWERS_FILE,
 ) -> RunSummary:
     """Judge `cases` one at a time, appending each record as it ends. No case starts unless the
-    money spent plus `CASE_ESTIMATE_USD` stays within `max_cost_usd`."""
+    money spent plus `CASE_ESTIMATE_USD` stays within `max_cost_usd`. A case whose backup call
+    reached no model (a blocked route, a wrong key) stops the run, so the cases after it don't
+    each pay Jev for an answer that is asked again; a refused or malformed answer is the case's
+    own failure and never stops it."""
     spent, tokens, answered, failed = 0.0, 0, 0, 0
+    stopped: StopReason | None = None
     for case in cases:
         if spent + CASE_ESTIMATE_USD > max_cost_usd:
-            return RunSummary(len(cases), answered, failed, spent, tokens, stopped_by_cap=True)
+            stopped = StopReason.COST_CAP
+            break
         record = judge_one(case)
         _append(path, record)
         spent, tokens = spent + record.cost_usd, tokens + record.tokens
         answered, failed = answered + record.is_complete, failed + (not record.is_complete)
-    return RunSummary(len(cases), answered, failed, spent, tokens, stopped_by_cap=False)
+        if record.is_backup_call_failed:
+            logger.warning("the backup judge's call reached no model; stopping the run")
+            stopped = StopReason.NO_ROUTE
+            break
+    return RunSummary(len(cases), answered, failed, spent, tokens, stopped)
 
 
 def _append(path: Path, record: JudgeRecord) -> None:
@@ -273,9 +307,10 @@ def _append(path: Path, record: JudgeRecord) -> None:
         handle.write(f"{record.model_dump_json()}\n")
 
 
-def estimate_usd(count: int) -> float:
-    """An upper estimate for `count` cases (both judges each)."""
-    return count * CASE_ESTIMATE_USD
+def estimate_usd(count: int, backup_model: str) -> float | None:
+    """An upper estimate for `count` cases (both judges each); None for a backup model other
+    than `PRICED_BACKUP_MODEL`, whose prices the estimate doesn't know."""
+    return count * CASE_ESTIMATE_USD if backup_model == PRICED_BACKUP_MODEL else None
 
 
 # --- the measures --------------------------------------------------------------------------------
@@ -364,9 +399,8 @@ def expected_calibration_error(bins: Sequence[CalibrationBin]) -> float | None:
 def combined_verdict(record: JudgeRecord, margin: float) -> bool | None:
     """The judge's answer at `margin` (as `Judge.judge` gives it): Jev's when sure, else the
     backup judge's; None when the judge that had to answer failed."""
-    if record.p_yes is not None and not is_unsure(record.p_yes, margin):
-        return record.p_yes >= YES_AT
-    return record.holds
+    decided = jev_decision(record.p_yes, margin)
+    return record.holds if decided is None else decided
 
 
 @dataclass(frozen=True)
@@ -393,9 +427,11 @@ def margin_rows(
 
 def recommended_margin(rows: Sequence[MarginRow]) -> float | None:
     """The smallest margin with the highest agreement with the labels: no margin sends more
-    cases to the backup judge without agreeing more often. None without a measured row."""
+    cases to the backup judge without agreeing more often. None without a measured row, and
+    None while any row leaves a labelled case unmeasured: its rate would rest on fewer cases
+    than the others', so the rows couldn't be compared (rerun the failed cases first)."""
     measured = [row for row in rows if row.with_labels.rate is not None]
-    if not measured:
+    if not measured or any(row.unmeasured for row in rows):
         return None
     best = max(row.with_labels.agreed / row.with_labels.n for row in measured)
     return min(row.margin for row in measured if row.with_labels.agreed / row.with_labels.n == best)
@@ -420,7 +456,7 @@ def scored_cases(
 
 
 def jev_pairs(scored: Iterable[Scored]) -> list[tuple[bool, bool]]:
-    return [(s.record.p_yes >= YES_AT, s.label) for s in scored if s.record.p_yes is not None]
+    return [(jev_holds(s.record.p_yes), s.label) for s in scored if s.record.p_yes is not None]
 
 
 def backup_pairs(scored: Iterable[Scored]) -> list[tuple[bool, bool]]:
@@ -435,7 +471,7 @@ def judges_pairs(records: Iterable[JudgeRecord]) -> list[tuple[bool, bool]]:
     """Jev's answer at 0.5 against the backup judge's, over every complete record: needs no
     labels."""
     return [
-        (record.p_yes >= YES_AT, record.holds)
+        (jev_holds(record.p_yes), record.holds)
         for record in records
         if record.p_yes is not None and record.holds is not None
     ]

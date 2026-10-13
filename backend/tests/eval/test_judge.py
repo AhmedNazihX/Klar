@@ -1,6 +1,7 @@
 """The judge (V4): Jev first, the backup LLM judge for unsure items. The claims here are invented,
 not benchmark cases; the recorded round trips use a committed validation case."""
 
+import ast
 import json
 from collections.abc import Callable
 
@@ -32,7 +33,7 @@ from aiact.eval.judge_validation import load_cases
 from aiact.llm import DecisionsClient, DecisionsError, LLMConfigError
 from aiact.llm.routing import NO_RETRIES
 from aiact.schemas import Language
-from aiact.settings import Settings
+from aiact.settings import BACKEND_DIR, Settings
 
 JEV = "typesafe/jev-1.13"
 HAIKU = "anthropic/claude-haiku-5.5"
@@ -103,6 +104,14 @@ def test_the_backup_judge_reads_the_same_question_with_the_item_last() -> None:
     assert human.text == f"claim:\n{CLAIM}\n\ncited_text:\n{SOURCE}"
 
 
+def test_the_backup_prompt_puts_each_criterion_on_its_own_answer() -> None:
+    system, _ = backup_messages(ITEM)
+    criteria = CHECKS[JudgeCheck.CITATION_SUPPORT].question.criteria
+    lines = system.text.splitlines()
+    assert f"Answer yes when: {criteria.true}" in lines
+    assert f"Answer no when: {criteria.false}" in lines
+
+
 # --- the unsure margin ---------------------------------------------------------------------------
 
 
@@ -151,7 +160,9 @@ class FakeBackup(BackupJudge):
     def ask(self, item: JudgeItem) -> BackupVerdict:
         self.calls += 1
         if self._holds is None:
-            raise JudgeError("ConnectTimeout", 0.0006, 0)
+            raise JudgeError(
+                "ConnectTimeout", 0.0006, 0, is_cost_estimated=True, is_call_failed=True
+            )
         return BackupVerdict(self._holds, "The text says inform, not consent.", 0.0002, 900)
 
 
@@ -184,7 +195,14 @@ def test_no_verdict_when_the_backup_judge_must_answer_and_fails() -> None:
     with pytest.raises(JudgeError, match="ConnectTimeout") as caught:
         Judge(FakeJev(0.5), FakeBackup(holds=None)).judge(ITEM)
     assert caught.value.cost_usd == pytest.approx(0.00064)
+    assert (caught.value.is_cost_estimated, caught.value.is_call_failed) == (True, True)
     assert CLAIM not in str(caught.value)
+
+
+def test_one_half_is_yes_when_jev_decides_at_margin_zero() -> None:
+    backup = FakeBackup(holds=False)
+    verdict = Judge(FakeJev(0.5), backup, margin=0.0).judge(ITEM)
+    assert (verdict.decided_by, verdict.holds, backup.calls) == ("jev", True, 0)
 
 
 def test_the_margin_given_decides_who_answers() -> None:
@@ -263,6 +281,8 @@ def test_a_broken_backup_answer_is_an_error_that_still_costs(content: str) -> No
     with pytest.raises(JudgeError, match="answer doesn't fit the schema") as caught:
         _backup(_reply(content)).ask(ITEM)
     assert (caught.value.cost_usd, caught.value.tokens) == (0.0002, 860)
+    assert not caught.value.is_call_failed
+    assert caught.value.__cause__ is None  # a validation error would quote the reply
     assert CLAIM not in str(caught.value)
 
 
@@ -277,6 +297,7 @@ def test_a_failed_backup_call_is_charged_the_estimate_and_named_by_type() -> Non
         judge_.ask(ITEM)
     assert caught.value.cost_usd == pytest.approx(0.00066)
     assert (caught.value.tokens, caught.value.is_cost_estimated) == (0, True)
+    assert caught.value.is_call_failed
 
 
 def test_a_reply_without_a_cost_is_charged_the_estimate() -> None:
@@ -286,6 +307,7 @@ def test_a_reply_without_a_cost_is_charged_the_estimate() -> None:
 
 
 def test_the_call_estimates_are_pinned() -> None:
+    assert judge.PRICED_BACKUP_MODEL == "anthropic/claude-haiku-5.5"
     assert (judge.PROMPT_TOKENS_BOUND, judge.MAX_OUTPUT_TOKENS) == (3_000, 600)
     assert pytest.approx(0.000126) == judge.JEV_CALL_ESTIMATE_USD
     assert pytest.approx(0.00066) == judge.BACKUP_CALL_ESTIMATE_USD
@@ -360,6 +382,41 @@ def test_the_backup_request_carries_the_pin_and_the_json_schema() -> None:
     response_format = body["response_format"]
     assert isinstance(response_format, dict) and response_format["type"] == "json_schema"
     assert response_format["json_schema"]["schema"]["required"] == ["holds", "reason"]
+
+
+# --- Jev reads benchmark material only ----------------------------------------------------------
+
+SERVING_PACKAGES = ("api", "engine", "drafting", "mcp")
+"""The code that serves users; Jev has no EU endpoint, so none of it may reach the judge."""
+
+
+def _eval_imports(source: str) -> list[str]:
+    """The `aiact.eval` modules (and the names from them) that `source` imports."""
+    found: list[str] = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            found += [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            found += [f"{node.module}.{alias.name}" for alias in node.names]
+    return [name for name in found if name == "aiact.eval" or name.startswith("aiact.eval.")]
+
+
+def test_the_import_finder_catches_every_form() -> None:
+    source = "import aiact.eval.judge\nfrom aiact.eval import judge\nfrom aiact import eval\n"
+    assert _eval_imports(source) == ["aiact.eval.judge", "aiact.eval.judge", "aiact.eval"]
+    assert _eval_imports("from aiact.evaluation import x\nimport aiact.llm\n") == []
+
+
+@pytest.mark.parametrize("package", SERVING_PACKAGES)
+def test_no_serving_code_imports_the_eval_package(package: str) -> None:
+    files = sorted((BACKEND_DIR / "aiact" / package).rglob("*.py"))
+    assert files
+    found = {
+        str(path.relative_to(BACKEND_DIR)): names
+        for path in files
+        if (names := _eval_imports(path.read_text(encoding="utf-8")))
+    }
+    assert found == {}
 
 
 # --- recorded round trips ------------------------------------------------------------------------

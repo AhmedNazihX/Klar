@@ -59,7 +59,7 @@ from aiact.eval.experiments import (
     smoke_verdict,
 )
 from aiact.eval.experiments.smoke_served import VerifyAll
-from aiact.eval.judge import BackupJudge, JevJudge
+from aiact.eval.judge import PRICED_BACKUP_MODEL, BackupJudge, JevJudge
 from aiact.llm import EmbeddingError, LLMConfigError, OpenRouterEmbeddings
 from aiact.llm.generations import GenerationLookup
 from aiact.obligations import list as obligations_list
@@ -1293,11 +1293,15 @@ def eval_judge_validation(
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     todo = judge_validation.cases_to_run(cases, records, route)
+    estimate = judge_validation.estimate_usd(len(todo), route.backup_model)
+    cost = "COST UNKNOWN" if estimate is None else f"at most ${estimate:.4f}"
     typer.echo(
         f"{len(cases)} cases ({len(labels)} labelled), {len(todo)} to answer with "
-        f"{route.jev_model} and {route.backup_model} on {route.backup_provider}; at most "
-        f"${judge_validation.estimate_usd(len(todo)):.4f} (cap ${max_cost_usd:.2f})"
+        f"{route.jev_model} and {route.backup_model} on {route.backup_provider}; {cost} "
+        f"(cap ${max_cost_usd:.2f})"
     )
+    if estimate is None:
+        typer.echo(f"WARNING: prices known for {PRICED_BACKUP_MODEL} only; check the cap", err=True)
     if dry_run:
         return
     if todo and not report_only:
@@ -1326,8 +1330,8 @@ def _judge_validation_run(
         f"{summary.answered} answered by both judges, {summary.failed} with a failed judge, of "
         f"{summary.planned}; ${summary.cost_usd:.4f}, {summary.tokens} tokens"
     )
-    if summary.stopped_by_cap:
-        typer.echo(f"Stopped early at the cap (${max_cost_usd:.2f}); run again to go on", err=True)
+    if summary.stopped is not None:
+        typer.echo(f"Stopped early: {summary.stopped.value}; run again to go on", err=True)
 
 
 @mcp_app.callback()

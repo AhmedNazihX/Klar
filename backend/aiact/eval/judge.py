@@ -17,6 +17,11 @@ independent (INIT > Tech stack). Both judges read the same question and criteria
 
 The margin is validated on the hand-labelled cases in `eval/judge_validation/`
 (`aiact.eval.judge_validation`); decision 006 records the measured choice.
+
+Jev has no EU endpoint (decision 006), so the judge must only ever read benchmark material: the
+validation cases, the Act's text and the engine's answers to benchmark cases, never a user's
+description. Nothing that serves users (`aiact.api`, `aiact.engine`, `aiact.drafting`,
+`aiact.mcp`) imports `aiact.eval`; a test holds that.
 """
 
 import logging
@@ -27,7 +32,7 @@ from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 from aiact.llm import (
     DecisionsClient,
@@ -37,13 +42,8 @@ from aiact.llm import (
     NoulQuestion,
     chat_model,
 )
-from aiact.llm.chat import reply_usage
-from aiact.llm.structured import (
-    ProviderRefusalError,
-    describe_validation_error,
-    json_schema_format,
-    parse_reply,
-)
+from aiact.llm.chat import invoke_structured
+from aiact.llm.structured import json_schema_format
 from aiact.schemas import Language
 from aiact.schemas.base import ContractModel
 from aiact.settings import Settings, get_settings
@@ -67,6 +67,8 @@ PROMPT_TOKENS_BOUND = 3_000
 token; a test holds the committed cases to it."""
 JEV_USD_PER_MTOK = 0.042
 """Jev's input price per million tokens; its output is free (OpenRouter listing, 2026-10-13)."""
+PRICED_BACKUP_MODEL = "anthropic/claude-haiku-5.5"
+"""The backup model the prices below belong to; no estimate is made for another one."""
 BACKUP_INPUT_USD_PER_MTOK = 0.11
 BACKUP_OUTPUT_USD_PER_MTOK = 0.55
 """Claude Haiku 5.5 on google-vertex/europe (OpenRouter listing, 2026-10-13). Haiku 4.5 there
@@ -185,15 +187,23 @@ def jev_state(item: JudgeItem) -> dict[str, str]:
 
 class JudgeError(RuntimeError):
     """No verdict: the judge that had to answer failed. `cost_usd` and `tokens` say what the
-    item spent. The message names the failure by type only, never the item's text."""
+    item spent; `is_call_failed` that the call reached no model (key, endpoint, guardrail or
+    network). The message names the failure by type only, never the item's text."""
 
     def __init__(
-        self, message: str, cost_usd: float, tokens: int, *, is_cost_estimated: bool = False
+        self,
+        message: str,
+        cost_usd: float,
+        tokens: int,
+        *,
+        is_cost_estimated: bool = False,
+        is_call_failed: bool = False,
     ) -> None:
         super().__init__(message)
         self.cost_usd = cost_usd
         self.tokens = tokens
         self.is_cost_estimated = is_cost_estimated
+        self.is_call_failed = is_call_failed
 
 
 @dataclass(frozen=True)
@@ -204,7 +214,8 @@ class JevAnswer:
 
 
 class JevJudge:
-    """Jev's probability that the check passes."""
+    """Jev's probability that the check passes. Jev has no EU endpoint: give it benchmark
+    material only, never a user's description (decision 006)."""
 
     def __init__(self, settings: Settings | None = None, client: DecisionsClient | None = None):
         """`client` replaces the OpenRouter client (tests). Raises `LLMConfigError` when the API
@@ -290,32 +301,29 @@ class BackupJudge:
     def ask(self, item: JudgeItem) -> BackupVerdict:
         """Raises `JudgeError` for a failed call (charged at `BACKUP_CALL_ESTIMATE_USD`), a refusal
         or an answer that doesn't fit the schema (charged what the reply reported)."""
-        try:
-            reply = self._chat.invoke(backup_messages(item), response_format=BACKUP_RESPONSE_FORMAT)
-        except Exception as exc:
-            logger.warning("backup judge call failed: %s", type(exc).__name__)
-            raise JudgeError(
-                failure(exc), BACKUP_CALL_ESTIMATE_USD, 0, is_cost_estimated=True
-            ) from exc
-        cost, tokens = reply_usage(reply)
-        is_estimated = cost is None
-        spent = BACKUP_CALL_ESTIMATE_USD if cost is None else cost
-        try:
-            answer = parse_reply(reply, BackupAnswer)
-        except (ValidationError, ProviderRefusalError) as exc:
-            raise JudgeError(failure(exc), spent, tokens, is_cost_estimated=is_estimated) from None
-        return BackupVerdict(answer.holds, answer.reason, spent, tokens, is_estimated)
-
-
-def failure(exc: Exception) -> str:
-    """Metadata only: a validation error by location and message, anything else by type."""
-    if isinstance(exc, ValidationError):
-        return f"answer doesn't fit the schema: {describe_validation_error(exc)}"
-    if isinstance(exc, ProviderRefusalError):
-        return "refused by the provider's content filter"
-    if isinstance(exc, DecisionsError):
-        return str(exc)
-    return type(exc).__name__
+        reply = invoke_structured(
+            self._chat,
+            backup_messages(item),
+            BackupAnswer,
+            BACKUP_RESPONSE_FORMAT,
+            BACKUP_CALL_ESTIMATE_USD,
+        )
+        if reply.answer is not None:
+            answer = reply.answer
+            return BackupVerdict(
+                answer.holds, answer.reason, reply.cost_usd, reply.tokens, reply.is_cost_estimated
+            )
+        error = JudgeError(
+            reply.error or "no answer",
+            reply.cost_usd,
+            reply.tokens,
+            is_cost_estimated=reply.is_cost_estimated,
+            is_call_failed=reply.is_call_failed,
+        )
+        if not reply.is_call_failed:
+            raise error from None  # a broken reply's validation error quotes the reply
+        logger.warning("backup judge call failed: %s", reply.error)
+        raise error from reply.cause
 
 
 DISTANCE_DIGITS = 6
@@ -329,9 +337,22 @@ def is_unsure(p_yes: float, margin: float) -> bool:
     return round(abs(p_yes - YES_AT), DISTANCE_DIGITS) < margin
 
 
+def jev_holds(p_yes: float) -> bool:
+    """Jev's answer: yes from `YES_AT` up."""
+    return p_yes >= YES_AT
+
+
+def jev_decision(p_yes: float | None, margin: float) -> bool | None:
+    """Jev's answer when it decides alone (it answered and is sure at `margin`); None when the
+    backup judge decides. The one rule `Judge.judge` and the validation's margin table share."""
+    if p_yes is None or is_unsure(p_yes, margin):
+        return None
+    return jev_holds(p_yes)
+
+
 def needs_backup(p_yes: float | None, margin: float) -> bool:
     """The backup judge decides when Jev gave no answer or an unsure one."""
-    return p_yes is None or is_unsure(p_yes, margin)
+    return jev_decision(p_yes, margin) is None
 
 
 class Verdict(ContractModel):
@@ -360,9 +381,10 @@ class Judge:
         """Raises `JudgeError` when the backup judge had to answer and couldn't; the error
         carries what both calls spent."""
         p_yes, cost, tokens = self._ask_jev(item)
-        if p_yes is not None and not is_unsure(p_yes, self.margin):
+        decided = jev_decision(p_yes, self.margin)
+        if decided is not None:
             return Verdict(
-                holds=p_yes >= YES_AT,
+                holds=decided,
                 decided_by="jev",
                 p_yes=p_yes,
                 reason=None,
@@ -372,7 +394,13 @@ class Judge:
         try:
             backup = self._backup.ask(item)
         except JudgeError as exc:
-            raise JudgeError(str(exc), cost + exc.cost_usd, tokens + exc.tokens) from exc
+            raise JudgeError(
+                str(exc),
+                cost + exc.cost_usd,
+                tokens + exc.tokens,
+                is_cost_estimated=exc.is_cost_estimated,
+                is_call_failed=exc.is_call_failed,
+            ) from exc
         return Verdict(
             holds=backup.holds,
             decided_by="backup",
@@ -387,6 +415,6 @@ class Judge:
         try:
             answer = self._jev.ask(item)
         except DecisionsError as exc:
-            logger.warning("Jev failed, the backup judge answers: %s", failure(exc))
+            logger.warning("Jev failed, the backup judge answers: %s", exc)
             return None, exc.cost_usd, exc.tokens
         return answer.p_yes, answer.cost_usd, answer.tokens
