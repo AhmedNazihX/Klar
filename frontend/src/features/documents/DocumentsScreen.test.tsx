@@ -172,6 +172,35 @@ describe('Documents list', () => {
     },
   )
 
+  it('shows no count while one tool’s list is in and another’s still loads', async () => {
+    let release = (): void => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let isDeployerListed = false
+    // The provider's list is held; the deployer's passes on to the fixture's handler at once.
+    server.use(
+      http.post(LIST_URL, async ({ request }) => {
+        const body = (await request.clone().json()) as { result: { role: string } }
+        if (body.result.role === 'provider') await gate
+        else isDeployerListed = true
+      }),
+    )
+    await openDocuments('/app/documents', { tools: [APPLICANT_SCREENING, DRIVER_SCORING] })
+    await vi.waitFor(() => {
+      expect(isDeployerListed).toBe(true)
+    })
+    // The deployer's documents are listed; the provider's group still loads.
+    const listed = await screen.findByRole('region', { name: 'For Applicant screening' })
+    await within(listed).findByRole('link', { name: /Human oversight record/ })
+    const toggle = screen.getByRole('button', { name: 'Documents' })
+    expect(toggle).toHaveAccessibleName('Documents')
+    release()
+    await vi.waitFor(() => {
+      expect(toggle).toHaveAccessibleName(/^Documents \(\d+\)$/)
+    })
+  })
+
   it('says there is nothing to draft before a tool is classified', async () => {
     await openDocuments('/app/documents', { tools: [] })
     expect(
@@ -809,6 +838,19 @@ describe('A stored result the API can’t read', () => {
       expect(calls).toBe(1)
     },
   )
+
+  it('says nothing of the kind when only a draft is refused with a 422', async () => {
+    server.use(
+      http.post(DRAFT_URL, () => HttpResponse.json({ detail: 'invalid' }, { status: 422 })),
+    )
+    await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
+    const main = await screen.findByRole('main')
+    expect(await within(main).findByRole('alert')).toHaveTextContent(
+      "Klar couldn't draft this document.",
+    )
+    expect(screen.queryByText(/can't read this tool's saved result/)).toBeNull()
+    expect(within(main).getByRole('button', { name: 'Try again' })).toBeEnabled()
+  })
 })
 
 describe('Something fails', () => {

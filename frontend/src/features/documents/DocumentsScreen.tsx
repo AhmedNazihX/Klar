@@ -8,7 +8,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import {
   documentFailure,
-  DocumentRequestError,
+  UnreadableResultError,
   useDocumentDraft,
   useDocumentLists,
   type DocumentTool,
@@ -271,8 +271,7 @@ function ToolDocuments({
       answers: answers?.data ?? {},
       isLoading: Boolean(list?.isPending || answers?.isPending),
       isError: Boolean(list?.isError || answers?.isError),
-      isUnreadableResult:
-        list?.error instanceof DocumentRequestError && list.error.isUnreadableResult,
+      isUnreadableResult: list?.error instanceof UnreadableResultError,
       onRetry: () => {
         void (answers?.isError ? answers.refetch() : list?.refetch())
       },
