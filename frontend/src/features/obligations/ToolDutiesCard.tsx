@@ -9,6 +9,7 @@ import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
 import { DutyItem } from '@/features/classify/DutyItem'
 import { dutyNote, statusPill, toolName } from '@/features/classify/result-text'
+import { useDutyRelief } from '@/features/classify/use-duty-relief'
 import { longDate } from '@/features/classify/dates'
 import { isoDay, type CheckedTool } from '@/features/inventory/tool-facts'
 import { useLanguage } from '@/hooks/use-language'
@@ -105,6 +106,7 @@ function DutyList({
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
+  const reliefOf = useDutyRelief(tool.result)
   const [isOpen, setIsOpen] = useState(false)
   const shown = isOpen ? duties : duties.slice(0, DUTY_PREVIEW)
   return (
@@ -114,7 +116,7 @@ function DutyList({
           <DutyItem
             key={duty.key ?? `${duty.article}:${duty.duty}`}
             duty={duty}
-            result={tool.result}
+            relief={reliefOf(duty)}
             toolId={tool.toolId}
             note={noteOf(t, tool, duty, language, today)}
             docLabel={t('obligations.card.draftReady')}

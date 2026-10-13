@@ -1,31 +1,17 @@
+import type { TFunction } from 'i18next'
 import type { JSX, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ClassificationResult, Obligation } from '@/api'
+import type { Obligation } from '@/api'
 import { ObligationItem } from '@/components/ObligationItem'
 import { useLanguage } from '@/hooks/use-language'
-import { useLawVersion } from '@/hooks/use-law-version'
-import { useReliefNotes } from '@/hooks/use-relief-notes'
-import { useUserDataOverview } from '@/hooks/use-user-data-overview'
 import { tickKey } from '@/lib/duty-progress'
 
 import { provisionName } from './provision-names'
-import { isRelieved, reliefNote } from './relief'
 import { DUTY_REFERENCE_WIDTH, dutyLabel } from './result-text'
 
-/** The line under a duty, with its relief note after it when the company gets one: the
- *  obligations table's for the duty's key, looked up for `result`'s roles and class. */
-function useNoteWithRelief(
-  duty: Obligation,
-  result: ClassificationResult,
-  note: ReactNode,
-): ReactNode {
-  const { t } = useTranslation()
-  const language = useLanguage()
-  const shown = useLawVersion()
-  const sizeClass = useUserDataOverview().data?.profile?.sizeClass
-  const table = useReliefNotes(result, isRelieved(sizeClass, shown))
-  const relief = duty.key && table ? reliefNote(table[duty.key], language) : null
+/** The line under a duty, with its relief note after it when it has one. */
+function noteWithRelief(t: TFunction, note: ReactNode, relief: string | null): ReactNode {
   if (relief === null) return note
   const line = <span className="basis-full">{t('result.duty.relief', { relief })}</span>
   return note ? (
@@ -40,13 +26,13 @@ function useNoteWithRelief(
 
 /**
  * One duty with its box, its Art. 111(2) marking and its draft document, as the provider layout
- * (P23) and the Obligations screen (P24) list it; each passes the line under it and the draft's
- * link text, and the relief note follows it for an SME or a small mid-cap (`isRelieved`). A
- * duty with nothing to tick off gets no box.
+ * (P23) and the Obligations screen (P24) list it; each passes the line under it, the draft's
+ * link text and the duty's relief note (`useDutyRelief`), which follows the line. A duty with
+ * nothing to tick off gets no box.
  */
 export function DutyItem({
   duty,
-  result,
+  relief,
   toolId,
   note,
   docLabel,
@@ -54,8 +40,8 @@ export function DutyItem({
   onTick,
 }: {
   duty: Obligation
-  /** The result that lists the duty. */
-  result: ClassificationResult
+  /** The duty's relief note for the company, if it gets one. */
+  relief: string | null
   toolId: string
   note: ReactNode
   docLabel: ReactNode
@@ -66,7 +52,7 @@ export function DutyItem({
   const { t } = useTranslation()
   const language = useLanguage()
   const key = tickKey(duty)
-  const shownNote = useNoteWithRelief(duty, result, note)
+  const shownNote = noteWithRelief(t, note, relief)
   return (
     <ObligationItem
       label={dutyLabel(duty, language)}

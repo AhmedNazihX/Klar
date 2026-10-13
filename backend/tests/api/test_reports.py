@@ -17,8 +17,8 @@ from aiact.api import create_app
 from aiact.api.dependencies import ApiContext
 from aiact.api.files import block_texts
 from aiact.api.reports import (
-    INVENTORY_MAX_CHARS,
-    INVENTORY_MAX_LINES,
+    LIST_REPORT_MAX_CHARS,
+    LIST_REPORT_MAX_LINES,
     RENDERERS,
     ChecklistRequest,
     InventoryReportRequest,
@@ -240,8 +240,8 @@ async def test_a_duty_label_is_capped_at_1000_characters(
 def test_the_report_caps_are_pinned() -> None:
     assert (
         InventoryReportRequest.MAX_TOOLS,
-        INVENTORY_MAX_LINES,
-        INVENTORY_MAX_CHARS,
+        LIST_REPORT_MAX_LINES,
+        LIST_REPORT_MAX_CHARS,
         MAX_NAME_CHARS,
     ) == (100, 11_500, 330_000, 200)
 

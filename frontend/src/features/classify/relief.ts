@@ -14,8 +14,9 @@ export function isRelieved(sizeClass: SizeClass | null | undefined, shown: LawVe
 }
 
 /** A duty's relief note in `language`, from the obligations table's `notes` for its key
- *  (`useReliefNotes`), as the reports take it; null when the table gives it none, and never the
- *  other language's note in its place. */
+ *  (`useReliefNotes`); null when the table gives it none. Deliberately stricter than the reports,
+ *  which fall back to the English note in German: the screen never shows the other language's
+ *  note in its place. */
 export function reliefNote(notes: ReliefNotes | undefined, language: Language): string | null {
   if (!notes) return null
   return (language === 'de' ? notes.relief_note_de : notes.relief_note) ?? null

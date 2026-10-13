@@ -12,6 +12,7 @@ import { OriginalDatesNote } from './OriginalDatesNote'
 import { DUTY_GROUPS, TECHNICAL_DOCUMENTATION_ARTICLE } from './provider-layout'
 import { GpaiNote } from './ProviderNotes'
 import { dutyNote, isTransparencyDuty } from './result-text'
+import { useDutyRelief } from './use-duty-relief'
 
 function useDocLabel(): (duty: Obligation) => string {
   const { t } = useTranslation()
@@ -39,13 +40,14 @@ export function DutyList({
   const { t } = useTranslation()
   const language = useLanguage()
   const docLabel = useDocLabel()
+  const reliefOf = useDutyRelief(result)
   return (
     <ul className="m-0 flex list-none flex-col p-0">
       {duties.map((duty) => (
         <DutyItem
           key={duty.key ?? `${duty.article}:${duty.duty}`}
           duty={duty}
-          result={result}
+          relief={reliefOf(duty)}
           toolId={toolId}
           note={dutyNote(t, duty, language)}
           docLabel={docLabel(duty)}

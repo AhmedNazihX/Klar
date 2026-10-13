@@ -305,7 +305,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; ResultScreen.phone.browser.test.tsx the result at 390 px, P26; the provider layout
-│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23, relief.ts its SME/SMC relief notes, P31; the ambiguous
+│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23, relief.ts its SME/SMC relief notes and use-duty-relief.ts the hook that looks them up for a duty list, P31; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
 │       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads; SourceDocuments, the texts list Ask and the reviewer view share, P31),
 │       │                            site-pages/ (P17: MethodPage, PrivacyPage, ImpressumPage, ContactPage, their shared SitePageParts,
@@ -356,7 +356,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
 │                                    qa-fixtures.ts (POST /qa answers and GET /documents, P7)
-                                    relief-fixtures.ts (GET /obligations with the table's relief notes, P31)
+│                                    relief-fixtures.ts (GET /obligations with the table's relief notes, P31)
 │                                    placeholders.ts (bracketed unknowns outside a marked placeholder, P17)
 │                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
 │                                    its vendor letters and the provisions it quotes, dumped and drift-checked by

@@ -57,13 +57,13 @@ from aiact.report import (
 from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 
-INVENTORY_MAX_LINES = 11_500
+LIST_REPORT_MAX_LINES = 11_500
 """The inventory report's and the checklist's line cap: their tables count each cell as a
 line. Sized for the longest single-role duty list: a hundred high-risk provider tools (26
 duties each on the Annex III route) come to 8,806 lines in the inventory report and 11,101 in
 the checklist, with its done cell (measured 2026-10-14; the drafted documents keep
 `MAX_FILE_LINES`). A hundred providers that also deploy (43 duties each) go past it: a 413."""
-INVENTORY_MAX_CHARS = 330_000
+LIST_REPORT_MAX_CHARS = 330_000
 """The inventory report's and the checklist's character cap, sized like the line cap with the
 table's German labels and an SME's relief notes (two provider duties carry one of about 300
 characters): a hundred high-risk provider tools come to 303,077 characters in the inventory
@@ -120,7 +120,7 @@ class InventoryReportRequest(ContractModel):
 
     MAX_TOOLS: ClassVar[int] = 100
     """Far above an SME's inventory; a hundred high-risk provider tools fit the file caps
-    (`INVENTORY_MAX_CHARS`)."""
+    (`LIST_REPORT_MAX_CHARS`)."""
 
     tools: tuple[InventoryTool, ...] = Field(max_length=MAX_TOOLS)
     language: Language = Field(description="The language of the report's wording and notice.")
@@ -216,7 +216,9 @@ def export_inventory_report(
         company=body.company,
         size_class=body.size_class,
     )
-    refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
+    refuse_too_long(
+        paper, TOO_LONG, max_chars=LIST_REPORT_MAX_CHARS, max_lines=LIST_REPORT_MAX_LINES
+    )
     return _file(request, context, paper, body.format, INVENTORY_STEM)
 
 
@@ -245,7 +247,9 @@ def export_obligations_checklist(
         size_class=body.size_class,
     )
     # The inventory report's caps: a checklist row has one cell more, and still fits them.
-    refuse_too_long(paper, TOO_LONG, max_chars=INVENTORY_MAX_CHARS, max_lines=INVENTORY_MAX_LINES)
+    refuse_too_long(
+        paper, TOO_LONG, max_chars=LIST_REPORT_MAX_CHARS, max_lines=LIST_REPORT_MAX_LINES
+    )
     return _file(request, context, paper, body.format, CHECKLIST_STEM)
 
 
