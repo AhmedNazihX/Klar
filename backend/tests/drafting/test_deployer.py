@@ -304,7 +304,11 @@ def test_the_art_50_3_choice_is_asked_in_both_languages() -> None:
         "Kategorien zu oder beides?",
     }
     assert [(c.key, c.label[Language.EN], c.label[Language.DE]) for c in question.choices] == [
-        ("emotion_recognition", "It recognises emotions", "Es erkennt Emotionen"),
+        (
+            "emotion_recognition",
+            "It recognises emotions or intentions from biometric data",
+            "Es erkennt Emotionen oder Absichten anhand biometrischer Daten",
+        ),
         (
             "biometric_categorisation",
             "It sorts people into categories from biometric data",
@@ -313,6 +317,20 @@ def test_the_art_50_3_choice_is_asked_in_both_languages() -> None:
         ("both", "Both", "Beides"),
     ]
 
+
+
+@pytest.mark.parametrize("template_id", [ART_50_3, "art_50_4_disclosure"])
+def test_a_disclosure_calls_its_text_the_disclosure_in_english(template_id: str) -> None:
+    """P31 (D5): an Art. 50 disclosure's wording section and its placement question say
+    "disclosure" in English; German keeps "Hinweis"."""
+    template = TEMPLATES[template_id]
+    (section,) = [s for s in template.sections if s.key == "notice"]
+    assert section.heading == {Language.EN: "The disclosure", Language.DE: "Der Hinweis"}
+    (placement,) = [q for q in template.questions if q.key == "placement"]
+    assert placement.text == {
+        Language.EN: "Where and when will people see this disclosure?",
+        Language.DE: "Wo und wann sehen Personen diesen Hinweis?",
+    }
 
 # --- The draft's own rules -----------------------------------------------------------------------
 

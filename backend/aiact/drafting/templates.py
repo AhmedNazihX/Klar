@@ -264,14 +264,14 @@ TOOL = InterviewSection(
     },
 )
 WHY_TELLING = {EN: "Why we're telling you", DE: "Warum wir Sie informieren"}
-NOTICE = {EN: "The notice", DE: "Der Hinweis"}
+NOTICE = {EN: "The disclosure", DE: "Der Hinweis"}
 WHY_SHOWN = {EN: "Why it is shown", DE: "Warum er angezeigt wird"}
 PLACEMENT = InterviewSection(
     "placement",
     {EN: "Where it is shown", DE: "Wo er angezeigt wird"},
     "placement",
     {
-        EN: "Where and when will people see this notice?",
+        EN: "Where and when will people see this disclosure?",
         DE: "Wo und wann sehen Personen diesen Hinweis?",
     },
 )
@@ -449,7 +449,10 @@ EMOTION_BIOMETRIC_DISCLOSURE = DocumentTemplate(
             (
                 Choice(
                     "emotion_recognition",
-                    {EN: "It recognises emotions", DE: "Es erkennt Emotionen"},
+                    {
+                        EN: "It recognises emotions or intentions from biometric data",
+                        DE: "Es erkennt Emotionen oder Absichten anhand biometrischer Daten",
+                    },
                     {
                         EN: "An AI system for emotion recognition is in operation here.",
                         DE: "Hier ist ein KI-System zur Emotionserkennung in Betrieb.",

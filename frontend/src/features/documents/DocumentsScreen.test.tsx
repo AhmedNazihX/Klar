@@ -311,7 +311,7 @@ describe('The Art. 50(3) disclosure', () => {
       tools: [MOOD_METER],
     })
     const article = await preview()
-    expect(within(article).getByRole('region', { name: 'The notice' })).toHaveTextContent(
+    expect(within(article).getByRole('region', { name: 'The disclosure' })).toHaveTextContent(
       'To fill in. Answer it in the guided interview.',
     )
     const interview = screen.getByRole('region', { name: 'Guided interview' })
@@ -323,7 +323,7 @@ describe('The Art. 50(3) disclosure', () => {
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
     ).toEqual([
-      'It recognises emotions',
+      'It recognises emotions or intentions from biometric data',
       'It sorts people into categories from biometric data',
       'Both',
     ])
@@ -397,7 +397,7 @@ describe('The Art. 50(3) disclosure', () => {
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
     ).toEqual([
-      'Es erkennt Emotionen',
+      'Es erkennt Emotionen oder Absichten anhand biometrischer Daten',
       'Es ordnet Personen anhand biometrischer Daten Kategorien zu',
       'Beides',
     ])

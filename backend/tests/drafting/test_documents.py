@@ -173,7 +173,7 @@ def test_a_choice_question_lists_its_choices_in_the_drafts_language() -> None:
     assert asked.choices == (
         InterviewChoice(
             key="emotion_recognition",
-            label="Es erkennt Emotionen",
+            label="Es erkennt Emotionen oder Absichten anhand biometrischer Daten",
             title="Hinweis: Emotionserkennung",
         ),
         InterviewChoice(
