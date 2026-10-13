@@ -6,33 +6,41 @@ tool infers (Art. 3(1)) and once decided it was in scope (user's live check, 202
 Worked example accepts both: the description doesn't say how the tool works, so the engine may
 ask, or assume it is an AI system. No run may pause on any other question.
 
-The replay asks the scope step `RUNS` times with the same request and replays the replies in the
-order they were recorded; the corpus answers come from the `.corpus.json` next to the cassette.
-Record it with `RECORD_COMMAND` (paid, the orchestrator's step, after the user's go-ahead).
+The replay asks the scope step `RUNS` times with the request a whole run sends it: the
+description with the four facts the facts node extracted from it (not the replay state's empty
+facts), and replays the replies in the order they were recorded; the corpus answers come from the
+`.corpus.json` next to the cassette. A free check holds that request to the whole run's recorded
+one. Record it with `RECORD_COMMAND` (paid, the orchestrator's step, after the user's go-ahead).
 """
 
-from collections import Counter
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import date
 
 import pytest
+import yaml
+from langchain_core.messages import BaseMessage
 
 from aiact.db import connect
+from aiact.engine.nodes.facts import find_span
 from aiact.engine.nodes.key_facts import Answer, KeyFact
 from aiact.engine.nodes.scope import (
+    SCOPE_INSTRUCTIONS,
     CorpusLibrary,
     Definition,
     DefinitionFact,
     ScopeCheck,
+    scope_messages,
     to_outcome,
 )
 from aiact.engine.nodes.scope_texts import AI_SYSTEM
-from aiact.engine.state import CheckOutcome
+from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.experiments.matchers import WORKED_EXAMPLE, replay_state
 from aiact.llm import OpenRouterEmbeddings
-from aiact.schemas import Status
+from aiact.schemas import EvidenceTag, Fact, Status
 from aiact.settings import Settings
+from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import (
     RecordingPendingError,
@@ -54,6 +62,35 @@ RUNS = 5
 """How many times the replay asks the scope step (BACKLOG > E14: about five)."""
 AS_OF = date(2026, 10, 13)
 RECORD_COMMAND = "uv run pytest tests/engine/nodes/test_scope_variance.py --record-mode=once"
+WHOLE_RUN_CASSETTE = (
+    RECORDINGS_DIR / "engine" / "test_classify_worked_example" / "test_replay_worked_example.yaml"
+)
+"""The whole-run recording whose scope request the five runs repeat."""
+CASE_CONTEXT = "Language for facts:"
+"""Where the scope request's per-case context starts, after the law and the guideline passages."""
+
+
+def _fact(text: str, evidence: EvidenceTag, quote: str | None = None) -> Fact:
+    span = find_span(WORKED_EXAMPLE.description, quote) if quote else None
+    return Fact(text=text, evidence=evidence, source_span=span)
+
+
+WORKED_EXAMPLE_FACTS = (
+    _fact(
+        "The tool reads job applications, scores them, and gives HR a ranked shortlist.",
+        EvidenceTag.STATED,
+        "reads incoming job applications, scores them, and shows HR a ranked shortlist.",
+    ),
+    _fact("The tool is used to screen applicants for employment.", EvidenceTag.INFERRED),
+    _fact(
+        "The company bought the tool from a vendor and did not change it.",
+        EvidenceTag.STATED,
+        "We bought it from a vendor and didn't change it.",
+    ),
+    _fact("The tool is used in the EU.", EvidenceTag.ASSUMED),
+)
+"""The facts the facts node extracted from the worked example in the whole-run recording
+(`WHOLE_RUN_CASSETTE`'s first reply: each fact's text, evidence tag and quote)."""
 
 DECIDED = "in scope, decided"
 ASKS_AI_SYSTEM = "in scope as the working assumption, asks whether the tool infers"
@@ -102,6 +139,39 @@ def test_any_other_reading_is_not(
     assert accepted_reading(_outcome(ai_system, **key_facts)) is None
 
 
+def worked_example_state() -> EngineState:
+    """The state the scope step gets in a whole run: the replay state plus the facts."""
+    return {**replay_state(WORKED_EXAMPLE, AS_OF), "facts": WORKED_EXAMPLE_FACTS}
+
+
+def _case_context(message: BaseMessage | dict[str, object]) -> str:
+    """A scope request's text from its per-case context on: the language, the facts and the
+    description. The law and the guideline passages before it come from the corpus."""
+    content = message.content if isinstance(message, BaseMessage) else message["content"]
+    assert isinstance(content, str)
+    return content[content.index(CASE_CONTEXT) :]
+
+
+def _whole_run_scope_request() -> dict[str, object]:
+    """The human message of the whole run's scope request: the one sent with the scope prompt."""
+    cassette = yaml.safe_load(WHOLE_RUN_CASSETTE.read_text(encoding="utf-8"))
+    for interaction in cassette["interactions"]:
+        messages = json.loads(interaction["request"]["body"]).get("messages", [])
+        if messages and messages[0]["content"] == SCOPE_INSTRUCTIONS:
+            return messages[-1]
+    raise AssertionError(
+        f"{WHOLE_RUN_CASSETTE.name} has no request with the current scope prompt: the prompt "
+        "changed or the whole run was re-recorded; recheck WORKED_EXAMPLE_FACTS against it"
+    )
+
+
+def test_the_runs_repeat_the_whole_runs_scope_request() -> None:
+    """The five runs measure the input that wavered: the request with the facts node's facts."""
+    sent = scope_messages(worked_example_state(), (), ())
+    assert _case_context(sent[-1]) == _case_context(_whole_run_scope_request())
+    assert "Facts:\n1. [stated] The tool reads job applications" in _case_context(sent[-1])
+
+
 @pytest.fixture
 def luna_settings(openrouter_settings: Settings) -> Settings:
     return openrouter_settings.model_copy(
@@ -132,7 +202,7 @@ def test_worked_example_scope_varies_only_between_inits_readings(
     question, and none ends out of scope or contested. How many runs ask is E14's diagnosis,
     read from the recorded replies' `ai_system` answers."""
     require_recording(vcr_cassette_dir, default_cassette_name, record_mode)
-    run_state = replay_state(WORKED_EXAMPLE, AS_OF)
+    run_state = worked_example_state()
     with corpus_recording(
         vcr_cassette_dir,
         default_cassette_name,
@@ -145,5 +215,5 @@ def test_worked_example_scope_varies_only_between_inits_readings(
     for outcome in outcomes:
         assert not unresolved_citations(outcome.step, run_state)
         assert not whole_articles(outcome.step)
-    readings = Counter(accepted_reading(outcome) for outcome in outcomes)
+    readings = [accepted_reading(outcome) for outcome in outcomes]
     assert None not in readings, [(o.step.status, o.follow_up_questions) for o in outcomes]
