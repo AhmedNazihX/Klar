@@ -12,7 +12,8 @@ it is validated here against hand labels (INIT › Evaluation › Judge; decisio
 
 ## How to label
 
-Read each case in `cases.yaml` and write `yes` or `no` after its id in `labels.yaml`. Judge only
+`labels.yaml` shows each case's question and its two texts as comments above its id (copied from
+`cases.yaml`, the source of truth): write `yes` or `no` after the id. Judge only
 from the two texts in the case, not from what you know about the Act or the system beyond them.
 Leave a case empty if you can't decide: it is then left out of every measure. `yes` always means
 the check passes:
