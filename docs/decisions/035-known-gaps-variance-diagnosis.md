@@ -51,7 +51,8 @@ question or ended out of scope or contested, so nothing points to the prompt. Co
    another provider's model, answer "deployer" when it also uses that system itself under its own authority, and
    "provider" when only others use it. The application already makes it the provider, and guide-art50 para 15 says
    one operator can be both. Cost: a re-record of every role replay. Risk: own-d-06 (a shop's website chat, labelled
-   provider only) could gain a deployer role.
+   provider only) could gain a deployer role. **User decision (2026-10-13): do it, in story E20 with follow-up 2**
+   (re-recording the 14 role replays cost about $0.014 at their recorded prices).
 2. **High-risk prompt (own-e-10).** One rule for `third_party_assessment`: an exemption from the sector law's
    conformity procedure that the company relies on is never a "no" by itself. The answer is "unknown" while the
    description doesn't show the exemption's conditions are met. Once it does, whether Art. 6(1)(b) still applies is
