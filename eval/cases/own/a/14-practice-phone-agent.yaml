@@ -12,8 +12,9 @@ description: >-
   in Süddeutschland.
 label:
   risk_class: limited_risk
+  status: legally_ambiguous
   role: provider
-label_citation: ["art:50:1", "art:50:2", "art:111:4", "art:3:3", "guide:guide-art50:para:31", "guide:guide-art50:para:45"]
+label_citation: ["art:50:1", "art:50:2", "art:50:4", "art:3:60", "art:111:4", "art:3:3", "guide:guide-art50:para:31", "guide:guide-art50:para:45", "guide:guide-art50:para:113"]
 business_function: customer_service
 as_of: 2026-10-01
 notes: >-
@@ -24,7 +25,15 @@ notes: >-
   2026, just after 2 August 2026, so no Art. 111(4) grace period for marking. Scheduling has no
   medical purpose and no Annex III use, so not high-risk. Role: provider under its own name
   (Art. 3(3)) building on a licensed general-purpose model (gpai_based; the model provider's
-  duties are only flagged); the practices are deployers.
+  duties are only flagged); the practices are deployers. Changed by the user 2026-10-13 (decision
+  035 follow-up 3, option B): guide-art50 para 113 was not weighed at approval. Open question:
+  is the very human-sounding synthetic voice of a live AI phone call a deep fake under Art. 3(60),
+  so the practices (deployers) owe the Art. 50(4) disclosure? Reading A: yes; para 113 counts
+  "realistic AI-generated human avatars or personas, and personal characteristics or expressions,
+  such as image, voice" as persons, and a subject that "can plausibly exist" is enough. Reading B:
+  no; once the Art. 50(1) disclosure is made the voice doesn't "falsely appear" authentic, and a
+  live two-way call may not be deep-fake "content", which the guidelines don't settle. The class
+  is limited risk under both readings; the provider's own duties stay Art. 50(1) and (2).
 tags:
   - "category:a"
   - "gpai_based"

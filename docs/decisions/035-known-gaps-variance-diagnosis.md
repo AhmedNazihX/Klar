@@ -2,8 +2,8 @@
 
 - **Date:** 2026-10-13
 - **Story:** E14 (docs/BACKLOG.md); affects E17's deferred items, the high-risk and role prompts, and the own-a-14 label
-- **Status:** proposed (waiting for the user): the diagnoses are final, including the worked example's after its
-  five runs were recorded (2026-10-13); the three follow-ups below are the user's to choose
+- **Status:** accepted (2026-10-13): the diagnoses are final, including the worked example's after its five runs
+  were recorded; the user chose all three follow-ups below (1 and 2 in story E20, 3 as a label change)
 
 ## Question
 After E19 the node replays still have five known gaps, and E19's recording showed two cases that flipped once
@@ -62,6 +62,11 @@ question or ended out of scope or contested, so nothing points to the prompt. Co
    re-recording the 30 high-risk replays cost about $0.04 at their recorded prices).
 3. **Label (own-a-14).** Should Art. 50(4) stay out of the label for a generic, very human-sounding synthetic phone
    voice? guide-art50 para 113 points the other way. A label change goes through eval/LABEL_CHANGES.md.
+   **User decision (2026-10-13): option B**, Art. 50(4) open in law: the label is now limited risk,
+   legally ambiguous, citing Art. 3(60), Art. 50(4) and para 113. Para 113 counts realistic synthetic voices as
+   persons, but whether a disclosed live AI call is deep-fake "content" that "falsely appear[s]" authentic is
+   unsettled. The reason logged is that para 113 was not weighed at approval, not that the engine disagreed
+   (eval/LABEL_CHANGES.md, 2026-10-13). own-a-14's replay now passes and its known gap is removed.
 
 ## Consequences
 - `tests/engine/nodes/test_scope_variance.py`: the five-run replay, recorded on 2026-10-13 (5 of 5 ask

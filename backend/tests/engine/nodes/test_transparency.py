@@ -1090,22 +1090,7 @@ def _b5a_cases() -> list[BenchmarkCase]:
 B5A_CASES = _b5a_cases()
 
 
-def _adds_deep_fakes(result: CheckOutcome, case: BenchmarkCase) -> bool:
-    return (
-        result.step.status is Status.LEGALLY_AMBIGUOUS and "art:50:4" in result.transparency_duties
-    )
-
-
 KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-a-14-practice-phone-agent": KnownGap(
-        "adds Art. 50(4): E19's re-record leaves open in law whether a generic, human-sounding "
-        "synthetic voice that imitates no one is a deep fake (legally ambiguous); before, it "
-        "asked whether the voices are deep fakes (needs_more_information, E10 re-record, user "
-        "2026-10-06). The label is decided with Art. 50(1) and (2) only. E14: not variance but "
-        "a label question for the user; the Art. 50 guidelines (para 113) count realistic "
-        "AI-generated personas and voices as persons, which supports the deep-fake reading",
-        _adds_deep_fakes,
-    ),
     "own-a-15-intranet-assistant-in-house": KnownGap(
         "E18's re-record (2026-10-12), and E19's: under the tighter T3 rule the model doesn't "
         "find the obvious-interaction exception shown and lists Art. 50(1), where the label has "
@@ -1208,9 +1193,9 @@ SETTLES_OPEN_POINT: dict[str, tuple[str, ...]] = {
 }
 """E17: the recorded cases the step may leave legally ambiguous, and the questions listed under
 "What would settle it": Art. 50(4)'s editorial exception (the user's hosted run) and Art. 50(1)'s
-obvious-interaction exception. own-a-14 (a known gap since E19's re-record) is left open on
-whether a generic synthetic voice is a deep fake (Art. 3(60)), a reading of the law no fact
-question settles, so it lists none."""
+obvious-interaction exception. own-a-14 is left open on whether a generic synthetic voice is a
+deep fake (Art. 3(60)), a reading of the law no fact question settles, so it lists none; its label
+says so since the user's change of 2026-10-13 (decision 035 follow-up 3)."""
 
 EDITORIAL_FIXTURE = (
     Path(__file__).resolve().parents[2] / "fixtures" / "followup_cases" / "editorial-question.yaml"
