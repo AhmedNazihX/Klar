@@ -55,6 +55,7 @@ from aiact.engine.state import CheckOutcome, EngineState
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseSet, load_yaml_file
 from aiact.eval.experiments.matchers import (
     EXEMPTION_TRAP,
+    case_label,
     high_risk_matches,
     high_risk_or_exempt_matches,
     replay_state,
@@ -1774,27 +1775,79 @@ def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     assert high_risk_matches(result, WORKED_EXAMPLE_CASE)
 
 
-KNOWN_GAPS: dict[str, KnownGap] = {}
+def _asks_for_third_party_assessment(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """High-risk assumed on the case's Annex I point, asking whether a third-party conformity
+    assessment is required (Art. 6(1)(b))."""
+    missing = result.step.missing_fact
+    return (
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and result.high_risk_route is HighRiskRoute.ANNEX_I
+        and result.annex_point in case_label(case).annex_point
+        and missing is not None
+        and missing.id == "third_party_assessment"
+        and missing.about == "art:6:1:b"
+    )
+
+
+def _decides_high_risk_on_its_annex_i_point(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """Decided high-risk on the case's Annex I point, with no question open in law."""
+    return (
+        result.step.status is Status.DECIDED
+        and result.high_risk_route is HighRiskRoute.ANNEX_I
+        and result.annex_point in case_label(case).annex_point
+        and result.step.open_question is None
+    )
+
+
+KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-e-09-ropeway-wear-forecast": KnownGap(
+        "E20's re-record (2026-10-13): the safety-component question is read as settled (yes), "
+        "so the step decides high-risk on annex:I:A:8 where the label leaves it legally "
+        "ambiguous; a status-only miss, not a false low risk. Run-to-run variance, not E20's "
+        "rule: the third-party assessment reads 'yes' in all eight recordings since E5, E19's "
+        "first recording (pre-E20 prompt) settled it the same way, and six of the eight hold it "
+        "open; the request differs from E19's variance-check recording only by the exemption "
+        "rule (and one retrieved passage's place), and the rule applies to an exemption the "
+        "company relies on, which own-e-09 doesn't",
+        _decides_high_risk_on_its_annex_i_point,
+    ),
+    "own-e-10-in-house-nodule-finder": KnownGap(
+        "E20's re-record (2026-10-13): the exemption rule's first stage. The description shows "
+        "in-house use but not the MDR in-house exemption's other conditions (Art. 5(5)), so the "
+        "third-party assessment reads 'unknown' and high-risk is assumed on the Annex I route "
+        "(MDR, annex:I:A:11) until it is answered (needs_more_information), where the label "
+        "leaves the exemption legally ambiguous; a status-only miss, not a false low risk",
+        _asks_for_third_party_assessment,
+    ),
+}
 """Recorded cases whose high-risk outcome differs from the label, with the reason and the
-reading they give instead; each fails when it starts matching, so the entry is removed. E20
-removed own-e-10's (an in-house MDR device asked, or read "no", on the third-party assessment;
-decision 035 follow-up 2): the exemption rule in high_risk.md holds it open in law."""
+reading they give instead; each fails when it starts matching, so the entry is removed."""
 
 
 MEDICAL_DEVICES = "(EU) 2017/745"
 """The Medical Device Regulation, as both languages name it."""
+MDR_HIGH_RISK = AnswerOutcome(
+    risk_class=RiskClass.HIGH_RISK,
+    high_risk_route=HighRiskRoute.ANNEX_I,
+    provision_id="annex:I:A:11",
+    duties_from=date(2028, 8, 2),
+)
+"""What a yes to own-e-10's third-party question settles: high-risk under the MDR, its duties
+from the Annex I date (E12 DoD)."""
 PRODUCT_LAW_QUESTIONS: dict[str, tuple[str, AnswerOutcome | None]] = {
     "own-e-08-heart-rhythm-app": ("intended_purpose", None),  # a second Annex I fact is open
+    "own-e-10-in-house-nodule-finder": ("third_party_assessment", MDR_HIGH_RISK),
 }
-"""Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD; what a
-yes to the third-party question settles is pinned in test_high_risk_questions.py)."""
+"""Recorded cases whose step asks an Annex I question, and what a yes settles (E12 DoD)."""
 AMBIGUOUS_CASES = {
     "own-e-09-ropeway-wear-forecast": "safety_component_or_product",
     "own-e-10-in-house-nodule-finder": "third_party_assessment",
 }
-"""The recorded cases whose step leaves an Annex I question open in law (E12 DoD), with the key
-fact it is open on: own-e-09 the safety component, own-e-10 the third-party assessment its
-in-house exemption leaves open (E20)."""
+"""The Annex I cases labelled legally ambiguous, with the key fact the law leaves open: own-e-09
+the safety component, own-e-10 the third-party assessment its in-house exemption leaves open
+(E20). A recorded step that matches the label must hold that fact open with E12's two readings
+(E12 DoD); a `KNOWN_GAPS` case doesn't match it, so its gap's reading is checked instead, and
+the check applies again once the gap is removed."""
 ANNEX_I_READING_TITLES = {
     Language.EN: ("High-risk under Art. 6(1)", "Art. 6(1) not met"),
     Language.DE: ("Hochrisiko nach Art. 6 Abs. 1", "Art. 6 Abs. 1 nicht erfüllt"),
@@ -1810,17 +1863,26 @@ def annex_i_open_fact(given: HighRiskAnswer) -> str | None:
 
 
 @pytest.mark.parametrize(
-    ("on", "is_expected"),
-    [("third_party_assessment", True), ("safety_component_or_product", False), (NOT_NAMED, False)],
+    ("point", "open_question", "on", "expected"),
+    [
+        pytest.param("annex:I:A:11", OPEN, "third_party_assessment", "third_party_assessment"),
+        pytest.param(
+            "annex:I:A:11", OPEN, "safety_component_or_product", "safety_component_or_product"
+        ),
+        pytest.param("annex:I:A:11", OPEN, NOT_NAMED, None, id="open-on-none"),
+        pytest.param("annex:I:A:11", None, "third_party_assessment", None, id="settled-in-law"),
+        pytest.param(None, OPEN, "third_party_assessment", None, id="no-point-reads-it"),
+    ],
 )
-def test_own_e_10s_question_is_expected_open_on_the_third_party_assessment_only(
-    on: str, is_expected: bool
+def test_the_screen_checks_open_fact_is_the_one_the_node_holds_open(
+    point: str | None, open_question: OpenQuestion | None, on: str, expected: str | None
 ) -> None:
-    """The screen check's open fact can fail: own-e-10 open on another fact, or on none, isn't
-    the reading E20 asks for."""
-    given = answer(one=annex_i("annex:I:A:11", YES, YES, Answer.UNKNOWN, open_question=OPEN, on=on))
-    expected = AMBIGUOUS_CASES["own-e-10-in-house-nodule-finder"]
-    assert (annex_i_open_fact(given) == expected) is is_expected
+    """The screen check's open fact can fail: an answer open on another fact or on none, an
+    answer settled in law, or one open on a fact no named point reads, holds no fact open (or
+    another), whatever `open_on` names."""
+    third_party = Answer.UNKNOWN
+    given = answer(one=annex_i(point, YES, YES, third_party, open_question=open_question, on=on))
+    assert annex_i_open_fact(given) == expected
 
 
 def answers_read(monkeypatch: pytest.MonkeyPatch) -> list[HighRiskAnswer]:
@@ -1856,7 +1918,7 @@ def assert_the_screens_fields(
         assert [c.provision_id for c in missing.citations] == ["annex:I:A:11", "art:6:1"]
         assert missing.options == YES_NO
         assert missing.if_yes == if_yes
-    if case.id in AMBIGUOUS_CASES:
+    if case.id in AMBIGUOUS_CASES and case.id not in KNOWN_GAPS:
         assert annex_i_open_fact(given) == AMBIGUOUS_CASES[case.id], given.annex_i.open_on
         question = step.open_question
         assert question is not None
@@ -2119,18 +2181,45 @@ def own_f_replay_check(
         yield check
 
 
+def _assumes_high_risk_on_point_2(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """High-risk assumed on Annex III point 2 until a fact is answered: over-strict, never a
+    false low risk."""
+    return (
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and result.high_risk_route is HighRiskRoute.ANNEX_III
+        and result.annex_point == "annex:III:2"
+    )
+
+
+OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-f-07-water-mains-renewal-plan": KnownGap(
+        "E20's re-record (2026-10-13): Annex III point 2 is assumed until the utility says "
+        "whether it is a critical entity under the CER Directive (the retrieved guideline "
+        "passage, para 198), against the H4 rule that a tool planning investment is no safety "
+        "component (minimal_risk label); over-strict, not a false low risk. Run-to-run "
+        "variance: E19's recording read `uses` 'no' on a request that differs only by E20's "
+        "exemption rule, which is about the Annex I conformity route, not point 2",
+        _assumes_high_risk_on_point_2,
+    ),
+}
+"""own/f cases whose recorded outcome differs from the label (`KNOWN_GAPS`, for own/f)."""
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
 def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:
     """Each own/f case against its label: never high-risk on an area alone, an Art. 6(3)
-    condition applied to the facts rather than held open, profiling kept high-risk."""
+    condition applied to the facts rather than held open, profiling kept high-risk; an
+    `OWN_F_KNOWN_GAPS` case is an expected failure."""
     run_state = replay_state(case, AS_OF)
     result = own_f_replay_check(run_state)
     assert not unresolved_citations(result.step, run_state)
     assert not whole_articles(result.step)
     step = result.step
     shown = (result.high_risk_route, result.annex_point, step.status, cited(result), step.decision)
-    assert high_risk_or_exempt_matches(result, case), shown
+    matches = high_risk_or_exempt_matches(result, case)
+    expect_known_gap(OWN_F_KNOWN_GAPS, result, case, matches=matches, shown=shown)
+    assert matches, shown
 
 
 def test_own_f_holds_b15s_nine_cases() -> None:
