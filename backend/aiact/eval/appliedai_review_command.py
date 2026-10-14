@@ -51,8 +51,8 @@ def appliedai_review(
 ) -> None:
     """Draft or update the appliedAI disagreement review of a stored run (V9): every case, the
     disagreements with a verdict for the user to write, Annex I apart, and risk-class accuracy
-    before and after excluding the cases marked outdated label. Verdicts already written are
-    kept (read-only on the database)."""
+    before and after excluding the cases marked outdated label or label error. Verdicts already
+    written are kept (read-only on the database)."""
     with _errors_exit(), records.connect() as connection:
         review = load_review(connection, run_id, out)
     if check:
