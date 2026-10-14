@@ -71,16 +71,29 @@ def check(
     draw_file: DrawOption = head_to_head.DRAW_FILE,
     sheet: SheetOption = head_to_head_sheet.SHEET_FILE,
     complete: Annotated[
-        bool, typer.Option("--complete", help="Also fail while a drawn case isn't run yet.")
+        bool,
+        typer.Option(
+            "--complete", help="Also fail while a drawn case or a spot-check isn't run yet."
+        ),
     ] = False,
 ) -> None:
-    """Validate the answer sheet against the draw and say how many cases are run."""
+    """Validate the answer sheet against the draw and say how many cases and spot-checks are
+    run."""
     with _errors_exit():
         _, filled = _checked(draw_file, sheet)
     run = sum(entry.is_run for entry in filled.cases)
-    typer.echo(f"Valid: {run} of {len(filled.cases)} cases run")
-    if complete and run < len(filled.cases):
+    spot_checks = head_to_head_sheet.spot_checks_run(filled)
+    wanted = head_to_head_sheet.SPOT_CHECK_COUNT
+    typer.echo(
+        f"Valid: {run} of {len(filled.cases)} cases run, {spot_checks} of {wanted} spot-checks run"
+    )
+    if not complete:
+        return
+    if run < len(filled.cases):
         typer.echo("Error: some drawn cases aren't run yet", err=True)
+    if spot_checks < wanted:
+        typer.echo("Error: some spot-checks aren't run yet", err=True)
+    if run < len(filled.cases) or spot_checks < wanted:
         raise typer.Exit(code=1)
 
 

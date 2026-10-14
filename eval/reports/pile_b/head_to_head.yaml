@@ -1,170 +1,300 @@
-# Head-to-head (V10a, decision 036): the Commission's AI Act Service Desk checker, run by hand.
+# Head-to-head (V10a, decision 036 and its amendment of 2026-10-14): the Commission's AI Act
+# Service Desk checker.
 # Checker: https://ai-act-service-desk.ec.europa.eu/en/eu-ai-act-compliance-checker
-# The cases come from head_to_head_draw.json (seed and rule there). For each case, answer the
-# checker's questions from the case's description (eval/cases/<set>/), then fill in:
-#   date             the day you ran it (YYYY-MM-DD)
-#   result_text      the checker's result, copied verbatim
-#   result_headings  each outcome heading the result shows, exactly as written there
-#   answers          every question the checker asked, with your answer, verbatim:
-#                    - question: "..."
-#                      answer: "..."
-#   screenshot       optional: a file name in head_to_head/ next to this file
-# headings: give every heading a case shows a row, its exact text and what it means, before any
+# The cases come from head_to_head_draw.json (seed and rule there). For each case, the checker's
+# questions are answered from the case's description (eval/cases/<set>/) only, then filled in:
+#   date                 the day it was run (YYYY-MM-DD)
+#   answered_by          agent (a blind agent, one per case) or hand (the user)
+#   checker_release      the question release the checker page names, for example "6.5.1"
+#   result_text          the checker's result, copied verbatim
+#   result_headings      each outcome heading the result shows, exactly as written there
+#   answers              every question the checker asked, with the answer given, verbatim:
+#                        - question: "..."
+#                          answer: "..."
+#   uncertain_questions  optional: the questions the description didn't settle, each copied from
+#                        answers
+#   screenshot           optional: a file name in head_to_head/ next to this file
+# cases holds the scored runs, one per drawn case (the agent's). spot_checks holds the user's
+# hand runs (answered_by: hand) of the 5 spot-check cases (seed 20261015,
+# one per class), run blind to the agent's answers and never scored; the report sets them beside
+# the agent's.
+# headings: give every heading a run shows a row, its exact text and what it means, before any
 # case is scored, for example:
 #   headings:
 #     "Exact heading text from the checker": high_risk
 # Meanings: prohibited_practice, high_risk, transparency_only, no_specific_duties, act_does_not_apply, cannot_determine.
-# Check:  uv run aiact evaluate head-to-head check
+# Check:  uv run aiact evaluate head-to-head check   (--complete: every case and spot-check run)
 # Report: uv run aiact evaluate head-to-head render
 headings: {}
 cases:
   - case_id: "cb-014-bank-fraud-voice-watchlist"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-103-certification-exam-proctoring"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-117-staffing-vacancy-matching"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-119-job-ad-wording-check"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-156-caseworker-fact-lookup"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-206-device-data-recovery"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-242-entry-check-traveller-score"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "cb-261-case-file-folder-sorting"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-a-05-vacuum-ad-synthetic-customers"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-a-07-surfing-cows-ad"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-a-09-newsroom-reviewed-drafts"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-b-01-overtime-payroll-rules"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-b-06-recon-vehicle-detection"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-b-08-university-protein-model"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-b-10-open-source-plant-app"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-b-12-texas-booking-chat"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-c-01-undress-photo-app"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-c-05-gossip-site-fake-nudes"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-c-07-unfiltered-image-generator"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-c-11-police-burglary-risk-list"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-c-14-kids-game-sad-pet-offers"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-d-07-office-assistant-seats"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-d-11-importer-stock-forecast"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-e-03-talking-plush-toy"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
     screenshot: null
   - case_id: "own-e-05-emergency-braking-supplier"
     date: null
+    answered_by: null
+    checker_release: null
     result_text: null
     result_headings: []
     answers: []
+    uncertain_questions: []
+    screenshot: null
+spot_checks:
+  - case_id: "own-b-06-recon-vehicle-detection"
+    date: null
+    answered_by: null
+    checker_release: null
+    result_text: null
+    result_headings: []
+    answers: []
+    uncertain_questions: []
+    screenshot: null
+  - case_id: "own-c-05-gossip-site-fake-nudes"
+    date: null
+    answered_by: null
+    checker_release: null
+    result_text: null
+    result_headings: []
+    answers: []
+    uncertain_questions: []
+    screenshot: null
+  - case_id: "cb-242-entry-check-traveller-score"
+    date: null
+    answered_by: null
+    checker_release: null
+    result_text: null
+    result_headings: []
+    answers: []
+    uncertain_questions: []
+    screenshot: null
+  - case_id: "own-d-07-office-assistant-seats"
+    date: null
+    answered_by: null
+    checker_release: null
+    result_text: null
+    result_headings: []
+    answers: []
+    uncertain_questions: []
+    screenshot: null
+  - case_id: "cb-119-job-ad-wording-check"
+    date: null
+    answered_by: null
+    checker_release: null
+    result_text: null
+    result_headings: []
+    answers: []
+    uncertain_questions: []
     screenshot: null
