@@ -102,11 +102,11 @@ def checker_classes(sheet: HeadToHeadSheet) -> dict[str, RiskClass | None]:
 
 def current_cases(draw: Draw, cases_dir: Path = CASES_DIR) -> dict[str, BenchmarkCase]:
     """The drawn cases as labelled now (a label changed since the draw has its LABEL_CHANGES
-    row); a drawn case that is gone raises."""
+    row); a drawn case that is gone raises, with a count only (the ids are Pile B's)."""
     loaded = {case.id: case for case_set in DRAW_SETS for case in load_cases(case_set, cases_dir)}
     missing = [case.case_id for case in draw.cases if case.case_id not in loaded]
     if missing:
-        raise SheetError(f"drawn cases no longer in eval/cases: {', '.join(missing)}")
+        raise SheetError(f"{len(missing)} drawn cases are no longer in eval/cases")
     return {case.case_id: loaded[case.case_id] for case in draw.cases}
 
 

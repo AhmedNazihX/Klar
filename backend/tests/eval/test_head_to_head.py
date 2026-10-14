@@ -1,3 +1,4 @@
+import json
 import subprocess
 from collections import Counter
 from pathlib import Path
@@ -362,6 +363,17 @@ def test_a_broken_draw_file_is_reported(tmp_path: Path) -> None:
     path.write_text('{"seed": 1}', encoding="utf-8")
     with pytest.raises(DrawError, match="not a valid draw"):
         load_draw(path)
+
+
+def test_a_broken_draw_file_is_reported_by_its_error_count_naming_no_case(tmp_path: Path) -> None:
+    """Pydantic's own text would quote the broken case, id included."""
+    path = tmp_path / "draw.json"
+    valid = make_draw(POOL, COMMIT, seed=7, size=25).model_dump(mode="json")
+    broken = {**valid, "cases": [{"case_id": "cb-test-secret"}, *valid["cases"][1:]]}
+    path.write_text(json.dumps(broken), encoding="utf-8")
+    with pytest.raises(DrawError, match=r"not a valid draw \(\d+ errors\)$") as raised:
+        load_draw(path)
+    assert "cb-test-secret" not in str(raised.value)
 
 
 # --- the labels at a tag --------------------------------------------------------------------------

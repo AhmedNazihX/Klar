@@ -350,9 +350,10 @@ def test_the_current_cases_must_still_hold_every_drawn_case(tmp_path: Path) -> N
         'label: {risk_class: high_risk}\nlabel_citation: ["art:6:2"]\n',
         encoding="utf-8",
     )
-    with pytest.raises(ValueError, match="drawn cases no longer in eval/cases") as raised:
+    with pytest.raises(ValueError) as raised:
         current_cases(DRAW, tmp_path)
-    assert HIGH not in str(raised.value)
+    assert str(raised.value) == "24 drawn cases are no longer in eval/cases"
+    assert not any(case.case_id in str(raised.value) for case in DRAW.cases)
 
 
 # --- the render command ---------------------------------------------------------------------------

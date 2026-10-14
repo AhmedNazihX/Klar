@@ -370,4 +370,5 @@ def load_draw(path: Path = DRAW_FILE) -> Draw:
     try:
         return Draw.model_validate_json(path.read_text(encoding="utf-8"))
     except ValidationError as exc:
-        raise DrawError(f"{path}: not a valid draw: {exc}") from exc
+        # The count only: pydantic's text quotes the input, Pile B case ids included.
+        raise DrawError(f"{path}: not a valid draw ({exc.error_count()} errors)") from exc

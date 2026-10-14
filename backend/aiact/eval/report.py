@@ -81,6 +81,10 @@ DEVELOPMENT_CASES = (
     "development cases: the engine's nodes were developed against them, so Commission Pile B "
     "carries the headline (decision 018)"
 )
+HEAD_TO_HEAD_MIX = (
+    "the head-to-head draw: own development cases and Commission Pile B cases together, so this "
+    "accuracy mixes the two; the per-set scores are in `eval/reports/pile_b/head_to_head.md`"
+)
 UNCOMMITTED = " (uncommitted changes: this commit may not reproduce the run)"
 EXCLUDE_MODES: Mapping[str, str] = {
     "heldout": " (held-out examples kept out of retrieval: the reported number)",
@@ -506,6 +510,8 @@ def _settings_lines(info: RunInfo) -> list[str]:
     benchmark = f"- Benchmark: `{info.benchmark}`"
     if info.benchmark == CaseSet.OWN.value:
         benchmark += f" ({DEVELOPMENT_CASES})"
+    if info.benchmark == HEAD_TO_HEAD_BENCHMARK:
+        benchmark += f" ({HEAD_TO_HEAD_MIX})"
     lines = [benchmark, f"- Commit: `{info.git_sha}`{UNCOMMITTED if info.is_git_dirty else ''}"]
     if info.status:
         lines.append(f"- Status: {info.status}")

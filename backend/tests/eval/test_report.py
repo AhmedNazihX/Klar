@@ -275,6 +275,19 @@ def test_own_cases_are_labelled_development_cases() -> None:
     assert "| Risk-class accuracy (development cases) | 100.0% | 1/1 |" in lines
 
 
+def test_a_head_to_head_run_says_it_mixes_the_sets_and_where_the_per_set_scores_are() -> None:
+    lines = render_markdown(
+        _info("head_to_head"), summarize([outcome(case("a"))], always)
+    ).splitlines()
+    assert lines[2] == (
+        "- Benchmark: `head_to_head` (the head-to-head draw: own development cases and Commission "
+        "Pile B cases together, so this accuracy mixes the two; the per-set scores are in "
+        "`eval/reports/pile_b/head_to_head.md`)"
+    )
+    commission = render_markdown(_info("commission_b"), summarize([], always))
+    assert "head-to-head draw" not in commission
+
+
 def test_a_run_stored_before_its_settings_were_recorded_still_loads() -> None:
     info = _info(config={"model": None, "embedding": None, "retrieval": None})
     assert (info.classifier, info.status, info.is_git_dirty, info.second_model) == (
