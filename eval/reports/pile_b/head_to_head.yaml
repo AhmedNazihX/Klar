@@ -30,276 +30,1480 @@
 # Meanings: prohibited_practice, high_risk, transparency_only, no_specific_duties, act_does_not_apply, cannot_determine.
 # Check:  uv run aiact evaluate head-to-head check   (--complete: every case and spot-check run)
 # Report: uv run aiact evaluate head-to-head render
-headings: {}
+headings:
+  ? Your AI system is likely prohibited under the AI Act, according to Article 5. As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  : prohibited_practice
+  Your AI system is likely a high-risk system under the AI Act following Article 6.: high_risk
+  Following Article 50 of the AI Act, you must follow certain transparency requirements as a deployer.: transparency_only
+  Following Article 50 of the AI Act, you must follow certain transparency requirements as a provider.: transparency_only
+  Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.: no_specific_duties
+  Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).: no_specific_duties
+  Your AI system is likely not covered by the AI Act as it does not fall within the scope of Article 3 (1).: act_does_not_apply
+  ? It is likely that your AI system falls outside the scope of the AI Act. You are not required to comply with the AI Act
+    because your system is classified as one of the excluded systems mentioned in Article 2.
+  : act_does_not_apply
+  ? Your AI system is likely to fall outside the scope of the AI Act, according to Article 2. However, please double check
+    with the AI Act provisions or consult a lawyer to verify this.
+  : act_does_not_apply
 cases:
-  - case_id: "cb-014-bank-fraud-voice-watchlist"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-103-certification-exam-proctoring"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-117-staffing-vacancy-matching"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-119-job-ad-wording-check"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-156-caseworker-fact-lookup"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-206-device-data-recovery"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-242-entry-check-traveller-score"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-261-case-file-folder-sorting"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-a-05-vacuum-ad-synthetic-customers"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-a-07-surfing-cows-ad"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-a-09-newsroom-reviewed-drafts"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-b-01-overtime-payroll-rules"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-b-06-recon-vehicle-detection"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-b-08-university-protein-model"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-b-10-open-source-plant-app"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-b-12-texas-booking-chat"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-01-undress-photo-app"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-05-gossip-site-fake-nudes"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-07-unfiltered-image-generator"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-11-police-burglary-risk-list"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-14-kids-game-sad-pet-offers"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-d-07-office-assistant-seats"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-d-11-importer-stock-forecast"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-e-03-talking-plush-toy"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-e-05-emergency-braking-supplier"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
+- case_id: cb-014-bank-fraud-voice-watchlist
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely a high-risk system under the AI Act following Article\
+    \ 6 \n(opens in a new tab)\n.\nYour AI system is likely covered by the AI Act as it does fall within the scope of Article\
+    \ 3 \n(opens in a new tab)\n(1).\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take measures\
+    \ to support the development of AI literacy of your staff and other persons dealing with the operation and use of AI systems\
+    \ on your behalf, taking into account their technical knowledge, experience, education and training and the context the\
+    \ AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems are to be used.\
+    \ This obligation does not require providers or deployers to guarantee any specific level of AI literacy of any individual.\n\
+    Your AI system is likely classified as a high-risk system under the AI Act, following Article 6 \n(opens in a new tab)\n\
+    . As a deployer of a high-risk AI system, pursuant to Article 26 \n(opens in a new tab)\nyou must:\ntake appropriate technical\
+    \ and organisational measures to ensure that AI systems are used in accordance with the instructions accompanying the\
+    \ AI systems;\nassign human oversight to natural persons who have the necessary competence, training and authority, as\
+    \ well as the necessary support;\nto the extent the deployer exercises control over the input data, you shall ensure that\
+    \ input data is relevant and sufficiently representative in view of the intended purpose of the high-risk AI system;\n\
+    monitor the operation of the high-risk AI system on the basis of the instructions for use and, where relevant, inform\
+    \ providers in accordance with Article 72 \n(opens in a new tab)\n. Where there is a reason to consider that the use of\
+    \ the high-risk AI system in accordance with the instructions may result in that AI system presenting a risk you must\
+    \ without undue delay inform the provider or distributor and the relevant market surveillance authority, and shall suspend\
+    \ the use of that system;\nkeep the logs automatically generated by that high-risk AI system to the extent such logs are\
+    \ under their control, for a period appropriate to the intended purpose of the high-risk AI system, of at least six months,\
+    \ unless provided otherwise in applicable Union or national law, in particular in Union law on the protection of personal\
+    \ data. Deployers that are financial institutions subject to requirements regarding their internal governance, arrangements\
+    \ or processes under Union financial services law shall maintain the logs as part of the documentation kept pursuant to\
+    \ the relevant Union financial service law.\nAdditionally:\nfor high-risk AI system at the workplace, deployers who are\
+    \ employers shall inform workers' representatives and the affected workers that they will be subject to the use of the\
+    \ high-risk AI system;\nin the framework of an investigation for the targeted search of a person suspected or convicted\
+    \ of having committed a criminal offence, the deployer of a high-risk AI system for post-remote biometric identification\
+    \ shall request an authorisation, ex-ante, or without undue delay and no later than 48 hours, by a judicial authority\
+    \ or an administrative authority whose decision is binding and subject to judicial review, for the use of that system,\
+    \ except when it is used for the initial identification of a potential suspect based on objective and verifiable facts\
+    \ directly linked to the offence. Each use shall be limited to what is strictly necessary for the investigation of a specific\
+    \ criminal offence;\ndeployers of high-risk AI systems referred to in Annex III \n(opens in a new tab)\nthat make decisions\
+    \ or assist in making decisions related to natural persons shall inform the natural persons that they are subject to the\
+    \ use of the high-risk AI system. For high-risk AI systems used for law enforcement purposes Аrticle-13 of Directive (EU)\
+    \ 2016/680 shall apply;\ncooperate with competent authorities.\nIf you have selected several sectors within Annex III\
+    \ \n(opens in a new tab)\nand one of the use cases is considered high-risk and the other(s) not, compliance with the whole\
+    \ Chapter 3 applies only to the high-risk use case you have selected and the requirements must be assessed in view of\
+    \ that intended purpose\nPrior to deploying a high-risk AI system, deployers that are bodies governed by public law, or\
+    \ are private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and\
+    \ (c) of Annex III \n(opens in a new tab)\n, shall perform an assessment of the impact on fundamental rights that the\
+    \ use of such system may produce. For that purpose, deployers shall perform an assessment based on Article 27 \n(opens\
+    \ in a new tab)\nrequirements.\nThe above obligation applies to the first use of the high-risk AI system. The deployer\
+    \ may, in similar cases, rely on previously conducted fundamental rights impact assessments or existing impact assessments\
+    \ carried out by provider.\nOnce the assessment has been performed, the deployer shall notify the market surveillance\
+    \ authority of its results.\nIf any of the obligations laid down in Article 27 \n(opens in a new tab)\nis already met\
+    \ through the data protection impact assessment conducted pursuant to Article-35 of Regulation (EU) 2016/679 or Article-27\
+    \ of Directive (EU) 2016/680, the deployer may, when conducting the fundamental rights impact assessment referred to in\
+    \ paragraph 1 of this Article, include cross-references to the relevant sections of that data protection impact assessment\
+    \ or include relevant parts thereof in the fundamental rights impact assessment."
+  result_headings:
+  - Your AI system is likely a high-risk system under the AI Act following Article 6 .
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Biometrics
+  - question: 'Is your AI system intended to be used for any of the following use-cases? Note: the use of your AI system must
+      be permitted under relevant EU or national law.'
+    answer: Remote biometric identification systems
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  uncertain_questions: []
+  screenshot: null
+- case_id: cb-103-certification-exam-proctoring
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a provider under Article 3 \n(opens in\
+    \ a new tab)\n(3).\nRisk level assessment\nYour AI system is likely a high-risk system under the AI Act following Article\
+    \ 6 \n(opens in a new tab)\n.\nYour AI system is likely covered by the AI Act as it does fall within the scope of Article\
+    \ 3 \n(opens in a new tab)\n(1).\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take measures\
+    \ to support the development of AI literacy of your staff and other persons dealing with the operation and use of AI systems\
+    \ on your behalf, taking into account their technical knowledge, experience, education and training and the context the\
+    \ AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems are to be used.\
+    \ This obligation does not require providers or deployers to guarantee any specific level of AI literacy of any individual.\n\
+    Your AI system is likely classified as a high-risk system under the AI Act, following Article 6 \n(opens in a new tab)\n\
+    . You are required to comply with the obligations outlined in Articles 8-15 of the AI Act, which pertain to high-risk\
+    \ AI systems. These requirements include:\nestablish a risk management system;\nensure adequate data governance and management\
+    \ practices;\ndraw up technical documentation;\nensure traceability (record-keeping);\nenable deployers to interpret your\
+    \ AI system's output;\nenable human oversight;\nensure an appropriate level of accuracy, robustness and cybersecurity.\n\
+    Additionally, as indicated in Article 16 \n(opens in a new tab)\n, a provider must also:\nindicate on the high-risk AI\
+    \ system or, where that is not possible, on its packaging or its accompanying documentation, as applicable, their name,\
+    \ registered trade name or registered trademark, the address at which they can be contacted;\nhave a quality management\
+    \ system in place which complies with Article 17 \n(opens in a new tab)\n;\nkeep the documentation referred to in Article\
+    \ 18 \n(opens in a new tab)\n;\nwhen under their control, keep the logs automatically generated by their high-risk AI\
+    \ systems as referred to in Article 19 \n(opens in a new tab)\n;\nensure that the high-risk AI system undergoes the relevant\
+    \ conformity assessment procedure as referred to in Article 43 \n(opens in a new tab)\n;\ndraw up an EU declaration of\
+    \ conformity in accordance with Article 47 \n(opens in a new tab)\n;\naffix the CE marking to the high-risk AI system,\
+    \ in accordance with Article 48 \n(opens in a new tab)\n;\ncomply with the registration obligations referred to in Article\
+    \ 49 \n(opens in a new tab)\n(1);\ntake the necessary corrective actions and provide information as required in Article\
+    \ 20 \n(opens in a new tab)\n;\ncooperate with national competent authorities as required in Article 21 \n(opens in a\
+    \ new tab)\n.\nensure that the high-risk AI system complies with accessibility requirements in accordance with Directives\
+    \ (EU) 2016/2102 and (EU) 2019/882.\nIf you have selected several sectors within Annex III \n(opens in a new tab)\nand\
+    \ one of the use cases is considered high-risk and the other(s) not, compliance with the whole Chapter 3 applies only\
+    \ to the high-risk use case you have selected and the requirements must be assessed in view of that intended purpose"
+  result_headings:
+  - Your AI system is likely a high-risk system under the AI Act following Article 6 .
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Education and vocational training
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: AI systems intended to be used for monitoring and detecting prohibited behaviour of students during tests in the
+      context of or within educational and vocational training institutions at all levels
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  uncertain_questions:
+  - Do you meet any of the following statement?
+  - Does your AI system fall within any of the following areas?
+  - Does your AI system perform any of these functions?
+  screenshot: null
+- case_id: cb-117-staffing-vacancy-matching
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely a high-risk system under the AI Act following Article\
+    \ 6 \n(opens in a new tab)\n.\nYour AI system is likely covered by the AI Act as it does fall within the scope of Article\
+    \ 3 \n(opens in a new tab)\n(1).\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take measures\
+    \ to support the development of AI literacy of your staff and other persons dealing with the operation and use of AI systems\
+    \ on your behalf, taking into account their technical knowledge, experience, education and training and the context the\
+    \ AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems are to be used.\
+    \ This obligation does not require providers or deployers to guarantee any specific level of AI literacy of any individual.\n\
+    Your AI system is likely classified as a high-risk system under the AI Act, following Article 6 \n(opens in a new tab)\n\
+    . As a deployer of a high-risk AI system, pursuant to Article 26 \n(opens in a new tab)\nyou must:\ntake appropriate technical\
+    \ and organisational measures to ensure that AI systems are used in accordance with the instructions accompanying the\
+    \ AI systems;\nassign human oversight to natural persons who have the necessary competence, training and authority, as\
+    \ well as the necessary support;\nto the extent the deployer exercises control over the input data, you shall ensure that\
+    \ input data is relevant and sufficiently representative in view of the intended purpose of the high-risk AI system;\n\
+    monitor the operation of the high-risk AI system on the basis of the instructions for use and, where relevant, inform\
+    \ providers in accordance with Article 72 \n(opens in a new tab)\n. Where there is a reason to consider that the use of\
+    \ the high-risk AI system in accordance with the instructions may result in that AI system presenting a risk you must\
+    \ without undue delay inform the provider or distributor and the relevant market surveillance authority, and shall suspend\
+    \ the use of that system;\nkeep the logs automatically generated by that high-risk AI system to the extent such logs are\
+    \ under their control, for a period appropriate to the intended purpose of the high-risk AI system, of at least six months,\
+    \ unless provided otherwise in applicable Union or national law, in particular in Union law on the protection of personal\
+    \ data. Deployers that are financial institutions subject to requirements regarding their internal governance, arrangements\
+    \ or processes under Union financial services law shall maintain the logs as part of the documentation kept pursuant to\
+    \ the relevant Union financial service law.\nAdditionally:\nfor high-risk AI system at the workplace, deployers who are\
+    \ employers shall inform workers' representatives and the affected workers that they will be subject to the use of the\
+    \ high-risk AI system;\nin the framework of an investigation for the targeted search of a person suspected or convicted\
+    \ of having committed a criminal offence, the deployer of a high-risk AI system for post-remote biometric identification\
+    \ shall request an authorisation, ex-ante, or without undue delay and no later than 48 hours, by a judicial authority\
+    \ or an administrative authority whose decision is binding and subject to judicial review, for the use of that system,\
+    \ except when it is used for the initial identification of a potential suspect based on objective and verifiable facts\
+    \ directly linked to the offence. Each use shall be limited to what is strictly necessary for the investigation of a specific\
+    \ criminal offence;\ndeployers of high-risk AI systems referred to in Annex III \n(opens in a new tab)\nthat make decisions\
+    \ or assist in making decisions related to natural persons shall inform the natural persons that they are subject to the\
+    \ use of the high-risk AI system. For high-risk AI systems used for law enforcement purposes Аrticle-13 of Directive (EU)\
+    \ 2016/680 shall apply;\ncooperate with competent authorities.\nIf you have selected several sectors within Annex III\
+    \ \n(opens in a new tab)\nand one of the use cases is considered high-risk and the other(s) not, compliance with the whole\
+    \ Chapter 3 applies only to the high-risk use case you have selected and the requirements must be assessed in view of\
+    \ that intended purpose\nPrior to deploying a high-risk AI system, deployers that are bodies governed by public law, or\
+    \ are private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and\
+    \ (c) of Annex III \n(opens in a new tab)\n, shall perform an assessment of the impact on fundamental rights that the\
+    \ use of such system may produce. For that purpose, deployers shall perform an assessment based on Article 27 \n(opens\
+    \ in a new tab)\nrequirements.\nThe above obligation applies to the first use of the high-risk AI system. The deployer\
+    \ may, in similar cases, rely on previously conducted fundamental rights impact assessments or existing impact assessments\
+    \ carried out by provider.\nOnce the assessment has been performed, the deployer shall notify the market surveillance\
+    \ authority of its results.\nIf any of the obligations laid down in Article 27 \n(opens in a new tab)\nis already met\
+    \ through the data protection impact assessment conducted pursuant to Article-35 of Regulation (EU) 2016/679 or Article-27\
+    \ of Directive (EU) 2016/680, the deployer may, when conducting the fundamental rights impact assessment referred to in\
+    \ paragraph 1 of this Article, include cross-references to the relevant sections of that data protection impact assessment\
+    \ or include relevant parts thereof in the fundamental rights impact assessment."
+  result_headings:
+  - Your AI system is likely a high-risk system under the AI Act following Article 6 .
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Employment, workers' management and access to self-employment
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted
+      job advertisements, to analyse and filter job applications, and to evaluate candidates
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  uncertain_questions: []
+  screenshot: null
+- case_id: cb-119-job-ad-wording-check
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nRisk level assessment\nYour AI system is likely not covered by the AI Act as it does not fall within\
+    \ the scope of Article 3 \n(opens in a new tab)\n(1).\nResetPrint\nPrint\n\nYou can save the Compliance Checker result\
+    \ to your device as a PDF by using the 'Print' function in your web browser's tools menu. Press CTRL + P (Windows) or\
+    \ CMD + P (Mac) to open the 'Print' menu, select “Save as PDF” as the destination and click “Save”."
+  result_headings:
+  - Your AI system is likely not covered by the AI Act as it does not fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'No'
+  uncertain_questions:
+  - Is your system an AI system within the meaning of the AI Act?
+  screenshot: null
+- case_id: cb-156-caseworker-fact-lookup
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nPrior to deploying a high-risk AI system, deployers that are bodies governed by public law, or are\
+    \ private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and (c)\
+    \ of Annex III \n(opens in a new tab)\n, shall perform an assessment of the impact on fundamental rights that the use\
+    \ of such system may produce. For that purpose, deployers shall perform an assessment based on Article 27 \n(opens in\
+    \ a new tab)\nrequirements.\nThe above obligation applies to the first use of the high-risk AI system. The deployer may,\
+    \ in similar cases, rely on previously conducted fundamental rights impact assessments or existing impact assessments\
+    \ carried out by provider.\nOnce the assessment has been performed, the deployer shall notify the market surveillance\
+    \ authority of its results.\nIf any of the obligations laid down in Article 27 \n(opens in a new tab)\nis already met\
+    \ through the data protection impact assessment conducted pursuant to Article-35 of Regulation (EU) 2016/679 or Article-27\
+    \ of Directive (EU) 2016/680, the deployer may, when conducting the fundamental rights impact assessment referred to in\
+    \ paragraph 1 of this Article, include cross-references to the relevant sections of that data protection impact assessment\
+    \ or include relevant parts thereof in the fundamental rights impact assessment."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Access to and enjoyment of essential private services and essential public services and benefits
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: AI systems intended to be used by public authorities or on behalf of public authorities to evaluate the eligibility
+      of natural persons for essential public assistance benefits and services, including healthcare services, as well as
+      to grant, reduce, revoke, or reclaim such benefits and services
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: Yes. The AI system is intended to perform a narrow procedural task; Yes. The AI system is intended to perform
+      a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III
+  - question: Is your AI system perform profiling of natural persons?
+    answer: 'No'
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Is your system an AI system within the meaning of the AI Act?
+  - Is your AI system intended to be used for any of the following use-cases?
+  - 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk of harm to
+    the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III shall always
+    be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3) AI Act)'
+  - Is your AI system perform profiling of natural persons?
+  - Is your AI system released under free and open-source licences?
+  screenshot: null
+- case_id: cb-206-device-data-recovery
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nYour AI system is likely not considered as high-risk. It is likely that your AI system does not\
+    \ have to comply with Chapter 3 of the AI Act, which relates to high-risk AI systems."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Law enforcement
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Do you meet any of the following statement?
+  - Is your AI system released under free and open-source licences?
+  screenshot: null
+- case_id: cb-242-entry-check-traveller-score
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely a high-risk system under the AI Act following Article\
+    \ 6 \n(opens in a new tab)\n.\nYour AI system is likely covered by the AI Act as it does fall within the scope of Article\
+    \ 3 \n(opens in a new tab)\n(1).\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take measures\
+    \ to support the development of AI literacy of your staff and other persons dealing with the operation and use of AI systems\
+    \ on your behalf, taking into account their technical knowledge, experience, education and training and the context the\
+    \ AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems are to be used.\
+    \ This obligation does not require providers or deployers to guarantee any specific level of AI literacy of any individual.\n\
+    Your AI system is likely classified as a high-risk system under the AI Act, following Article 6 \n(opens in a new tab)\n\
+    . As a deployer of a high-risk AI system, pursuant to Article 26 \n(opens in a new tab)\nyou must:\ntake appropriate technical\
+    \ and organisational measures to ensure that AI systems are used in accordance with the instructions accompanying the\
+    \ AI systems;\nassign human oversight to natural persons who have the necessary competence, training and authority, as\
+    \ well as the necessary support;\nto the extent the deployer exercises control over the input data, you shall ensure that\
+    \ input data is relevant and sufficiently representative in view of the intended purpose of the high-risk AI system;\n\
+    monitor the operation of the high-risk AI system on the basis of the instructions for use and, where relevant, inform\
+    \ providers in accordance with Article 72 \n(opens in a new tab)\n. Where there is a reason to consider that the use of\
+    \ the high-risk AI system in accordance with the instructions may result in that AI system presenting a risk you must\
+    \ without undue delay inform the provider or distributor and the relevant market surveillance authority, and shall suspend\
+    \ the use of that system;\nkeep the logs automatically generated by that high-risk AI system to the extent such logs are\
+    \ under their control, for a period appropriate to the intended purpose of the high-risk AI system, of at least six months,\
+    \ unless provided otherwise in applicable Union or national law, in particular in Union law on the protection of personal\
+    \ data. Deployers that are financial institutions subject to requirements regarding their internal governance, arrangements\
+    \ or processes under Union financial services law shall maintain the logs as part of the documentation kept pursuant to\
+    \ the relevant Union financial service law.\nAdditionally:\nfor high-risk AI system at the workplace, deployers who are\
+    \ employers shall inform workers' representatives and the affected workers that they will be subject to the use of the\
+    \ high-risk AI system;\nin the framework of an investigation for the targeted search of a person suspected or convicted\
+    \ of having committed a criminal offence, the deployer of a high-risk AI system for post-remote biometric identification\
+    \ shall request an authorisation, ex-ante, or without undue delay and no later than 48 hours, by a judicial authority\
+    \ or an administrative authority whose decision is binding and subject to judicial review, for the use of that system,\
+    \ except when it is used for the initial identification of a potential suspect based on objective and verifiable facts\
+    \ directly linked to the offence. Each use shall be limited to what is strictly necessary for the investigation of a specific\
+    \ criminal offence;\ndeployers of high-risk AI systems referred to in Annex III \n(opens in a new tab)\nthat make decisions\
+    \ or assist in making decisions related to natural persons shall inform the natural persons that they are subject to the\
+    \ use of the high-risk AI system. For high-risk AI systems used for law enforcement purposes Аrticle-13 of Directive (EU)\
+    \ 2016/680 shall apply;\ncooperate with competent authorities.\nIf you have selected several sectors within Annex III\
+    \ \n(opens in a new tab)\nand one of the use cases is considered high-risk and the other(s) not, compliance with the whole\
+    \ Chapter 3 applies only to the high-risk use case you have selected and the requirements must be assessed in view of\
+    \ that intended purpose\nPrior to deploying a high-risk AI system, deployers that are bodies governed by public law, or\
+    \ are private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and\
+    \ (c) of Annex III \n(opens in a new tab)\n, shall perform an assessment of the impact on fundamental rights that the\
+    \ use of such system may produce. For that purpose, deployers shall perform an assessment based on Article 27 \n(opens\
+    \ in a new tab)\nrequirements.\nThe above obligation applies to the first use of the high-risk AI system. The deployer\
+    \ may, in similar cases, rely on previously conducted fundamental rights impact assessments or existing impact assessments\
+    \ carried out by provider.\nOnce the assessment has been performed, the deployer shall notify the market surveillance\
+    \ authority of its results.\nIf any of the obligations laid down in Article 27 \n(opens in a new tab)\nis already met\
+    \ through the data protection impact assessment conducted pursuant to Article-35 of Regulation (EU) 2016/679 or Article-27\
+    \ of Directive (EU) 2016/680, the deployer may, when conducting the fundamental rights impact assessment referred to in\
+    \ paragraph 1 of this Article, include cross-references to the relevant sections of that data protection impact assessment\
+    \ or include relevant parts thereof in the fundamental rights impact assessment."
+  result_headings:
+  - Your AI system is likely a high-risk system under the AI Act following Article 6 .
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Migration, asylum and border control management
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies,
+      offices or agencies to assess a risk, including a security risk, a risk of irregular migration, or a health risk, posed
+      by a natural person who intends to enter or who has entered into the territory of a Member State
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  uncertain_questions:
+  - Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+  screenshot: null
+- case_id: cb-261-case-file-folder-sorting
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nPrior to deploying a high-risk AI system, deployers that are bodies governed by public law, or are\
+    \ private entities providing public services, and deployers of high-risk AI systems referred to in points 5 (b) and (c)\
+    \ of Annex III \n(opens in a new tab)\n, shall perform an assessment of the impact on fundamental rights that the use\
+    \ of such system may produce. For that purpose, deployers shall perform an assessment based on Article 27 \n(opens in\
+    \ a new tab)\nrequirements.\nThe above obligation applies to the first use of the high-risk AI system. The deployer may,\
+    \ in similar cases, rely on previously conducted fundamental rights impact assessments or existing impact assessments\
+    \ carried out by provider.\nOnce the assessment has been performed, the deployer shall notify the market surveillance\
+    \ authority of its results.\nIf any of the obligations laid down in Article 27 \n(opens in a new tab)\nis already met\
+    \ through the data protection impact assessment conducted pursuant to Article-35 of Regulation (EU) 2016/679 or Article-27\
+    \ of Directive (EU) 2016/680, the deployer may, when conducting the fundamental rights impact assessment referred to in\
+    \ paragraph 1 of this Article, include cross-references to the relevant sections of that data protection impact assessment\
+    \ or include relevant parts thereof in the fundamental rights impact assessment."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: Migration, asylum and border control management
+  - question: Is your AI system intended to be used for any of the following use-cases?
+    answer: AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies,
+      offices or agencies to assist competent public authorities for the examination of applications for asylum, visa or residence
+      permits and for associated complaints with regard to the eligibility of the natural persons applying for a status, including
+      related assessments of the reliability of evidence
+  - question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
+      of harm to the health, safety or fundamental rights of natural persons? Note: an AI system referred to in Annex III
+      shall always be considered to be high-risk where the AI system performs profiling of natural persons (Article 6 (3)
+      AI Act)'
+    answer: Yes. The AI system is intended to perform a narrow procedural task
+  - question: Is your AI system perform profiling of natural persons?
+    answer: 'No'
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Is your system an AI system within the meaning of the AI Act?
+  - Is your AI system intended to be used for any of the following use-cases?
+  - Is your AI system released under free and open-source licences?
+  screenshot: null
+- case_id: own-a-05-vacuum-ad-synthetic-customers
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a deployer under Article 3 (opens in a new tab)
+
+    (4).
+
+    Risk level assessment
+
+    Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (opens in a new tab)
+
+    (1).
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+
+    Your obligations
+
+    According to Article 4 (opens in a new tab)
+
+    , you must take measures to support the development of AI literacy of your staff and other persons dealing with the operation
+    and use of AI systems on your behalf, taking into account their technical knowledge, experience, education and training
+    and the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems
+    are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy
+    of any individual.
+
+    Following Article 50 (opens in a new tab)
+
+    of the AI Act, you must follow certain transparency requirements as a deployer.
+
+    If you are deploying an emotion recognition system or a biometric categorisation system, you must inform the natural persons
+    exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU)
+    2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation does not apply to AI systems used
+    for biometric categorisation and emotion recognition, which are permitted by law to detect, prevent or investigate criminal
+    offences, subject to appropriate safeguards for the rights and freedoms of third parties, and in accordance with Union
+    law.
+
+    If your AI system generates or manipulates image, audio or video content constituting a deep fake, you must disclose that
+    the content has been artificially generated or manipulated. This obligation shall not apply where the use is authorised
+    by law to detect, prevent, investigate or prosecute criminal offence. Where the content forms part of an evidently artistic,
+    creative, satirical, fictional or analogous work or programme, the transparency obligations set out in this paragraph
+    are limited to disclosure of the existence of such generated or manipulated content in an appropriate manner that does
+    not hamper the display or enjoyment of the work.
+
+    If your AI system generates or manipulates text which is published with the purpose of informing the public on matters
+    of public interest shall disclose that the text has been artificially generated or manipulated. This obligation shall
+    not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offences or where the
+    AI-generated content has undergone a process of human review or editorial control and where a natural or legal person
+    holds editorial responsibility for the publication of the content.
+
+    The information should be provided to the natural persons concerned in a clear and distinguishable manner at the latest
+    at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system does not have to comply with Chapter
+    3 of the AI Act, which relates to high-risk AI systems.'
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  - Following Article 50 of the AI Act, you must follow certain transparency requirements as a deployer.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: The AI system generates or manipulates image, audio or video content that would falsely appear to a person to
+      be authentic (deep fake)
+  uncertain_questions:
+  - Do you meet any of the following statement?
+  - Does your AI system perform any of these functions?
+  screenshot: null
+- case_id: own-a-07-surfing-cows-ad
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nYour AI system is likely not considered as high-risk. It is likely that your AI system does not\
+    \ have to comply with Chapter 3 of the AI Act, which relates to high-risk AI systems."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Does your AI system perform any of these functions?
+  screenshot: null
+- case_id: own-a-09-newsroom-reviewed-drafts
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nFollowing Article 50 \n(opens in a new tab)\nof the AI Act, you must follow certain transparency\
+    \ requirements as a deployer.\nIf you are deploying an emotion recognition system or a biometric categorisation system,\
+    \ you must inform the natural persons exposed thereto of the operation of the system, and shall process the personal data\
+    \ in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation\
+    \ does not apply to AI systems used for biometric categorisation and emotion recognition, which are permitted by law to\
+    \ detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights and freedoms of third\
+    \ parties, and in accordance with Union law.\nIf your AI system generates or manipulates image, audio or video content\
+    \ constituting a deep fake, you must disclose that the content has been artificially generated or manipulated. This obligation\
+    \ shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offence. Where\
+    \ the content forms part of an evidently artistic, creative, satirical, fictional or analogous work or programme, the\
+    \ transparency obligations set out in this paragraph are limited to disclosure of the existence of such generated or manipulated\
+    \ content in an appropriate manner that does not hamper the display or enjoyment of the work.\nIf your AI system generates\
+    \ or manipulates text which is published with the purpose of informing the public on matters of public interest shall\
+    \ disclose that the text has been artificially generated or manipulated. This obligation shall not apply where the use\
+    \ is authorised by law to detect, prevent, investigate or prosecute criminal offences or where the AI-generated content\
+    \ has undergone a process of human review or editorial control and where a natural or legal person holds editorial responsibility\
+    \ for the publication of the content.\nThe information should be provided to the natural persons concerned in a clear\
+    \ and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform\
+    \ to the applicable accessibility requirements.\nYour AI system is likely not considered as high-risk. It is likely that\
+    \ your AI system does not have to comply with Chapter 3 of the AI Act, which relates to high-risk AI systems."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  - Following Article 50 of the AI Act, you must follow certain transparency requirements as a deployer.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: The AI system generates or manipulates text that is published with the purpose of informing the public on matters
+      of public interest
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-b-01-overtime-payroll-rules
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Risk level assessment
+
+    Your AI system is likely not covered by the AI Act as it does not fall within the scope of Article 3 (opens in a new tab)
+    (1).'
+  result_headings:
+  - Your AI system is likely not covered by the AI Act as it does not fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'No'
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-b-06-recon-vehicle-detection
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a provider under Article 3 (opens in a new tab) (3).
+
+    Your obligations
+
+    It is likely that your AI system falls outside the scope of the AI Act. You are not required to comply with the AI Act
+    because your system is classified as one of the excluded systems mentioned in Article 2 (opens in a new tab).'
+  result_headings:
+  - It is likely that your AI system falls outside the scope of the AI Act. You are not required to comply with the AI Act
+    because your system is classified as one of the excluded systems mentioned in Article 2 .
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: The AI system is exclusively developed and used for military, defence or national security purposes
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-b-08-university-protein-model
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a provider under Article 3 (opens in a new tab) (3).
+
+    Your obligations
+
+    It is likely that your AI system falls outside the scope of the AI Act. You are not required to comply with the AI Act
+    because your system is classified as one of the excluded systems mentioned in Article 2 (opens in a new tab).'
+  result_headings:
+  - It is likely that your AI system falls outside the scope of the AI Act. You are not required to comply with the AI Act
+    because your system is classified as one of the excluded systems mentioned in Article 2 .
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: The AI system is specifically developed and put into service for the sole purpose of scientific research and development
+  uncertain_questions:
+  - Does your AI system meet any of the following descriptions?
+  screenshot: null
+- case_id: own-b-10-open-source-plant-app
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a provider under Article 3 (3).
+
+    Risk level assessment
+
+    Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+
+    Your obligations
+
+    According to Article 4 , you must take measures to support the development of AI literacy of your staff and other persons
+    dealing with the operation and use of AI systems on your behalf, taking into account their technical knowledge, experience,
+    education and training and the context the AI systems are to be used in, and considering the persons or groups of persons
+    on whom the AI systems are to be used. This obligation does not require providers or deployers to guarantee any specific
+    level of AI literacy of any individual.
+
+    Following Article 50 of the AI Act, you must follow certain transparency requirements as a provider.
+
+    If your AI system interacts directly with natural persons (e.g. a chatbot), you must ensure that AI systems are designed
+    and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system.
+
+    Unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect,
+    taking into account the circumstances and the context of use.
+
+
+    This obligation does not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences,
+    subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for
+    the public to report a criminal offence.
+
+    If your AI system generates synthetic audio, image, video or text content you must ensure that the outputs of the AI system
+    are marked in a machine-readable format and detectable as artificially generated or manipulated. You must ensure that
+    your technical solutions are effective, interoperable, robust and reliable as far as this is technically feasible, taking
+    into account the specificities and limitations of various types of content, the costs of implementation and the generally
+    acknowledged state of the art, as may be reflected in relevant technical standards.
+
+    Transparency obligations shall not apply to the extent the AI systems perform an assistive function for standard editing
+    or do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by
+    law to detect, prevent, investigate or prosecute criminal offences.
+
+    The information shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest
+    at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system does not have to comply with Chapter
+    3 of the AI Act, which relates to high-risk AI systems.'
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  - Following Article 50 of the AI Act, you must follow certain transparency requirements as a provider.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: The AI system interacts directly with natural persons
+  uncertain_questions:
+  - Do you want to check an AI model or an AI system?
+  - Does your AI system perform any of these functions?
+  screenshot: null
+- case_id: own-b-12-texas-booking-chat
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a deployer under Article 3 (4).
+
+    Risk level assessment
+
+    Your AI system is likely to fall outside the scope of the AI Act, according to Article 2. However, please double check
+    with the AI Act provisions or consult a lawyer to verify this.
+
+    ResetPrint
+
+    You can save the Compliance Checker result to your device as a PDF by using the ''Print'' function in your web browser''s
+    tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open the ''Print'' menu, select “Save as PDF” as the destination
+    and click “Save”.'
+  result_headings:
+  - Your AI system is likely to fall outside the scope of the AI Act, according to Article 2. However, please double check
+    with the AI Act provisions or consult a lawyer to verify this.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: None of the above
+  uncertain_questions:
+  - 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple roles,
+    such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive evaluation'
+  screenshot: null
+- case_id: own-c-01-undress-photo-app
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a provider under Article 3 (3).
+
+    Risk level assessment
+
+    Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+
+    Your obligations
+
+    Your AI system is likely prohibited under the AI Act, according to Article 5. As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+
+    ResetPrint
+
+    Print
+
+
+    You can save the Compliance Checker result to your device as a PDF by using the ''Print'' function in your web browser''s
+    tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open the ''Print'' menu, select “Save as PDF” as the destination
+    and click “Save”.'
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely prohibited under the AI Act, according to Article 5. As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: AI system generates or manipulates realistic images, videos, audio or similar material of an identifiable natural
+      person's intimate parts, or of an identifiable natural person engaged in sexually explicit activities, without that
+      person's freely-given, specific, informed, unambiguous and explicit consent for that generation or manipulation
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-c-05-gossip-site-fake-nudes
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour obligations\nYour AI system is likely prohibited under the AI Act, according\
+    \ to Article 5 \n(opens in a new tab)\n. As of February 2025, you are not allowed to place your AI system on the market,\
+    \ put it into service, or use it."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely prohibited under the AI Act, according to Article 5 . As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: AI system generates or manipulates realistic images, videos, audio or similar material of an identifiable natural
+      person's intimate parts, or of an identifiable natural person engaged in sexually explicit activities, without that
+      person's freely-given, specific, informed, unambiguous and explicit consent for that generation or manipulation
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-c-07-unfiltered-image-generator
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a provider under Article 3 \n(opens in\
+    \ a new tab)\n(3).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour obligations\nYour AI system is likely prohibited under the AI Act, according\
+    \ to Article 5 \n(opens in a new tab)\n. As of February 2025, you are not allowed to place your AI system on the market,\
+    \ put it into service, or use it.\nResetPrint\nPrint\n\nYou can save the Compliance Checker result to your device as a\
+    \ PDF by using the 'Print' function in your web browser's tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open\
+    \ the 'Print' menu, select “Save as PDF” as the destination and click “Save”."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely prohibited under the AI Act, according to Article 5 . As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: AI system generates or manipulates material or performance within the meaning of Article 2, points (c) and (e),
+      of Directive 2011/93/EU on combating the sexual abuse and sexual exploitation of children and child pornography
+  uncertain_questions:
+  - Does your AI system fall under one of these AI practices?
+  screenshot: null
+- case_id: own-c-11-police-burglary-risk-list
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a deployer under Article 3 \n(opens in\
+    \ a new tab)\n(4).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour obligations\nYour AI system is likely prohibited under the AI Act, according\
+    \ to Article 5 \n(opens in a new tab)\n. As of February 2025, you are not allowed to place your AI system on the market,\
+    \ put it into service, or use it.\nResetPrint\nPrint\n\nYou can save the Compliance Checker result to your device as a\
+    \ PDF by using the 'Print' function in your web browser's tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open\
+    \ the 'Print' menu, select “Save as PDF” as the destination and click “Save”."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely prohibited under the AI Act, according to Article 5 . As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: AI system does individual criminal offence risk assessment and prediction for natural persons solely on the profiling
+      or assessment of personality traits or characteristics
+  uncertain_questions:
+  - Does your AI system fall under one of these AI practices?
+  screenshot: null
+- case_id: own-c-14-kids-game-sad-pet-offers
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a provider under Article 3 \n(opens in\
+    \ a new tab)\n(3).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour obligations\nYour AI system is likely prohibited under the AI Act, according\
+    \ to Article 5 \n(opens in a new tab)\n. As of February 2025, you are not allowed to place your AI system on the market,\
+    \ put it into service, or use it.\nResetPrint\nPrint\n\nYou can save the Compliance Checker result to your device as a\
+    \ PDF by using the 'Print' function in your web browser's tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open\
+    \ the 'Print' menu, select “Save as PDF” as the destination and click “Save”."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely prohibited under the AI Act, according to Article 5 . As of February 2025, you are not allowed
+    to place your AI system on the market, put it into service, or use it.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU; An AI system is integrated with your product under your own name or trademark
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: AI system deploys subliminal, manipulative or deceptive techniques to materially distort a person's behaviour,
+      thereby likely causing significant harm; AI system exploits of vulnerabilities due to age, disability or a specific
+      socioeconomic situation to materially distort a person's behaviour, thereby likely causing significant harm
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-d-07-office-assistant-seats
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a deployer under Article 3 (opens in a new tab)(4).
+
+    Risk level assessment
+
+    Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (opens in a new tab)(1).
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+
+    Your obligations
+
+    According to Article 4 (opens in a new tab), you must take measures to support the development of AI literacy of your
+    staff and other persons dealing with the operation and use of AI systems on your behalf, taking into account their technical
+    knowledge, experience, education and training and the context the AI systems are to be used in, and considering the persons
+    or groups of persons on whom the AI systems are to be used. This obligation does not require providers or deployers to
+    guarantee any specific level of AI literacy of any individual.
+
+    Your AI system is likely not considered as high-risk. It is likely that your AI system does not have to comply with Chapter
+    3 of the AI Act, which relates to high-risk AI systems.'
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Deployer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Do you meet any of the following statement?
+  screenshot: null
+- case_id: own-d-11-importer-stock-forecast
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as an importer under Article 3 \n(opens in\
+    \ a new tab)\n(6).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nYour AI system is likely not considered as high-risk. It is\
+    \ likely that your AI system does not have to comply with Chapter 3 of the AI Act, which relates to high-risk AI systems.\n\
+    ResetPrint\nPrint\n\nYou can save the Compliance Checker result to your device as a PDF by using the 'Print' function\
+    \ in your web browser's tools menu. Press CTRL + P (Windows) or CMD + P (Mac) to open the 'Print' menu, select “Save as\
+    \ PDF” as the destination and click “Save”."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Importer
+  - question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
+      to an AI system?
+    answer: None of the above
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Is your AI system released under free and open-source licences?
+    answer: 'No'
+  uncertain_questions:
+  - Is your system an AI system within the meaning of the AI Act?
+  - Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+  screenshot: null
+- case_id: own-e-03-talking-plush-toy
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: "Results\nYour role\nAccording to the AI Act, you are considered as a provider under Article 3 \n(opens in\
+    \ a new tab)\n(3).\nRisk level assessment\nYour AI system is likely covered by the AI Act as it does fall within the scope\
+    \ of Article 3 \n(opens in a new tab)\n(1).\nYour AI system is likely not considered as high-risk. It is likely that your\
+    \ AI system poses no to minimal risks.\nYour obligations\nAccording to Article 4 \n(opens in a new tab)\n, you must take\
+    \ measures to support the development of AI literacy of your staff and other persons dealing with the operation and use\
+    \ of AI systems on your behalf, taking into account their technical knowledge, experience, education and training and\
+    \ the context the AI systems are to be used in, and considering the persons or groups of persons on whom the AI systems\
+    \ are to be used. This obligation does not require providers or deployers to guarantee any specific level of AI literacy\
+    \ of any individual.\nFollowing Article 50 \n(opens in a new tab)\nof the AI Act, you must follow certain transparency\
+    \ requirements as a provider.\nIf your AI system interacts directly with natural persons (e.g. a chatbot), you must ensure\
+    \ that AI systems are designed and developed in such a way that the natural persons concerned are informed that they are\
+    \ interacting with an AI system.\nUnless this is obvious from the point of view of a natural person who is reasonably\
+    \ well-informed, observant and circumspect, taking into account the circumstances and the context of use.\n\nThis obligation\
+    \ does not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject\
+    \ to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public\
+    \ to report a criminal offence.\nIf your AI system generates synthetic audio, image, video or text content you must ensure\
+    \ that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or\
+    \ manipulated. You must ensure that your technical solutions are effective, interoperable, robust and reliable as far\
+    \ as this is technically feasible, taking into account the specificities and limitations of various types of content,\
+    \ the costs of implementation and the generally acknowledged state of the art, as may be reflected in relevant technical\
+    \ standards.\nTransparency obligations shall not apply to the extent the AI systems perform an assistive function for\
+    \ standard editing or do not substantially alter the input data provided by the deployer or the semantics thereof, or\
+    \ where authorised by law to detect, prevent, investigate or prosecute criminal offences.\nThe information shall be provided\
+    \ to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction\
+    \ or exposure. The information shall conform to the applicable accessibility requirements.\nYour AI system is likely not\
+    \ considered as high-risk. It is likely that your AI system does not have to comply with Chapter 3 of the AI Act, which\
+    \ relates to high-risk AI systems."
+  result_headings:
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  - Your AI system is likely not considered as high-risk. It is likely that your AI system poses no to minimal risks.
+  - Following Article 50 of the AI Act, you must follow certain transparency requirements as a provider.
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU; An AI system is integrated with your product under your own name or trademark
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'Yes'
+  - question: 'Does your AI system fulfil a safety function? Note: This is not the case, e.g. if your AI system is solely
+      used for non-safety related aspects of user assistance, performance optimisation, service efficiency, automation or
+      convenience or quality control?'
+    answer: 'No'
+  - question: Is the AI system's failure or malfunctioning would endanger health or safety?
+    answer: 'No'
+  - question: Does your AI system fall within any of the following areas?
+    answer: None of the above
+  - question: Does your AI system perform any of these functions?
+    answer: The AI system interacts directly with natural persons; The AI system generates synthetic audio, image, video or
+      text content
+  uncertain_questions:
+  - 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple roles,
+    such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive evaluation'
+  - 'Does your AI system fulfil a safety function? Note: This is not the case, e.g. if your AI system is solely used for non-safety
+    related aspects of user assistance, performance optimisation, service efficiency, automation or convenience or quality
+    control?'
+  - Is the AI system's failure or malfunctioning would endanger health or safety?
+  screenshot: null
+- case_id: own-e-05-emergency-braking-supplier
+  date: '2026-10-14'
+  answered_by: agent
+  checker_release: 6.5.1
+  result_text: 'Results
+
+    Your role
+
+    According to the AI Act, you are considered as a provider under Article 3 (3).
+
+    Risk level assessment
+
+    Your AI system is likely a high-risk system under the AI Act following Article 6 .
+
+    Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+
+    Your obligations
+
+    According to Article 4 , you must take measures to support the development of AI literacy of your staff and other persons
+    dealing with the operation and use of AI systems on your behalf, taking into account their technical knowledge, experience,
+    education and training and the context the AI systems are to be used in, and considering the persons or groups of persons
+    on whom the AI systems are to be used. This obligation does not require providers or deployers to guarantee any specific
+    level of AI literacy of any individual.
+
+    Your AI system is likely classified as a high-risk system under the AI Act, following Article 2 (2) and Article 6 (1).
+    You are required to comply with the requirements outlined in Article 8 to Article 15 of the AI Act; however, these articles
+    need to be transposed into the relevant sectoral legislation, in accordance with Article 102 to Article 109 , depending
+    on the sectoral legislation applicable to the case at hand.'
+  result_headings:
+  - Your AI system is likely a high-risk system under the AI Act following Article 6 .
+  - Your AI system is likely covered by the AI Act as it does fall within the scope of Article 3 (1).
+  answers:
+  - question: Do you want to check an AI model or an AI system?
+    answer: AI system
+  - question: Is your system an AI system within the meaning of the AI Act?
+    answer: 'Yes'
+  - question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
+      roles, such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive
+      evaluation'
+    answer: Provider
+  - question: Do you meet any of the following statement?
+    answer: Your AI system is placed or put in service within the EU; You are established or located within the EU; Your AI
+      system's output is used in the EU
+  - question: Does your AI system meet any of the following descriptions?
+    answer: None of the above
+  - question: Does your AI system fall under one of these AI practices?
+    answer: None of the above
+  - question: Is your AI system, or the product in which it is intended to be embedded in, subject to sector-specific regulations?
+    answer: 'Yes'
+  - question: 'Does your AI system fulfil a safety function? Note: This is not the case, e.g. if your AI system is solely
+      used for non-safety related aspects of user assistance, performance optimisation, service efficiency, automation or
+      convenience or quality control?'
+    answer: 'Yes'
+  - question: Is it regulated under one of the sectors listed below?
+    answer: None of the above
+  - question: Is your AI system, or the product in which your AI system is intended to be used as a safety component, subject
+      to sector-specific regulations and classified under one of the sectors listed below
+    answer: Motor vehicles and their trailers
+  - question: Is your product, or the product in which your AI system is intended to be used as a safety component is required
+      to undergo a third-party conformity assessment under the sectoral law? Note that this also includes products for which
+      you can opt-out of a third-party conformity assessment when harmonised standards are fully applied
+    answer: 'Yes'
+  - question: Is your product is required to undergo a third-party conformity assessment solely due to risks other than risks
+      to health and safety, in particular risks relating to the distribution of radio spectrum or electromagnetic interference
+      that do not affect health and safety?
+    answer: 'No'
+  uncertain_questions:
+  - 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple roles,
+    such as provider and deployer, please complete the assessment separately for each role to ensure a comprehensive evaluation'
+  - Does your AI system meet any of the following descriptions?
+  - Is it regulated under one of the sectors listed below?
+  screenshot: null
 spot_checks:
-  - case_id: "own-b-06-recon-vehicle-detection"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-c-05-gossip-site-fake-nudes"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-242-entry-check-traveller-score"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "own-d-07-office-assistant-seats"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
-  - case_id: "cb-119-job-ad-wording-check"
-    date: null
-    answered_by: null
-    checker_release: null
-    result_text: null
-    result_headings: []
-    answers: []
-    uncertain_questions: []
-    screenshot: null
+- case_id: own-b-06-recon-vehicle-detection
+  date: null
+  answered_by: null
+  checker_release: null
+  result_text: null
+  result_headings: []
+  answers: []
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-c-05-gossip-site-fake-nudes
+  date: null
+  answered_by: null
+  checker_release: null
+  result_text: null
+  result_headings: []
+  answers: []
+  uncertain_questions: []
+  screenshot: null
+- case_id: cb-242-entry-check-traveller-score
+  date: null
+  answered_by: null
+  checker_release: null
+  result_text: null
+  result_headings: []
+  answers: []
+  uncertain_questions: []
+  screenshot: null
+- case_id: own-d-07-office-assistant-seats
+  date: null
+  answered_by: null
+  checker_release: null
+  result_text: null
+  result_headings: []
+  answers: []
+  uncertain_questions: []
+  screenshot: null
+- case_id: cb-119-job-ad-wording-check
+  date: null
+  answered_by: null
+  checker_release: null
+  result_text: null
+  result_headings: []
+  answers: []
+  uncertain_questions: []
+  screenshot: null
