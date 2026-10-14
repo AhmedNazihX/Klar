@@ -43,7 +43,6 @@ from aiact.settings import Settings
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import unresolved_citations, whole_articles
 from tests.engine.nodes.corpus_recording import corpus_recording, require_recording
-from tests.engine.nodes.known_gaps import STALE_RECORDING_ERRORS
 from tests.engine.nodes.test_scope import (
     LUNA,
     LUNA_PROVIDER,
@@ -97,14 +96,6 @@ WORKED_EXAMPLE_FACTS = (
 (`WHOLE_RUN_CASSETTE`'s first reply: each fact's text, evidence tag and quote), as E20's
 re-record of the whole run gave them."""
 
-WHOLE_RUN_FACTS_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=STALE_RECORDING_ERRORS,
-    reason="recording pending (orchestrator): E20 re-recorded the whole run, whose facts the "
-    "five runs repeat (WORKED_EXAMPLE_FACTS), so their recorded request is stale; delete and "
-    "re-record",
-)
-"""The five scope runs, until the orchestrator records them on the new whole run's facts."""
 
 DECIDED = "in scope, decided"
 ASKS_AI_SYSTEM = "in scope as the working assumption, asks whether the tool infers"
@@ -199,7 +190,6 @@ def _live_corpus(settings: Settings) -> Iterator[CorpusLibrary]:
         yield CorpusLibrary(connection, OpenRouterEmbeddings(settings=settings))
 
 
-@WHOLE_RUN_FACTS_PENDING
 @pytest.mark.vcr
 def test_worked_example_scope_varies_only_between_inits_readings(
     luna_settings: Settings,

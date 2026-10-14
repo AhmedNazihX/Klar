@@ -17,7 +17,6 @@ from aiact.schemas import Language, RiskClass
 from aiact.settings import Settings
 from tests.e2e.runs import E2E_RECORDINGS, RECORD_COMMAND, e2e_runs
 from tests.engine.nodes.corpus_recording import (
-    RecordingPendingError,
     corpus_recording,
     require_recording,
 )
@@ -76,17 +75,6 @@ def test_the_answered_worked_example_no_longer_asks_its_answer(
     assert not asked & {"ai_system", "eu_link"}, asked
 
 
-GERMAN_RECORDING_PENDING = pytest.mark.xfail(
-    strict=True,
-    raises=RecordingPendingError,
-    reason="recording pending (orchestrator): E20's recording of the German run was cut off at "
-    "the high-risk output cap (a fact_numbers list counting on) and is deleted; a cut-off reply "
-    "is now asked once more, so re-record it",
-)
-"""The German run, until the orchestrator records it again (BACKLOG > E20)."""
-
-
-@GERMAN_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("name", ["worked_example_de"])
 def test_the_worked_example_in_german_is_high_risk(
