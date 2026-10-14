@@ -88,7 +88,7 @@ test('a returning visit keeps the profile, which answers the EU question after a
   await expectResult(page, TOOL_NAME)
   const fromProfile = page.getByRole('region', { name: 'From your company profile' })
   const euQuestion =
-    'Is the tool placed on the market or used in the EU, or are its outputs used there?'
+    'Is the tool used in or placed on the market in the EU, or are its outputs used there?'
   await expect(fromProfile.getByText(euQuestion)).toBeVisible()
   await expect(fromProfile.getByText('Yes', { exact: true })).toBeVisible()
 

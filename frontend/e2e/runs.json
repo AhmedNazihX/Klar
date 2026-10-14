@@ -7,7 +7,7 @@
       "language": "en",
       "answers": {
         "ai_system": "It is trained on data: the vendor's model learned from past applications how to score and rank new ones.",
-        "eu_link": "Is the tool placed on the market or used in the EU, or are its outputs used there? Yes."
+        "eu_link": "Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes."
       }
     },
     "worked_example_de": {
@@ -18,7 +18,7 @@
       "description": "We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.",
       "language": "en",
       "answers": {
-        "eu_link": "Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.",
+        "eu_link": "Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes.",
         "for_public_authority": "Is the system meant for use by public authorities? No."
       }
     },

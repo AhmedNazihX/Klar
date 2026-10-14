@@ -1,5 +1,5 @@
 {
- "{\"as_of\": \"2026-10-06\", \"definition_guidance\": \"Is this an AI system under the AI system definition? We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"scope\"}": [
+ "{\"as_of\": \"2026-10-06\", \"definition_guidance\": \"Is this an AI system under the AI system definition? We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"scope\"}": [
   {
    "doc_key": "guide-definition",
    "doc_type": "guideline",
@@ -12,7 +12,7 @@
    "provision_id": "guide:guide-definition:para:40",
    "reference_rank": null,
    "score": 0.0234375,
-   "similarity": 0.623036376780816,
+   "similarity": 0.624159470100341,
    "status": "final",
    "text": "(40) Recital 12 also explains that the AI system definition should distinguish AI systems from \"simpler traditional software systems or programming approaches and should not cover systems that are based on the rules defined solely by natural persons to automatically execute operations.\"",
    "valid_from": "2025-02-06",
@@ -31,7 +31,7 @@
    "provision_id": "guide:guide-definition:para:25",
    "reference_rank": null,
    "score": 0.0220856102003643,
-   "similarity": 0.5508753018417101,
+   "similarity": 0.550930939753496,
    "status": "final",
    "text": "(25) Recital 12 AI Act clarifies that, 'the objectives of the AI system may be different from the intended purpose of the AI system in a specific context'. The objectives of an AI system are internal to the system, referring to the goals of the tasks to be performed and their results. For instance, a corporate virtual AI assistant system may have objectives to answer user questions on a set of documents with high accuracy in and low rate of failures. In contrast, the intended purpose is externally oriented and includes the context in which the system is designed to be deployed and how it must be operated. Indeed, according to Article 3(12) AI Act, the intended purpose of an AI system refers to the 'use for which an AI system is intended by the provider'. For example, in the case of a corporate virtual AI assistant system, the intended purpose might be to assist a certain department of a company to carry out certain tasks. This might require that the documents that the virtual assistant uses comply with certain requirements (e.g. length, formatting) and that the user questions are limited to the domain in which the system is intended to operate. This intended purpose is fulfilled not only through the system's internal operation to achieve its objectives, but also through other factors, such as the integration of the system into a broader customer service workflow, the data that is used by the system, or instructions for use.",
    "valid_from": "2025-02-06",
@@ -49,13 +49,13 @@
    "law_version": null,
    "provision_id": "guide:guide-definition:para:47",
    "reference_rank": null,
-   "score": 0.0184628237259816,
-   "similarity": 0.488891883691422,
+   "score": 0.0183531746031746,
+   "similarity": 0.48598711150846197,
    "status": "final",
    "text": "(47) Also systems that solely intended for descriptive analysis, hypothesis testing, and visualisation, fall outside the definition of an AI system. For instance, in software for sales report visualisation, statistical methods can be used to create a sales dashboard that shows total sales, average sales per region and sales trends over time. With the help of statistical methods, those data can be summarised and visualised in charts and graphs. However, the system does not recommend how to improve sales or which products to promote. Another example is a software system that applies statistical techniques to opinion polls or survey data to determine their validity, reliability, correlation, and statistical significance. Such systems do not 'learn, reason or model', they simply present data in an informative way.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 35
+   "vector_rank": 36
   },
   {
    "doc_key": "guide-definition",
@@ -68,13 +68,13 @@
    "law_version": null,
    "provision_id": "guide:guide-definition:para:22",
    "reference_rank": null,
-   "score": 0.0179924242424242,
-   "similarity": 0.48783033941153797,
+   "score": 0.0181020733652313,
+   "similarity": 0.48847088149016404,
    "status": "final",
    "text": "(22) The third element of the definition in Article 3(1) AI Act is that the system 'may exhibit adaptiveness after deployment'. The concepts of autonomy and adaptiveness are two distinct but closely related concepts. They are often discussed together but they represent different dimensions of an AI system's functionality. Recital 12 AI Act clarifies that 'adaptiveness' refers to self-learning capabilities, allowing the behaviour of the system to change while in use. The new behaviour of the adapted system may produce different results from the previous system for the same inputs.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 36
+   "vector_rank": 35
   },
   {
    "doc_key": "guide-definition",
@@ -87,16 +87,16 @@
    "law_version": null,
    "provision_id": "guide:guide-definition:para:42",
    "reference_rank": null,
-   "score": 0.0177732539931099,
-   "similarity": 0.47571783968423,
+   "score": 0.0179655062280422,
+   "similarity": 0.47567137930818704,
    "status": "final",
    "text": "(42) Systems used to improve mathematical optimisation or to accelerate and approximate traditional, well established optimisation methods, such as linear or logistic regression methods, fall outside the scope of the AI system definition. This is because, while those models have the capacity to infer, they do not transcend 'basic data processing'. An indication that a system does not transcend basic data processing could be that it has been used in consolidated manner for many years 6 . This includes, for example, machine learning-based models that approximate functions or parameters in optimization problems while maintaining performance. The systems aim to improve the efficiency of optimisation algorithms used in computational problems. For example, they help to speed up optimisation tasks by providing learned approximations, heuristics, or search strategies.",
    "valid_from": "2025-02-06",
    "valid_to": null,
-   "vector_rank": 43
+   "vector_rank": 41
   }
  ],
- "{\"as_of\": \"2026-10-06\", \"doc_type\": \"guideline\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"limit\": 8, \"node\": \"high_risk\", \"search\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\"}": [
+ "{\"as_of\": \"2026-10-06\", \"doc_type\": \"guideline\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"limit\": 8, \"node\": \"high_risk\", \"search\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\"}": [
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
@@ -109,7 +109,7 @@
    "provision_id": "guide:guide-prohibited:para:13",
    "reference_rank": null,
    "score": 0.0229779411764706,
-   "similarity": 0.699058410609514,
+   "similarity": 0.6923657082646231,
    "status": "final",
    "text": "(13) Article 3(11) AI Act defines putting into service as 'the supply of an AI system for first use to the deployer or for own use in the Union for its intended purpose', therefore covering both supply for first use to third parties, as well as in-house development and deployment. The intended purpose of the system is the 'use for which an AI system is intended by the provider, including the specific context and conditions of use, as specified in the information supplied by the provider in the instructions of use, promotional or sales materials and statements, as well as in the technical documentation.' 7\n\nFor example, a provider builds a RBI system outside the Union and supplies that system to a law enforcement authority or to a private company established in a Member State to be used for the first time, thereby putting it into service.\n\nFor example, a public authority develops a scoring system in-house and deploys it to predict the risk of fraud of household allowance beneficiaries, thereby putting it into service.\n\nsecurity and justice (AFSJ) annexed to the TEU and TFEU, Ireland may decide not to apply the rules concerning the prohibition of real-time use of RBIs in public spaces for a law enforcement purpose as well as the procedural rules linked to that article (Article 5(2) to (6) AI Act) (see Recital 40). Denmark benefits from opt-out agreements when applying Protocol No. 22 to the TEU and TFEU and may decide not to fully apply the prohibitions based on Article 16 of the TFEU (see Recital 41).\n\n5 See for definitions of these terms also the Commission Notice - The 'Blue Guide' on the implementation of EU product rules 2022, 2022/C 247/01, Section 2.\n\n6 Article 3(10) AI Act.\n\n7 Article 3(12) AI Act.",
    "valid_from": "2025-02-04",
@@ -128,7 +128,7 @@
    "provision_id": "guide:guide-high-risk-annex-iii:ex:112",
    "reference_rank": null,
    "score": 0.0228857890148213,
-   "similarity": 0.702829298124086,
+   "similarity": 0.697225990643441,
    "status": "draft",
    "text": "AI system ranking self-employed service providers\nAn online platform designed to help consumers in finding a self-employed service provider to assist them with various tasks uses an AI-enabled job-matching tool that ranks service providers and determines which are presented to potential consumers.\nThis system falls within the use case of point 4(a) of Annex III since it directly and meaningfully affects selection of natural persons by filtering and ranking potential service providers. Because its output shapes access to future assignments and may have a decisive impact on the careers of self-employed persons, along with their livelihoods and rights, none of the exceptions in Article 6(3) apply.",
    "valid_from": "2026-05-19",
@@ -146,13 +146,13 @@
    "law_version": null,
    "provision_id": "guide:guide-high-risk-annex-iii:para:253",
    "reference_rank": null,
-   "score": 0.0217768147345612,
-   "similarity": 0.68031416174005,
+   "score": 0.021978021978022,
+   "similarity": 0.679514031381253,
    "status": "draft",
    "text": "(253) The terms 'to analyse and filter job applications' used in point 4(a) of Annex III should be understood broadly and not as limiting the use case to AI systems that always perform both functions simultaneously. A functional interpretation is required: where an AI system merely analyses applications in a descriptive sense (such as converting file formats or classifying degrees into standard categories without applying evaluative weight), it may be considered to perform a preparatory task within the meaning of Article 6(3)(d) AI Act. In contrast, AI systems that analyse job applications with an effect that may result in a restriction of the applicant in accessing certain job opportunities, for example by producing suitability scores, assessing compatibility of a candidate's profile or experience with the selection criteria or job description, or producing competence profiles that condition shortlisting, fall within scope of the high-risk use case listed in point 4(a) of Annex III. In this case, 'analysis\" and 'filtering\" form part of a continuum: analysis that influences access to later stages operates de facto as filtering, and therefore falls within the scope of Annex III, point 4(a).\n\n45 This would be the case if the requirements stem from a genuine and determining occupational requirement whose absence may make it impossible for the candidate to perform the functions stated in the job description, and not when it is about a preferred characteristic, or a specific profile that while desirable does not have a direct and objective link to the required qualifications/skills. In assessing the mentioned non-discriminatory, objective and reasonable criteria, it is important to consider the EU non-discrimination acquis, including Article 4 of Directives 2000/78/EC and 2000/43/EC and Article 14(2) of Directive 2006/54/EC of the European Parliament and of the Council of 5 July 2006 on the implementation of the principle of equal opportunities and equal treatment of men and women in matters of employment and occupation (recast), OJ L 204, 26.7.2006, pp. 23-36.",
    "valid_from": "2026-05-19",
    "valid_to": null,
-   "vector_rank": 11
+   "vector_rank": 10
   },
   {
    "doc_key": "guide-high-risk-annex-iii",
@@ -165,13 +165,32 @@
    "law_version": null,
    "provision_id": "guide:guide-high-risk-annex-iii:para:254",
    "reference_rank": null,
-   "score": 0.0211458333333333,
-   "similarity": 0.676290350844776,
+   "score": 0.0215111301369863,
+   "similarity": 0.673498709589331,
    "status": "draft",
    "text": "(254) The terms 'to evaluate candidates' used in point 4(a) of Annex III must also be understood broadly. Evaluation refers to any assessment of a candidate's (including self-employed) suitability, merit or potential, whether through scoring, ranking, predictive modelling, or qualitative judgements derived from data inputs. The provision does not require that the evaluation carried out by the AI system directly determines the hiring outcome. It suffices that it appreciably influences the decision-making process, for example by laying out shortlists, prioritising certain applicants or scoring assessments within the context of the recruitment or selection process that may result in advantages for certain candidates. AI tools that merely present factual information without involving evaluative weight (such as software displaying unaltered employment history) may fall outside scope if they do not generate assessments of suitability.\n\n46 Oral responses could be evaluated, for example, through an AI system capable of processing video- and audio and interacting with the applicant through an avatar.",
    "valid_from": "2026-05-19",
    "valid_to": null,
-   "vector_rank": 15
+   "vector_rank": 13
+  },
+  {
+   "doc_key": "guide-high-risk-annex-iii",
+   "doc_type": "guideline",
+   "document_title": "Draft Commission Guidelines on the classification of high-risk AI systems: Annex III",
+   "heading": "v. Evaluate candidates › b) Practical examples of AI system falling outside the high-risk use case of point 4(a)",
+   "keyword_idf": 20.6480469488894,
+   "keyword_rank": 2,
+   "language": "en",
+   "law_version": null,
+   "provision_id": "guide:guide-high-risk-annex-iii:ex:122",
+   "reference_rank": null,
+   "score": 0.0174103105215556,
+   "similarity": 0.64063081750733,
+   "status": "draft",
+   "text": "AI system intended to be used for employee onboarding support\nThe system provides personalized information about company policies, training schedules, and answers common questions during their onboarding process. Since the system supports internal HR operations after hiring and does not influence the recruitment or selection of natural persons or affect in any manner their access to work, the system does not fall within the use case of point 4(a) of Annex III. The system may fall within the use case of point 4(b) of Annex III, if it affects the terms of the work-related relationship or feeds into performance evaluations or monitors workers.",
+   "valid_from": "2026-05-19",
+   "valid_to": null,
+   "vector_rank": 47
   },
   {
    "doc_key": "guide-prohibited",
@@ -185,7 +204,7 @@
    "provision_id": "guide:guide-prohibited:para:14",
    "reference_rank": null,
    "score": 0.0163934426229508,
-   "similarity": 0.709747314453145,
+   "similarity": 0.7022569839221819,
    "status": "final",
    "text": "(14) While the 'use' of an AI system is not explicitly defined in the AI Act, it should be understood in a broad manner to cover the use or deployment of the system at any moment of its lifecycle after having been placed on the market or put into service. This may also cover the integration of the AI system in the services and processes of the person(s) making use of the AI system, including as part of more complex systems, processes or infrastructure. While providers of AI systems must consider the conditions of use which may be reasonably foreseen prior to placing their AI systems on the market (intended use and reasonably foreseeable misuse 8 ), deployers remain responsible for taking the lawful conditions for the use of the system into account. 9 For the purposes of Article 5 AI Act, the reference to 'use' should be understood to include any misuse of an AI system ('reasonably foreseeable' or not) that may amount to a prohibited practice. 10\n\nFor example, an AI system used by an employer to infer emotions at the workspace is prohibited, except when used for medical or safety purposes (Article 5(1)(f) AI Act). The prohibition applies to deployers regardless of whether the provider (the supplier of the system) has excluded such use in its contractual relationships with the deployer (the employer), i.e. in the terms of use.",
    "valid_from": "2025-02-04",
@@ -204,7 +223,7 @@
    "provision_id": "guide:guide-prohibited:para:16",
    "reference_rank": null,
    "score": 0.0158730158730159,
-   "similarity": 0.702804380153828,
+   "similarity": 0.69393384456635,
    "status": "final",
    "text": "(16) According to Article 3(3) AI Act, providers are natural or legal persons, public authorities, agencies or other bodies, that develop AI systems or have them developed and place them on the Union market, or put them into service under their own name or trademark 11 (see section 2.3 above). Providers established or located outside the Union are subject to the provisions of the AI Act if they place those systems on the market or put them into service in the Union, 12 or if the output of the AI system is used in the Union. 13 Providers must ensure their AI systems meet all relevant requirements before placing them on the market or putting them into service.\n\nFor example, a provider of a RBI system is the manufacturer of the system that markets the system in the Union under its trademark. The provider of such a system could also\n\n8 See Article 3(12) and (13) AI Act.\n\n9\n\nSee for definitions of these terms also the Commission Notice - The 'Blue Guide' on the implementation of EU product rules 2022,\n\n2022/C 247/01, Section 2.8.\n\n10 Recital 28 AI Act.\n\n11 Article 3(3), (9) and (11) AI Act. In relation to high-risk AI systems, Article 25 AI Act envisages that 1. Any distributor, importer, deployer or other third-party shall be considered to be a provider of a high-risk AI system for the purposes of this Regulation and shall be subject to the obligations of the provider under Article 16, in any of the following circumstances: (a) they put their name or trademark on a high-risk AI system already placed on the market or put into service, without prejudice to contractual arrangements stipulating that the obligations are otherwise allocated; (b) they make a substantial modification to a high-risk AI system that has already been placed on the market or has already been put into service in such a way that it remains a high-risk AI system pursuant to Article 6; (c) they modify the intended purpose of an AI system, including a general-purpose AI system, which has not been classified as high-risk and has already been placed on the market or put into service in such a way that the AI system concerned becomes a high-risk AI system in accordance with Article 6.\n\n12\n\nArticle 2(1)(a) AI Act. be a public authority that develops the system in-house and puts it into service for its own use.\n\n13 Article 2(1)(c) AI Act.",
    "valid_from": "2025-02-04",
@@ -215,42 +234,23 @@
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
    "document_title": "Commission Guidelines on prohibited AI practices",
-   "heading": "2.3. Material scope: practices related to the 'placing on the market', 'putting into service' or 'use' of an AI system",
+   "heading": "4.4. Interplay with other Union legal acts",
    "keyword_idf": null,
    "keyword_rank": null,
    "language": "en",
    "law_version": null,
-   "provision_id": "guide:guide-prohibited:para:12",
+   "provision_id": "guide:guide-prohibited:para:178",
    "reference_rank": null,
    "score": 0.0153846153846154,
-   "similarity": 0.694861647946099,
+   "similarity": 0.6898099184036299,
    "status": "final",
-   "text": "(12) According to Article 3(9) AI Act, the placing on the market of an AI system is 'the first making available of an AI system […] on the Union market'. 'Making available' is defined as the supply of the system 'for distribution or use on the Union market in the course of a commercial activity, whether in return for payment or free of charge.' 6 The making available of an AI system is covered regardless of the means of supply, such as access to the system and its service through an application programming interface ('API'), via cloud, direct downloads, as physical copies, or embedded in physical products.\n\nFor example, a RBI system developed outside the Union by a third-country provider is placed on the Union market for the first time when it is offered in return for payment or free of charge in one or more Member States. Such placing on the market may occur by providing access to the system online through an API or other user interface.",
+   "text": "(178) Providers and deployers should carefully assess whether other applicable Union and national legislation applies to any particular AI scoring system used in their activities, in particular if there is more specific legislation that strictly regulates the types of data that can be used as relevant and necessary for specific evaluation purposes and if there are more specific rules and procedures to ensure justified and fair treatment.",
    "valid_from": "2025-02-04",
    "valid_to": null,
    "vector_rank": 5
-  },
-  {
-   "doc_key": "guide-high-risk-annex-iii",
-   "doc_type": "guideline",
-   "document_title": "Draft Commission Guidelines on the classification of high-risk AI systems: Annex III",
-   "heading": "2.4. 'Intended to be used'",
-   "keyword_idf": null,
-   "keyword_rank": null,
-   "language": "en",
-   "law_version": null,
-   "provision_id": "guide:guide-high-risk-annex-iii:para:78",
-   "reference_rank": null,
-   "score": 0.0151515151515152,
-   "similarity": 0.6930013434883731,
-   "status": "draft",
-   "text": "(78) Moreover, to be classified as high-risk pursuant to Article 6(2) AI Act, it is not necessary for the AI system to be actually in use. Instead, the provider must assess the intended use of the system before placing it on the EU market or putting it into service. It is at that moment that the AI system, if it is high-risk, must be in conformity with the requirements for high-risk systems and that the provider of the system must meet the obligations for such systems.",
-   "valid_from": "2026-05-19",
-   "valid_to": null,
-   "vector_rank": 6
   }
  ],
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"guidance\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"prohibited\"}": [
+ "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"guidance\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"prohibited\"}": [
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
@@ -263,7 +263,7 @@
    "provision_id": "guide:guide-prohibited:para:13",
    "reference_rank": null,
    "score": 0.0239375320020481,
-   "similarity": 0.6997934550231659,
+   "similarity": 0.6941036192805661,
    "status": "final",
    "text": "(13) Article 3(11) AI Act defines putting into service as 'the supply of an AI system for first use to the deployer or for own use in the Union for its intended purpose', therefore covering both supply for first use to third parties, as well as in-house development and deployment. The intended purpose of the system is the 'use for which an AI system is intended by the provider, including the specific context and conditions of use, as specified in the information supplied by the provider in the instructions of use, promotional or sales materials and statements, as well as in the technical documentation.' 7\n\nFor example, a provider builds a RBI system outside the Union and supplies that system to a law enforcement authority or to a private company established in a Member State to be used for the first time, thereby putting it into service.\n\nFor example, a public authority develops a scoring system in-house and deploys it to predict the risk of fraud of household allowance beneficiaries, thereby putting it into service.\n\nsecurity and justice (AFSJ) annexed to the TEU and TFEU, Ireland may decide not to apply the rules concerning the prohibition of real-time use of RBIs in public spaces for a law enforcement purpose as well as the procedural rules linked to that article (Article 5(2) to (6) AI Act) (see Recital 40). Denmark benefits from opt-out agreements when applying Protocol No. 22 to the TEU and TFEU and may decide not to fully apply the prohibitions based on Article 16 of the TFEU (see Recital 41).\n\n5 See for definitions of these terms also the Commission Notice - The 'Blue Guide' on the implementation of EU product rules 2022, 2022/C 247/01, Section 2.\n\n6 Article 3(10) AI Act.\n\n7 Article 3(12) AI Act.",
    "valid_from": "2025-02-04",
@@ -281,13 +281,13 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:177",
    "reference_rank": null,
-   "score": 0.0205424003238211,
-   "similarity": 0.624350234943605,
+   "score": 0.0206967213114754,
+   "similarity": 0.626063108444214,
    "status": "final",
    "text": "(177) Compliance with sectoral Union legislation, such as in the field of credit-scoring, antimoney laundering, etc., that specifies the type of data that can be used as relevant and necessary for the specific legitimate purpose of evaluation and ensures that the treatment is justified and proportionate to the social behaviour may thus ensure that the AI practice falls outside the scope of the prohibition in Article 5(1)(c) AI Act.\n\nExamples of legitimate scoring practices in line with Union and national law that are outside the scope of Article 5(1)(c) AI Act:\n\n- Financial credit scoring systems used by creditors or credit information agencies to assess a customer's financial creditworthiness or outstanding debts, providing a credit score or determining their creditworthiness assessment, which are based on the customer's income and expenses and other financial and economic circumstances, are out of scope of Article 5(1)(c) AI Act if they are relevant for the legitimate purpose of the credit scoring and if they comply with consumer protection laws 126 specifying the type of data and the necessary safeguards to ensure the fair treatment of consumers in creditworthiness assessments.\n\n- Companies have a legitimate interest to evaluate customers for financial fraud and those practices are not affected by the prohibition, if the evaluation is based on relevant data such as transactional behaviour and metadata in the context of the services, past history and other factors from sources that are objectively relevant to determine the risk of fraud and if the detrimental treatment is justified and proportionate as a consequence of the fraudulent behaviour.\n\n- Information collected through telematic devices that show that a driver is speeding or not maintaining safe driving practices used by an insurer that offers telematics-based tariffs in relation to a policyholder's high-risk driving behaviour may be used to increase the premium of that policyholder due to the higher risk of an accident caused by that driving behaviour, provided the increase in the premium is proportionate to the risky behaviour of the driver.\n\n125 Recital 31 AI Act.\n\n126 See in particular Directive (EU) 2023/2225 of 18 October 2023 on credit agreements for consumers and repealing Directive 2008/48/EC and the European Banking Authority' Guidelines on loan origination and monitoring from 29 May 2020, EBA/GL/2020/06.\n\n- The collection and processing of data that is relevant and necessary for the intended legitimate purpose of the AI systems (e.g. health and schizophrenic data collected from various sources to diagnose patients) is out of scope of Article 5(1)(c) AI Act, in particular because it process relevant and necessary data and typically does not entail unjustified detrimental or unfavourable treatment of certain natural persons.\n\n- Online platforms profiling users for safety reasons on their services based on data which is relevant for the context and purpose of assessment is out of scope of Article 5(1)(c) AI Act, when the evaluation does not result in detrimental treatment that is disproportionate to the gravity of the user's misbehaviour.\n\n- AI-enabled targeted commercial advertising is out of scope, where it is based on relevant data (e.g., users' preferences), it is done in line with Union law on consumer protection, data protection and digital services, and it does not result in detrimental or unfavourable treatment disproportionate to the gravity of the user's social behaviour (e.g., exploitative and unfair differential pricing).\n\n- AI systems using data collected in refugee camps (e.g., behavioural compliance) for decisions about resettlement or employment is not affected by the prohibition, given that this data is relevant for the purpose of assessment and provided that the procedures under applicable Union migration law are fulfilled to ensure the treatment is justified and proportionate.\n\n- AI-enabled scoring by an online shopping platform which offers privileges to users with a strong purchase history and a low rate of product returns, such as a faster returns application process or returnless refunds are out of scope of Article 5(1)(c) AI Act, given that the advantages are justified and proportionate to reward positive behaviour and other users continue to have access to the standard return process.\n\n- AI-evaluation and scoring of individuals by police and other law enforcement authorities that collect data about individuals' social behaviour from multiple contexts are out of scope of Article 5(1)(c) AI Act where those data are relevant for the specific purposes of the prevention, detection, prosecution and punishment of criminal offences, and where the detrimental treatment is justified and proportionate in accordance with substantive and procedural Union and national criminal and police law. It is also relevant to consider in this context the prohibition in Article 5(1)(d) AI Act, which imposes additional and more specific conditions for AI-enabled risk assessments and predictions of the likelihood of a person committing a criminal offence which must not be solely based on profiling or the assessment of personality traits (see section 5).",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 21
+   "vector_rank": 20
   },
   {
    "doc_key": "guide-prohibited",
@@ -300,13 +300,13 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:173",
    "reference_rank": null,
-   "score": 0.0192307692307692,
-   "similarity": 0.641343874771138,
+   "score": 0.0197435897435897,
+   "similarity": 0.645252346992493,
    "status": "final",
    "text": "(173) The prohibition in Article 5(1)(c) AI Act only applies to the scoring of natural persons or groups of persons, thus excluding in principle scoring of legal entities where the evaluation is not based on personal or personality characteristics or social behaviour of individuals, even if in some cases individuals may be indirectly impacted by the score (e.g., all citizens in a municipality in case of allocation of budget). However, if legal entities have been evaluated based on an overall score that aggregates the evaluation or classification of a group of natural persons based on their social behaviour or personal or personality characteristics and this score directly affects those persons (e.g. all employees in a company, students in a specific school whose behaviour has been evaluated), the practice may fall within the scope of Article 5(1)(c) AI Act if all other conditions are fulfilled. This will depend on a case-by-case assessment.",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 18
+   "vector_rank": 15
   },
   {
    "doc_key": "guide-prohibited",
@@ -319,13 +319,13 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:166",
    "reference_rank": null,
-   "score": 0.0172844954398352,
-   "similarity": 0.6026639995577401,
+   "score": 0.0185647685647686,
+   "similarity": 0.605750459603979,
    "status": "final",
    "text": "(166) In the first scenario described under Article 5(1)(c)(i) AI Act, the detrimental or unfavourable treatment resulting from the score must take place in social context(s) unrelated to the contexts in which the data was originally generated or collected. This implies not only that the persons may be treated in an unfavourable or detrimental manner due to the social score, but also that the data about their social behaviour or their known, inferred or predicted personal or personality characteristics are generated or collected in social contexts unrelated to the one in which the scoring takes place. The data collected or generated from these unrelated contexts must be subsequently used by the AI system for the scoring of the persons without an apparent connection for the purpose of the evaluation or classification or in a manner that leads to generalised surveillance of the persons or the groups of persons. In most cases, this happens against the reasonable expectations of the persons and in violation of Union data protection law and possibly other applicable rules that specify the types of data and sources considered relevant and necessary for the evaluation or classification. Whether this condition is fulfilled will require a case-by-case assessment, taking into account the purpose of the evaluation and the contexts from which the data has been collected and generated.\n\nExamples of detrimental or unfavourable treatment in unrelated social contexts prohibited under Article 5(1)(c)(i) AI Act\n\n- National tax authorities use an AI predictive tool on all taxpayers' tax returns in a country to select tax returns for closer inspection. The AI tool uses relevant variables, such as yearly income, assets (real estate property, cars etc.), data on family members of beneficiaries, but also unrelated data, such as taxpayers' social habits or internet connections, to single out specific individuals for inspections.\n\n- A social welfare agency uses an AI system to estimate the probability of fraud by beneficiaries of household allowances that relies on characteristics collected or inferred from social contexts with no apparent connection or relevance for the assessment of fraud, such as having a spouse of a certain nationality or ethnic origin, having an internet connection, behaviour on social platforms, or performance at the workplace, etc. 122 By contrast, data that is relevant for the allocation of the benefits and lawfully collected could be used to determine the risk of fraud, since public authorities pursue a legitimate aim in verifying if social benefits are correctly allocated.\n\n121 Recital 31 AI Act.\n\n- A public labour agency uses an AI system to score unemployed individuals based on an interview and an AI-based assessment for determining whether an individual should benefit from state support for employment. That score is based on relevant personal characteristics, such as age and education, but also variables collected or inferred from data and contexts with no apparent connection to the purpose of evaluation, such as marital status, health data for chronic diseases, addiction, etc. 123\n\nThese unacceptable scoring practices may be distinguished from lawful practices that evaluate persons for specific purpose in compliance with Union and national law, in particular when such laws, in compliance with EU law, specify the data considered as relevant and necessary for the purposes of evaluation (see section 4.3. out of scope).",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 43
+   "vector_rank": 31
   },
   {
    "doc_key": "guide-prohibited",
@@ -338,13 +338,13 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:160",
    "reference_rank": null,
-   "score": 0.0168111373785133,
-   "similarity": 0.605855024209945,
+   "score": 0.017283950617284,
+   "similarity": 0.6075208081342329,
    "status": "final",
    "text": "(160) For the prohibition in Article 5(1)(c) AI Act to apply, the social score created by or with the assistance of an AI system must lead to a detrimental or unfavourable treatment for the evaluated person or group of persons. In other words, the treatment must be the consequence of the score, and the score the cause of the treatment. Such a plausible causal link may also exist in cases where the harmful consequences have not yet materialised but the AI system is intended to or capable of producing such an adverse outcome. This is particularly relevant given that the prohibited practice in Article 5(1)(c) AI Act also covers the 'placing on the market' of such AI systems.\n\n117 See Recital 42 AI Act which lists some examples of such characteristics.\n\n118 Article 5(1)(d) AI Act.\n\n119 See Article 29 Working Party, Guidelines on Automated individual decision making and Profiling for the purposes of Regulation 2016/679, WP251rev.01, 6.2.2018, p. 7 et seq.",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 34
+   "vector_rank": 30
   },
   {
    "doc_key": "guide-prohibited",
@@ -357,16 +357,16 @@
    "law_version": null,
    "provision_id": "guide:guide-prohibited:para:9",
    "reference_rank": null,
-   "score": 0.0166383922745661,
-   "similarity": 0.6037575006485161,
+   "score": 0.0170818020960936,
+   "similarity": 0.604068768509484,
    "status": "final",
    "text": "(9) Overview on the Prohibitions\n\n| Provision | Prohibition | Content |\n|---|---|---|\n| Article 5(1)(a) | Harmful manipulation, and deception | AI systems that deploy subliminal techniques beyond a person's consciousness or purposefully manipulative or deceptive techniques, with the objective or with the effect of distorting behaviour, causing or reasonably likely to cause significant harm |\n| Article 5(1)(b) | Harmful exploitation of vulnerabilities | AI systems that exploit vulnerabilities due to age, disability or a specific social or economic situation, with the objective or with the effect of distorting behaviour, causing or reasonably likely to cause significant harm |\n| Article 5(1)(c) | Social scoring | AI systems that evaluate or classify natural persons or groups of persons based on social behaviour or personal or personality characteristics, with the |\n\n| | | social score leading to detrimental or unfavourable treatment when data comes from unrelated social contexts or such treatment is unjustified or disproportionate to the social behaviour |\n|---|---|---|\n| Article 5(1)(d) | Individual criminal offence risk assessment and prediction | AI systems that assess or predict the risk of people committing a criminal offence based solely on profiling or personality traits and characteristics; except to support a human assessment based on objective and verifiable facts directly linked to a criminal activity |\n| Article 5(1)(e) | Untargeted scraping to develop facial recognition databases | AI systems that create or expand facial recognition databases through untargeted scraping of facial images from the internet or closed-circuit television ('CCTV') footage |\n| Article 5(1)(f) | Emotion recognition | AI systems that infer emotions at the workplace or in education institutions; except for medical or safety reasons |\n| Article 5(1)(g) | Biometric categorisation | AI systems that categorise people based on their biometric data to deduce or infer their race, political opinions, trade union membership, religious or philosophical beliefs, sex-life or sexual orientation; except for labelling or filtering of lawfully acquired biometric datasets, including in the area of law enforcement |\n| Article 5(1)(h) | Real-time remote biometric identification ('RBI') | AI systems for real-time remote biometric identification in publicly accessible spaces for the purposes of law enforcement; except if necessary for the targeted search of specific victims, the prevention of specific threats including terrorist attacks, or the search of suspects of specific offences (further procedural requirements, including for authorisation, outlined in Article 5(2- 7) AI Act). |",
    "valid_from": "2025-02-04",
    "valid_to": null,
-   "vector_rank": 37
+   "vector_rank": 33
   }
  ],
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"guidance\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"transparency\"}": [
+ "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"guidance\": \"We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.\\n\\nAnswers to follow-up questions:\\n- eu_link: Is the tool used in or placed on the market in the EU, or are its outputs used there? Yes.\\n- for_public_authority: Is the system meant for use by public authorities? No.\", \"language\": \"en\", \"law_version\": \"amended\", \"node\": \"transparency\"}": [
   {
    "doc_key": "guide-art50",
    "doc_type": "guideline",
@@ -379,7 +379,7 @@
    "provision_id": "guide:guide-art50:para:14",
    "reference_rank": null,
    "score": 0.0227079796264856,
-   "similarity": 0.675368587694681,
+   "similarity": 0.673133432865143,
    "status": "final",
    "text": "(14) Where the deployer of an AI system is a legal person under whose authority the system is used (e.g. an advertising company), the individual employees that act under the instructions and under the control of that legal person (e.g. digital animators, web designers, content creators, journalists) should not be considered as separate deployers for that system. A legal person remains a deployer even if it involves third parties (e.g. contractors, freelancers) in the operation of the system on its behalf and under its responsibility and control.\n\nFor example, a media outlet established in the Union, whose editors use an AI system to support their written coverage of current events with AI-generated text publications on matters of public interests posted on a globally accessible website, is a deployer falling within the scope of the AI Act. Similarly, a company established in a third country that uses an AI system to generate a deep fake of a celebrity featured in an advertisement displayed in the Union is also a deployer falling within the scope of the AI Act.\n\n( 5 ) Article 3(4) AI Act.\n\n( 6 ) Article 2(1)(b) and (c) AI Act.\n\nBy contrast, a company that merely commissions an advertising agency to produce an advertisement, without taking decisions and exercising control over whether and how the advertising agency uses AI in the production process, is not a deployer.",
    "valid_from": "2026-07-20",
@@ -398,7 +398,7 @@
    "provision_id": "guide:guide-art50:para:65",
    "reference_rank": null,
    "score": 0.0214285714285714,
-   "similarity": 0.609293813344283,
+   "similarity": 0.6065023126155831,
    "status": "final",
    "text": "(65) Furthermore, an AI system's output that merely reproduces existing content or enables the presentation or arrangement of already existing content is not covered by\n\nArticle 50(2) AI Act. This may be the case, e.g., for music playlists or other recommender systems that only select or rank existing content based on user preferences or activity, without creating anything new or manipulating the content itself. The same applies to AI systems used in internal analytical processes that extract and structure data, but do not summarise it.",
    "valid_from": "2026-07-20",
@@ -417,7 +417,7 @@
    "provision_id": "guide:guide-art50:para:15",
    "reference_rank": null,
    "score": 0.0211993888464477,
-   "similarity": 0.614957369265401,
+   "similarity": 0.611352741718292,
    "status": "final",
    "text": "(15) Operators (e.g. providers and deployers) may fulfil more than one role concurrently in relation to an AI system. For example, a company might develop an in-house generative AI system and use it for the generation of deep fakes. In such a case, it will qualify as both a provider and a deployer that must ensure compliance with the machine-readable marking obligations under Article 50(2) and the requirements for a clear and perceivable labelling of the deep fakes under Article 50(4) AI Act.",
    "valid_from": "2026-07-20",
@@ -436,7 +436,7 @@
    "provision_id": "guide:guide-art50:para:11",
    "reference_rank": null,
    "score": 0.0211594202898551,
-   "similarity": 0.614156635724997,
+   "similarity": 0.608825738027015,
    "status": "final",
    "text": "(11) Providers must ensure their interactive or generative AI systems have transparency embedded into the system's design and operation and ensure all relevant transparency obligations in Articles 50(1), (2) and (5) AI Act are met at the latest when those systems are placed on the market or put into service. All natural persons interacting with the AI system or exposed to its outputs in scope must be effectively and consistently informed throughout the lifecycle of the AI system, as placed on the market or put into service by that provider (irrespective of who the deployers or other users of the system are).\n\nFor example, a company provides a generative or interactive AI application (e.g. a chatbot, image generator, AI agent) on the Union market under its own name or trademark to consumers, professional users or other legal entities who may directly use the AI system for interaction or content generation (including by integrating the system into their existing processes and using it accordingly without the need for modifications or additional components). The company is a provider responsible for compliance with the transparency obligations in Article 50(1) and/or (2) AI Act, regardless of whether the AI system is provided for free or for payment and regardless of whether the provider is established or located in the Union or in a third country.\n\nAnother example of a provider is a company or another organisation (e.g. a public authority) that has developed an interactive AI system (e.g. chatbot) in-house and puts it into service in the Union for its own use and under its name or trademark.\n\n( 3 ) Articles 2(1)(a), 3(3), (9) and (11) AI Act. For further guidance on the concepts of placing on the market, putting into service and use, see the Commission Guidelines on the prohibited artificial intelligence practices, C(2025) 5052 and Commission Notice - The 'Blue Guide' on the implementation of EU product rules 2022, 2022/C 247/01, Section 2.\n\n( 4 ) Article 2(1)(c) and recital 22 AI Act.\n\nIf a company takes an already existing generative AI system placed on the market by another provider and modifies that system (e.g. with new training data), which it afterwards puts into service under its own name or trade market, then that company becomes a provider of the new system without prejudice to the responsibility of the provider of the initial AI system for the latter.",
    "valid_from": "2026-07-20",
@@ -454,13 +454,13 @@
    "law_version": null,
    "provision_id": "guide:guide-art50:para:30",
    "reference_rank": null,
-   "score": 0.0206793206793207,
-   "similarity": 0.593581943747691,
+   "score": 0.020350535540409,
+   "similarity": 0.5889063407993049,
    "status": "final",
    "text": "(30) Four elements must be present for a system to fall within the scope of Article 50(1) AI Act: (i) the system must be an AI system, (ii) intended to interact, (iii) directly, (iv) with natural persons.\n\ni. An AI system: The system must fulfil the elements of the AI system definition ( 18 ), which excludes simple non-AI automated response mechanisms (e.g., traditional out-of-office emails, rule-based quick message answers).\n\nii. Intended to interact: The AI system must be intended to interact with natural persons. Interaction entails the capability of a bidirectional exchange of information or actions between natural persons and the AI system with a genuine conversational or responsive character. It can occur in various forms (e.g. auditory, visual and physical). Natural persons should be able to provide input (e.g., written text or other forms of content, voice, or physical actions) to the AI system (e.g. via technical communication means including online interfaces, phone or e-mail, or directly), while the AI system should be capable of responding with contextual output (including any type of content or actions) and vice-versa. The interaction may cover any type of output or format that can be perceived and understood by humans. It does not have to be initiated by a human; it may also cover AI content or actions eliciting a human response. The interaction may be a one-time exchange (e.g. single prompt followed with a single reply) or take place over a certain period time (multiturn). Systems that only passively collect data and are not capable of engaging in an exchange with natural persons (e.g. automated facial-recognition access controls) or just collect one-time feedback (e.g. spam filters), are not considered to interact with natural persons.\n\niii. Direct interaction: The interaction between the AI system and the natural persons must be direct. This typically involves real-time or near real-time interaction (including through capabilities of the system to write and send messages to natural persons or otherwise interact with the physical or virtual environment that can be perceived by natural persons). Direct interaction excludes indirect or mediated human interaction where a natural person is exposed to AI outputs without directly interacting with the system (for example, if customer service representatives use AI assistance tools to help them communicate with natural persons or if the AI output is not made available to the person by the AI system itself, but by another person disseminating the content). However, the mere possibility for humans to intervene or review the AI system's outputs should not be used to circumvent the application of the disclosure requirement under Article 50(1) AI Act. Cases of products and services blending AI-generated responses with human-curated content fall within the scope of Article 50(1) AI Act and require disclosure for the specific outputs in the interaction that are AI-generated, unless those AI outputs have been properly reviewed and sent by humans as the main interlocutors with the natural persons.\n\n( 18 ) See Article 3(1) AI Act. For further guidance on the concept of AI system, see Commission Guidelines on the definition of an AI system, 29.7.2025, C(2025) 5053 final.\n\niv. With natural persons: Article 50(1) AI Act requires that the AI system interacts with natural persons. Those persons may be professional deployers, other users (also using the system for purely personal activities) or other persons using the system on their behalf. AI systems that operate in a closed physical environment (such as part of an industrial machinery set-up), backend machine-to-machine calls between AI systems (including AI agents) whose outputs are not intended to reach natural person, or virtual environments without any direct contact with natural persons are excluded from the scope of the obligation.",
    "valid_from": "2026-07-20",
    "valid_to": null,
-   "vector_rank": 17
+   "vector_rank": 19
   },
   {
    "doc_key": "guide-art50",
@@ -474,7 +474,7 @@
    "provision_id": "guide:guide-art50:para:87",
    "reference_rank": null,
    "score": 0.0186053783614759,
-   "similarity": 0.5866276550258089,
+   "similarity": 0.584308403262747,
    "status": "final",
    "text": "(87) There may also be limited cases of \"industrial AI applications\" or \"business to business applications\" (excluding public and consumer-facing AI systems) where the proportionality principle and the limited benefits for the transparency objectives means that no marking and detection of AI-generated or manipulated outputs is required. This applies only if the following requirements are met cumulatively:\n\ni. The AI system's generated output is strictly technical in nature, for example engineering designs, industrial production workflows, technical instructions, output generated as a result of predictive system maintenance processes in industrial settings, internal documentation processes or production steps and workflows before the output is finalised and made available to other external persons or the public.\n\nii. The AI system's generated output is only intended to be perceived and processed by a limited pre-defined number of natural persons acting in a professional capacity within the organisation of the provider and the deployer.\n\niii. The AI system's generated output must not be intended to be shared outside the company or to be usable by external persons, with appropriate safeguards in place to avoid reasonably foreseeable misuse (e.g. cloud isolation, role-based controls).",
    "valid_from": "2026-07-20",
@@ -493,7 +493,7 @@
    "provision_id": "guide:guide-art50:para:91",
    "reference_rank": null,
    "score": 0.0180722891566265,
-   "similarity": 0.586514083521677,
+   "similarity": 0.58336322754889,
    "status": "final",
    "text": "(91) The second exception applies where an AI system does not substantially alter the input data provided by the deployer or the semantics thereof. An alteration should be considered substantial if the input data or its semantics have been manipulated significantly by the AI system during its output generation process. This must be based on an assessment of relevant factors, such as the format, media content type, style and changes in the content that affect its meaning, style or intent. Whether that is the case requires a case-specific assessment.",
    "valid_from": "2026-07-20",
@@ -511,13 +511,13 @@
    "law_version": null,
    "provision_id": "guide:guide-art50:para:51",
    "reference_rank": null,
-   "score": 0.0170502983802217,
-   "similarity": 0.5678558688077859,
+   "score": 0.0172463768115942,
+   "similarity": 0.5666940808296199,
    "status": "final",
    "text": "(51) The DSA also includes transparency requirements for online platforms' recommender systems, including a requirement to explain the main ranking parameters. These obligations are complementary to the transparency obligations laid down in Article 50(1) AI Act, since they have a different scope and purpose and concern systems that, in principle, do not interact directly with users within the meaning of Article 50(1) AI Act.",
    "valid_from": "2026-07-20",
    "valid_to": null,
-   "vector_rank": 42
+   "vector_rank": 40
   }
  ],
  "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"annex:I:A:1\"}": {
@@ -1243,7 +1243,7 @@
   "valid_from": "2026-07-27",
   "valid_to": null
  },
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"art:2:3\"}": {
+ "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"art:2:12\"}": {
   "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
   "doc_key": "ai-act-consolidated",
   "doc_type": "law",
@@ -1252,24 +1252,9 @@
   "heading": "Article 2 — Scope",
   "language": "en",
   "law_version": "amended",
-  "provision_id": "art:2:3",
+  "provision_id": "art:2:12",
   "status": "consolidated",
-  "text": "This Regulation does not apply to areas outside the scope of Union law, and shall not, in any event, affect the competences of the Member States concerning national security, regardless of the type of entity entrusted by the Member States with carrying out tasks in relation to those competences.\nThis Regulation does not apply to AI systems where and in so far they are placed on the market, put into service, or used with or without modification exclusively for military, defence or national security purposes, regardless of the type of entity carrying out those activities.\nThis Regulation does not apply to AI systems which are not placed on the market or put into service in the Union, where the output is used in the Union exclusively for military, defence or national security purposes, regardless of the type of entity carrying out those activities.",
-  "valid_from": "2026-07-27",
-  "valid_to": null
- },
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"art:2:6\"}": {
-  "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
-  "doc_key": "ai-act-consolidated",
-  "doc_type": "law",
-  "document_title": "AI Act, consolidated text as of 27 July 2026",
-  "english_only": false,
-  "heading": "Article 2 — Scope",
-  "language": "en",
-  "law_version": "amended",
-  "provision_id": "art:2:6",
-  "status": "consolidated",
-  "text": "This Regulation does not apply to AI systems or AI models, including their output, specifically developed and put into service for the sole purpose of scientific research and development.",
+  "text": "This Regulation does not apply to AI systems released under free and open-source licences, unless they are placed on the market or put into service as high-risk AI systems or as an AI system that falls under Article 5 or 50.",
   "valid_from": "2026-07-27",
   "valid_to": null
  },
@@ -1423,6 +1408,36 @@
   "valid_from": "2026-07-27",
   "valid_to": null
  },
+ "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"recital:102\"}": {
+  "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
+  "doc_key": "ai-act",
+  "doc_type": "law",
+  "document_title": "Regulation (EU) 2024/1689 (AI Act)",
+  "english_only": false,
+  "heading": null,
+  "language": "en",
+  "law_version": "original",
+  "provision_id": "recital:102",
+  "status": "final",
+  "text": "Software and data, including models, released under a free and open-source licence that allows them to be openly shared and where users can freely access, use, modify and redistribute them or modified versions thereof, can contribute to research and innovation in the market and can provide significant growth opportunities for the Union economy. General-purpose AI models released under free and open-source licences should be considered to ensure high levels of transparency and openness if their parameters, including the weights, the information on the model architecture, and the information on model usage are made publicly available. The licence should be considered to be free and open-source also when it allows users to run, copy, distribute, study, change and improve software and data, including models under the condition that the original provider of the model is credited, the identical or comparable terms of distribution are respected.",
+  "valid_from": "2024-08-01",
+  "valid_to": null
+ },
+ "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"recital:103\"}": {
+  "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
+  "doc_key": "ai-act",
+  "doc_type": "law",
+  "document_title": "Regulation (EU) 2024/1689 (AI Act)",
+  "english_only": false,
+  "heading": null,
+  "language": "en",
+  "law_version": "original",
+  "provision_id": "recital:103",
+  "status": "final",
+  "text": "Free and open-source AI components covers the software and data, including models and general-purpose AI models, tools, services or processes of an AI system. Free and open-source AI components can be provided through different channels, including their development on open repositories. For the purposes of this Regulation, AI components that are provided against a price or otherwise monetised, including through the provision of technical support or other services, including through a software platform, related to the AI component, or the use of personal data for reasons other than exclusively for improving the security, compatibility or interoperability of the software, with the exception of transactions between microenterprises, should not benefit from the exceptions provided to free and open-source AI components. The fact of making AI components available through open repositories should not, in itself, constitute a monetisation.",
+  "valid_from": "2024-08-01",
+  "valid_to": null
+ },
  "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"recital:12\"}": {
   "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
   "doc_key": "ai-act",
@@ -1435,36 +1450,6 @@
   "provision_id": "recital:12",
   "status": "final",
   "text": "The notion of ‘AI system’ in this Regulation should be clearly defined and should be closely aligned with the work of international organisations working on AI to ensure legal certainty, facilitate international convergence and wide acceptance, while providing the flexibility to accommodate the rapid technological developments in this field. Moreover, the definition should be based on key characteristics of AI systems that distinguish it from simpler traditional software systems or programming approaches and should not cover systems that are based on the rules defined solely by natural persons to automatically execute operations. A key characteristic of AI systems is their capability to infer. This capability to infer refers to the process of obtaining the outputs, such as predictions, content, recommendations, or decisions, which can influence physical and virtual environments, and to a capability of AI systems to derive models or algorithms, or both, from inputs or data. The techniques that enable inference while building an AI system include machine learning approaches that learn from data how to achieve certain objectives, and logic- and knowledge-based approaches that infer from encoded knowledge or symbolic representation of the task to be solved. The capacity of an AI system to infer transcends basic data processing by enabling learning, reasoning or modelling. The term ‘machine-based’ refers to the fact that AI systems run on machines. The reference to explicit or implicit objectives underscores that AI systems can operate according to explicit defined objectives or to implicit objectives. The objectives of the AI system may be different from the intended purpose of the AI system in a specific context. For the purposes of this Regulation, environments should be understood to be the contexts in which the AI systems operate, whereas outputs generated by the AI system reflect different functions performed by AI systems and include predictions, content, recommendations or decisions. AI systems are designed to operate with varying levels of autonomy, meaning that they have some degree of independence of actions from human involvement and of capabilities to operate without human intervention. The adaptiveness that an AI system could exhibit after deployment, refers to self-learning capabilities, allowing the system to change while in use. AI systems can be used on a stand-alone basis or as a component of a product, irrespective of whether the system is physically integrated into the product (embedded) or serves the functionality of the product without being integrated therein (non-embedded).",
-  "valid_from": "2024-08-01",
-  "valid_to": null
- },
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"recital:24\"}": {
-  "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
-  "doc_key": "ai-act",
-  "doc_type": "law",
-  "document_title": "Regulation (EU) 2024/1689 (AI Act)",
-  "english_only": false,
-  "heading": null,
-  "language": "en",
-  "law_version": "original",
-  "provision_id": "recital:24",
-  "status": "final",
-  "text": "If, and insofar as, AI systems are placed on the market, put into service, or used with or without modification of such systems for military, defence or national security purposes, those should be excluded from the scope of this Regulation regardless of which type of entity is carrying out those activities, such as whether it is a public or private entity. As regards military and defence purposes, such exclusion is justified both by Article 4(2) TEU and by the specificities of the Member States’ and the common Union defence policy covered by Chapter 2 of Title V TEU that are subject to public international law, which is therefore the more appropriate legal framework for the regulation of AI systems in the context of the use of lethal force and other AI systems in the context of military and defence activities. As regards national security purposes, the exclusion is justified both by the fact that national security remains the sole responsibility of Member States in accordance with Article 4(2) TEU and by the specific nature and operational needs of national security activities and specific national rules applicable to those activities. Nonetheless, if an AI system developed, placed on the market, put into service or used for military, defence or national security purposes is used outside those temporarily or permanently for other purposes, for example, civilian or humanitarian purposes, law enforcement or public security purposes, such a system would fall within the scope of this Regulation. In that case, the entity using the AI system for other than military, defence or national security purposes should ensure the compliance of the AI system with this Regulation, unless the system is already compliant with this Regulation. AI systems placed on the market or put into service for an excluded purpose, namely military, defence or national security, and one or more non-excluded purposes, such as civilian purposes or law enforcement, fall within the scope of this Regulation and providers of those systems should ensure compliance with this Regulation. In those cases, the fact that an AI system may fall within the scope of this Regulation should not affect the possibility of entities carrying out national security, defence and military activities, regardless of the type of entity carrying out those activities, to use AI systems for national security, military and defence purposes, the use of which is excluded from the scope of this Regulation. An AI system placed on the market for civilian or law enforcement purposes which is used with or without modification for military, defence or national security purposes should not fall within the scope of this Regulation, regardless of the type of entity carrying out those activities.",
-  "valid_from": "2024-08-01",
-  "valid_to": null
- },
- "{\"as_of\": \"2026-10-06\", \"exclude_source_example_ids\": [], \"language\": \"en\", \"law_version\": \"amended\", \"lookup\": \"recital:25\"}": {
-  "disclaimer": "This is guidance, not legal advice. It is based only on the description provided and the version of the AI Act shown. Have decisions with legal consequences reviewed by a lawyer.",
-  "doc_key": "ai-act",
-  "doc_type": "law",
-  "document_title": "Regulation (EU) 2024/1689 (AI Act)",
-  "english_only": false,
-  "heading": null,
-  "language": "en",
-  "law_version": "original",
-  "provision_id": "recital:25",
-  "status": "final",
-  "text": "This Regulation should support innovation, should respect freedom of science, and should not undermine research and development activity. It is therefore necessary to exclude from its scope AI systems and models specifically developed and put into service for the sole purpose of scientific research and development. Moreover, it is necessary to ensure that this Regulation does not otherwise affect scientific research and development activity on AI systems or models prior to being placed on the market or put into service. As regards product-oriented research, testing and development activity regarding AI systems or models, the provisions of this Regulation should also not apply prior to those systems and models being put into service or placed on the market. That exclusion is without prejudice to the obligation to comply with this Regulation where an AI system falling into the scope of this Regulation is placed on the market or put into service as a result of such research and development activity and to the application of provisions on AI regulatory sandboxes and testing in real world conditions. Furthermore, without prejudice to the exclusion of AI systems specifically developed and put into service for the sole purpose of scientific research and development, any other AI system that may be used for the conduct of any research and development activity should remain subject to the provisions of this Regulation. In any event, any research and development activity should be carried out in accordance with recognised ethical and professional standards for scientific research and should be conducted in accordance with applicable Union law.",
   "valid_from": "2024-08-01",
   "valid_to": null
  }
