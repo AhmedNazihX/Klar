@@ -118,6 +118,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── answers.py           fixed answers for the downgrade rate's second run, `run --answers-from` (V8)
 │   │   │   ├── gap.py               held-out vs in-corpus gap of two stored runs; `aiact evaluate gap` (V8)
 │   │   │   ├── held_out_hits.py     held-out rows a stored run's traces retrieved; `aiact evaluate held-out-hits` (V8)
+│   │   │   ├── appliedai_review.py  an appliedai run's disagreements, the user's verdicts read back, accuracy
+│   │   │   │                        before and after the outdated labels (V9); appliedai_review_report.py: the
+│   │   │   │                        markdown; appliedai_review_command.py: `aiact evaluate appliedai-review` (V9)
 │   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
 │   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
 │   │   │   ├── judge.py             the judge: Jev's probability of yes first, the pinned backup LLM judge for
@@ -247,6 +250,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                answers.jsonl and report.md (written by `aiact evaluate judge-validation`), README.md
 │   ├── reports/                     run-<date>.md, label_disagreements.md, final.md… (B9, B12, V8–V10, W1);
 │   │                                label_filter_answers.jsonl: the second model's answers (B9)
+│   │                                appliedai_review.md: the appliedAI disagreement review and the user's verdicts (V9)
 │   │   └── pile_b/                  label_filter_answers.jsonl and label_disagreements.md for commission_b
 │   │                                only: Pile B's labels and the second model's reasons (B9). The Engine
 │   │                                lane denies this folder; no cb-* id goes in the files above it
