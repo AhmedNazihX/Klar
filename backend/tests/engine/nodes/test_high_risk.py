@@ -94,7 +94,6 @@ from tests.engine.nodes.corpus_recording import (
     require_recording,
 )
 from tests.engine.nodes.known_gaps import (
-    E21_PROMPT_RECORDING_PENDING,
     NOT_ASSESSED,
     KnownGap,
     expect_known_gap,
@@ -1761,7 +1760,6 @@ def replay_check(
         yield check
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_worked_example(replay_check: HighRiskCheck) -> None:
     """INIT's worked example: recruitment use, and ranking is profiling, so no Art. 6(3)."""
@@ -1943,7 +1941,6 @@ def assert_the_screens_fields(
         assert [item.kind for item in question.settled_by] == [SettledByKind.GUIDANCE]
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "case",
@@ -2003,7 +2000,6 @@ def _original_replay(case_id: str, replay_check: HighRiskCheck) -> CheckOutcome:
     return result
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_machinery_guard_is_annex_i_section_a(
     original_replay_check: HighRiskCheck,
@@ -2021,7 +2017,6 @@ def test_replay_original_machinery_guard_is_annex_i_section_a(
     assert "Art. 2 Abs. 2" not in step.decision, shown  # the case is German
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 def test_replay_original_radio_check_reads_no_art_6_1a_to_1c(
     original_replay_check: HighRiskCheck,
@@ -2072,7 +2067,6 @@ def e18_replay_check(
         yield check
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_CASES, ids=lambda case: case.id)
 def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
@@ -2091,19 +2085,15 @@ def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 
 E18_POSITIVE_CASES = negative_cases("h4-positive")
-"""H4's counterweights: a component on a road bridge whose own output detects that a load-bearing
+"""H4's counterweight: a component on a road bridge whose own output detects that a load-bearing
 part needs inspection, and closes the lane until it is done, is a safety component (guide-annex-iii
-para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2. E21's gas-main fixture
-only detects (para 184(b)): its own output finds the pipe sections that need inspection or repair
-and ranks them, and acts on nothing, so E21's narrowed planning rule must not take it out of
-point 2 either."""
+para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
-    """Each H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
+    """The H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
     exemption."""
     run_state = replay_state(case, AS_OF)
     result = e18_replay_check(run_state)
@@ -2119,8 +2109,7 @@ def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 def test_h4_has_its_positive_fixture() -> None:
     assert [case.id for case in E18_POSITIVE_CASES] == [
-        "fixture-e18-h4-positive-bridge-bearing-wear",
-        "fixture-e21-h4-positive-gas-main-corrosion",
+        "fixture-e18-h4-positive-bridge-bearing-wear"
     ]
 
 
@@ -2192,15 +2181,28 @@ def own_f_replay_check(
         yield check
 
 
-OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {}
-"""own/f cases whose recorded outcome differs from the label (`KNOWN_GAPS`, for own/f). E21
-removed own-f-07's (Annex III point 2 assumed until the utility says whether it is a critical
-entity under the CER Directive): the H4 rule in high_risk.md says a tool that ranks assets for
-longer-term investment or renewal planning, without monitoring the infrastructure in operation,
-is no safety component, whatever the operator's status."""
+def _assumes_high_risk_on_point_2(result: CheckOutcome, case: BenchmarkCase) -> bool:
+    """High-risk assumed on Annex III point 2 until a fact is answered: over-strict, never a
+    false low risk."""
+    return (
+        result.step.status is Status.NEEDS_MORE_INFORMATION
+        and result.high_risk_route is HighRiskRoute.ANNEX_III
+        and result.annex_point == "annex:III:2"
+    )
 
 
-@E21_PROMPT_RECORDING_PENDING
+OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {
+    "own-f-07-water-mains-renewal-plan": KnownGap(
+        "Annex III point 2: the guidelines leave the line between a maintenance-need detector "
+        "(para 184(b)) and a supporting predictive-maintenance tool beside independent safety "
+        "systems (ex:065, ex:068) open for a renewal planner; the user kept it as a known gap "
+        "(E21, 2026-10-15, option A)",
+        _assumes_high_risk_on_point_2,
+    ),
+}
+"""own/f cases whose recorded outcome differs from the label (`KNOWN_GAPS`, for own/f)."""
+
+
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", OWN_F_CASES, ids=lambda case: case.id)
 def test_own_f_replay(case: BenchmarkCase, own_f_replay_check: HighRiskCheck) -> None:
@@ -2311,38 +2313,3 @@ def test_the_prompt_states_the_e20_exemption_rule() -> None:
     start = flat.index("- `third_party_assessment`:")
     assert start < flat.index(E20_RULE) < flat.index("## question")
     assert E20_ORIGINAL_RULE in " ".join(node.ORIGINAL_INSTRUCTIONS.split())
-
-
-E21_H4_RULE = (
-    "What divides the two is what the system watches and when its output matters. A safety "
-    "component watches or checks the infrastructure in operation and flags a near-term danger, or "
-    "a near-term need for maintenance or inspection, whose omission may directly lead to such harm "
-    "or damage (guidelines, paragraphs 180 and 184(b)). A tool that is not a component of the "
-    "infrastructure, does not monitor it in operation, and ranks or selects assets for "
-    "longer-term investment or renewal planning, while separate operational systems detect "
-    "dangers and respond to them, only informs the operator's decisions and is not a safety "
-    "component, even when its ranking comes from its own failure-likelihood model (paragraph "
-    '181): answer `uses` "no" for point 2. That holds whether or not the operator is a critical '
-    "entity under the CER Directive: that status only limits point 2 to the safety components a "
-    "critical entity uses (paragraph 190), it never makes a tool a safety component, so don't ask "
-    "about it for such a tool. A system that watches the infrastructure in operation and detects "
-    "such a danger or need stays a safety component (paragraph 184), even when it also ranks or "
-    "schedules the work."
-)
-"""E21's H4 rule (guide-annex-iii paras 180, 181, 184(b) and 190), as high_risk.md words it: the
-deciding features (monitoring in operation and a near-term need, against longer-term planning
-beside separate operational systems), so it never overrides the para 184(b) detector rule just
-before it, even for a planner with its own failure-likelihood model (E21 reviews)."""
-
-
-def test_the_prompt_states_the_e21_planning_rule() -> None:
-    """The rule sits in point 2's bullet, after the safety component it refers to ("such a
-    component") and before the next section. The original text's request sends the same
-    instructions, and its overlay leaves point 2 alone: Annex III point 2 reads the same in both
-    texts, and the rule rests on the guidelines, not on the sentence the Omnibus added to Art.
-    3(14)."""
-    flat = " ".join(node.HIGH_RISK_INSTRUCTIONS.split())
-    assert E21_H4_RULE in flat
-    detects = flat.index("A component in the infrastructure whose output detects")
-    assert detects < flat.index(E21_H4_RULE) < flat.index("## art_6_3")
-    assert "point 2" not in node.ORIGINAL_INSTRUCTIONS

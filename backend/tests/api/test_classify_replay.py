@@ -19,7 +19,7 @@ from tests.api.conftest import BASE_URL, FULL_RUN, TEST_HOST, outline, sse_event
 from tests.conftest import RECORDINGS_DIR
 from tests.engine.built_corpus import built_validator
 from tests.engine.nodes.corpus_recording import corpus_recording
-from tests.engine.nodes.known_gaps import E21_PROMPT_RECORDING_PENDING, raise_if_recording_stale
+from tests.engine.nodes.known_gaps import raise_if_recording_stale
 from tests.engine.replayed_engine import LUNA, LUNA_PROVIDER, LiveCorpus, recorded_libraries
 from tests.engine.test_classify_worked_example import (
     AS_OF,
@@ -81,7 +81,6 @@ def replay_nodes(record_mode: str) -> Iterator[NodeBuilder]:
 STALE = f"{CASSETTE} is stale; re-record it with `{RECORD_COMMAND}`"
 
 
-@E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.anyio
 async def test_the_worked_example_streams_every_step_then_the_expected_result(

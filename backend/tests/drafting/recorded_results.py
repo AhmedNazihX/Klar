@@ -45,7 +45,6 @@ from tests.engine.nodes.corpus_recording import (
     RecordingPendingError,
     corpus_recording,
 )
-from tests.engine.nodes.known_gaps import STALE_RECORDING_ERRORS
 from tests.engine.nodes.test_high_risk import RecordedHighRiskLibrary
 
 LUNA = "openai/gpt-6-luna-20260922"
@@ -130,14 +129,12 @@ def _deployer_step() -> CheckOutcome:
 
 AMBIGUOUS_RECORDING_PENDING = pytest.mark.xfail(
     strict=True,
-    raises=STALE_RECORDING_ERRORS,
+    raises=RecordingPendingError,
     reason="recording pending (orchestrator): E20's re-record of own-e-09 settles its "
     "safety-component question (a known gap in test_high_risk.py, run-to-run variance), so no "
-    "recorded result is legally ambiguous, and E21's high-risk prompt left its recording stale; "
-    "re-record own-e-09 there",
+    "recorded result is legally ambiguous; re-record own-e-09 there",
 )
-"""The tests on the recorded ambiguous result, while own-e-09's recording isn't ambiguous or is
-stale (a stale one fails before the result is read)."""
+"""The tests on the recorded ambiguous result, while own-e-09's recording isn't ambiguous."""
 
 
 def recorded_ambiguous_result(settings: Settings, record_mode: str) -> ClassificationResult:
