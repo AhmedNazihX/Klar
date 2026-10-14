@@ -47,3 +47,18 @@ then, before any case is scored.
   limitation if the checker doesn't cover the 2025–26 amendments (for example the December 2026 prohibitions in
   the own cases).
 - Revisit if the Commission checker is withdrawn or changes its outcomes during the runs.
+
+## Implementation (V10a, for the user to confirm)
+- **Where the files live.** The draw, the answer sheet, the report and the screenshots are in
+  `eval/reports/pile_b/` (`head_to_head_draw.json`, `head_to_head.yaml`, `head_to_head.md`, `head_to_head/`),
+  not `eval/reports/`: they name Pile B cases with their labels, and the user's answers retell each case, so they
+  go where the Engine lane can't read them (docs/LAYOUT.md: no cb-* id above `pile_b/`).
+- **The draw.** Seed 20261014, 25 cases from the cases as tagged `labels-v1` (be072f0), read from the tag itself.
+  "Stratified by risk class" is an even split: five per class, since the pool has all five. Each engine step is
+  served first (two cases each, within the class shares), then each class is filled by a seeded sample. A case
+  exercises a step by its own category (a–f) or Commission Annex area, by a class only one step gives (out of
+  scope, prohibited, limited risk), and Art. 6(3) when its basis is the filter or it cites a lettered condition.
+  `aiact evaluate head-to-head draw` reproduces it and refuses a different one.
+- **Scoring.** The checker's class is scored against the current labels (a later change has its LABEL_CHANGES
+  row), with `metrics.class_match` and `metrics.class_too_low`, the bare-class forms of `risk_class_match` and
+  `false_low_risk`; V10b scores the engine column with the same code.

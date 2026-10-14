@@ -215,17 +215,34 @@ def risk_class_match(outcome: Outcome) -> bool | None:
             return False
         score = score_appliedai(label, result.risk_class, result.status)
         return None if score.is_counted_separately else score.is_match
+    return class_match(outcome.case, result.risk_class if result is not None else None)
+
+
+def class_match(case: BenchmarkCase, risk_class: RiskClass | None) -> bool | None:
+    """`risk_class_match` on a bare class, for an answer that is no `ClassificationResult` (the
+    head-to-head checker's, V10): None (no class, or no answer) is a miss. An appliedAI label is
+    scored on a result's status too, so it is refused here."""
+    label = case.label
+    if not isinstance(label, CaseLabel):
+        raise ValueError(f"case {case.id}: an appliedAI label needs a result's status")
     if label.status is Status.LEGALLY_AMBIGUOUS or label.expects_description:
         return None
-    return result is not None and result.risk_class in accepted_classes(outcome.case, label)
+    return risk_class is not None and risk_class in accepted_classes(case, label)
 
 
 def false_low_risk(outcome: Outcome) -> bool | None:
     """Whether a high-risk or prohibited system was classified lower (the costliest error)."""
-    expected, result = _unsafe_label_class(outcome.case), outcome.result
-    if expected is None or result is None or result.risk_class is None:
+    result = outcome.result
+    return class_too_low(outcome.case, result.risk_class if result is not None else None)
+
+
+def class_too_low(case: BenchmarkCase, risk_class: RiskClass | None) -> bool | None:
+    """`false_low_risk` on a bare class (V10): None when the label isn't high-risk or prohibited,
+    or no class was given (none was shown, so none was shown too low)."""
+    expected = _unsafe_label_class(case)
+    if expected is None or risk_class is None:
         return None
-    return RISK_RANK[result.risk_class] < RISK_RANK[expected]
+    return RISK_RANK[risk_class] < RISK_RANK[expected]
 
 
 def annex_point_match(outcome: Outcome) -> bool | None:

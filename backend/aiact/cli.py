@@ -26,6 +26,7 @@ from aiact.eval import (
     answers,
     citation_index,
     gap,
+    head_to_head_command,
     held_out_hits,
     isolation,
     judge_report,
@@ -303,6 +304,7 @@ def eval_() -> None:
 
 
 eval_app.command("judged")(judged_command.judged)
+eval_app.add_typer(head_to_head_command.app, name="head-to-head")
 
 
 @eval_app.command("academic-import")
