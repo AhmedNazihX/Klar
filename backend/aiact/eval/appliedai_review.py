@@ -41,11 +41,24 @@ REVIEW_FILE = EVAL_DIR / "reports" / "appliedai_review.md"
 ANNEX_I_TAG = "annex_i"
 FUNCTION_PREFIX = "function:"
 NO_FUNCTION = "(none)"
+TITLE = "# appliedAI disagreement review"
+"""The review file's first line; `--out` never overwrites a file that doesn't start with it."""
 VERDICT_MARK = "**Verdict:**"
 RUN_LINE = re.compile(r"^- Run id: `([0-9a-f-]{36})`\s*$")
 CASE_HEADING = re.compile(r"^### Case (\S+)\s*$")
-SECTION_HEADINGS = ("## ", "### ")
-"""A verdict runs up to the next of these; a line starting with a lone `#` stays in it."""
+ANNEX_I_DISAGREEMENTS = "## Annex I disagreements"
+SECTION_END = re.compile(rf"^{ANNEX_I_DISAGREEMENTS} \(\d+\)$")
+"""The one heading the report writes after a case's verdict; any other `#` line there is refused."""
+DETAIL_PREFIXES = (
+    "- Function: ",
+    "- Experts: ",
+    "- Engine: ",
+    "- Match: ",
+    "- Look first at: ",
+    "- Experts' comment: ",
+    "- Engine, ",
+)
+"""The lines the report writes between a case's heading and its verdict mark."""
 
 
 class Verdict(StrEnum):
@@ -181,11 +194,16 @@ def load_review(conn: psycopg.Connection, run_id: UUID, path: Path = REVIEW_FILE
 
 def read_review_file(path: Path, run_id: UUID) -> dict[str, WrittenVerdict]:
     """The verdicts written in the review at `path` (none when it doesn't exist yet). Raises
-    `ReviewFormatError`, naming the file, for one that can't be read back or whose verdicts
-    belong to another run."""
+    `ReviewFormatError`, naming the file, for one that isn't a review (its first line isn't
+    `TITLE`, so it's never overwritten), can't be read back, or holds another run's verdicts."""
     if not path.exists():
         return {}
     text = path.read_text(encoding="utf-8")
+    if text.splitlines()[:1] != [TITLE]:
+        raise ReviewFormatError(
+            f"{path} isn't an appliedAI review (its first line isn't `{TITLE}`); "
+            "choose another --out"
+        )
     try:
         verdicts = read_verdicts(text)
     except ReviewFormatError as error:
@@ -208,9 +226,11 @@ def review_run_id(text: str) -> UUID | None:
 
 def read_verdicts(text: str) -> dict[str, WrittenVerdict]:
     """Each `### Case <case id>` section's verdict, the text after `VERDICT_MARK` up to the next
-    heading; a section whose verdict is still empty is left out. Raises `ReviewFormatError` for a
-    section without the mark, a line before it the report didn't write, a case listed twice, or
-    a verdict that doesn't start with one of `Verdict`'s values."""
+    case heading (or `SECTION_END`); a section whose verdict is still empty is left out. Raises
+    `ReviewFormatError` for anything a new rendering couldn't keep: a section without the mark, a
+    line before it the report didn't write, a line starting with `#` in a verdict, text after a
+    section's end, a case listed twice, or a verdict that doesn't start with one of `Verdict`'s
+    values."""
     verdicts: dict[str, WrittenVerdict] = {}
     for case_id, lines in _case_sections(text):
         if case_id in verdicts:
@@ -233,14 +253,32 @@ def parse_verdict(case_id: str, text: str) -> Verdict:
 
 
 def _case_sections(text: str) -> list[tuple[str, list[str]]]:
+    """Each case's lines, from its heading to the next case heading or `SECTION_END`. Everything
+    above the first case heading is the report's own and is ignored."""
     sections: list[tuple[str, list[str]]] = []
+    is_open = False
     for line in text.splitlines():
-        if line.startswith(SECTION_HEADINGS):
-            heading = CASE_HEADING.match(line)
-            sections.append((heading.group(1) if heading else "", []))
-        elif sections:
+        heading = CASE_HEADING.match(line)
+        if heading:
+            sections.append((heading.group(1), []))
+            is_open = True
+        elif not sections:
+            continue
+        elif is_open and SECTION_END.match(line):
+            is_open = False
+        elif is_open and line.startswith("#"):
+            raise ReviewFormatError(
+                f"{sections[-1][0]}: a line starts with `#`; a note line must not start with "
+                "`#`, fix it by hand, then run again"
+            )
+        elif is_open:
             sections[-1][1].append(line)
-    return [(case_id, lines) for case_id, lines in sections if case_id]
+        elif line.strip():
+            raise ReviewFormatError(
+                f"{sections[-1][0]}: a line after `{ANNEX_I_DISAGREEMENTS}` that the report "
+                "didn't write; move it under a verdict, then run again"
+            )
+    return sections
 
 
 def _section_text(case_id: str, lines: Sequence[str]) -> str:
@@ -248,7 +286,7 @@ def _section_text(case_id: str, lines: Sequence[str]) -> str:
         if line.startswith(VERDICT_MARK):
             rest = [line.removeprefix(VERDICT_MARK), *lines[index + 1 :]]
             return "\n".join(rest).strip()
-        if line.strip() and not line.startswith("- "):
+        if line.strip() and not line.startswith(DETAIL_PREFIXES):
             raise ReviewFormatError(
                 f"{case_id}: a line before `{VERDICT_MARK}` that the report didn't write; "
                 "move it after the mark, then run again"

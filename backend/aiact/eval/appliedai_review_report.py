@@ -2,14 +2,17 @@
 
 Every number is computed from the stored run named at the top. The experts' comments are quoted
 from the stored labels with the CC BY 4.0 credit (`eval/appliedai/SOURCE.md`, decision 002); the
-descriptions are never printed. The engine's step decisions are shown on one line each, so a
-model-written text can't start a heading or a verdict.
+descriptions are never printed. Every text the report doesn't write itself (the engine's
+answer, Annex point and step decisions, the experts' comment, a function tag) is shown on one
+line, and with `|` escaped in a table cell, so it can't start a heading or a verdict.
 """
 
 from collections import defaultdict
 from collections.abc import Sequence
 
 from aiact.eval.appliedai_review import (
+    ANNEX_I_DISAGREEMENTS,
+    TITLE,
     VERDICT_MARK,
     Review,
     ReviewCase,
@@ -17,8 +20,8 @@ from aiact.eval.appliedai_review import (
     accuracy,
 )
 from aiact.eval.failures import failure
-from aiact.eval.metrics import Rate, risk_class_match
-from aiact.eval.report import settings_lines
+from aiact.eval.metrics import risk_class_match
+from aiact.eval.report import run_lines
 from aiact.schemas import StepName
 
 CREDIT = (
@@ -36,9 +39,10 @@ HOW_TO = (
     f"`{Verdict.ENGINE_ERROR.value}`, `{Verdict.OUTDATED_LABEL.value}` (the 2023 label no longer "
     f"fits the law) or `{Verdict.AMBIGUOUS.value}`, then any note of your own (for example "
     f"`{Verdict.OUTDATED_LABEL.value}: Art. 6(3) exempts it`). Keep the mark exactly as written "
-    "and write only after it. Then run `uv run aiact evaluate appliedai-review <run id>` again "
-    "(from `backend/`): it keeps every verdict and recomputes the accuracy after excluding the "
-    "outdated labels. `--check` fails while a disagreement has no verdict."
+    "and write only after it; a note line must not start with `#`. Then run "
+    "`uv run aiact evaluate appliedai-review <run id>` again (from `backend/`): it keeps every "
+    "verdict and recomputes the accuracy after excluding the outdated labels. `--check` fails "
+    "while a disagreement has no verdict."
 )
 MATCH_RULES = (
     "Matching follows INIT's appliedAI mapping (`score_appliedai`): `low` accepts limited_risk, "
@@ -73,7 +77,7 @@ def render_review(review: Review) -> str:
         _table("## Cases (without Annex I)", "", others, review),
         _table("## Annex I cases (reported separately)", ANNEX_I_NOTE, annex_i, review),
         _disagreements("## Disagreements", others, review),
-        _disagreements("## Annex I disagreements", annex_i, review),
+        _disagreements(ANNEX_I_DISAGREEMENTS, annex_i, review),
     ]
     return "\n".join(parts)
 
@@ -83,15 +87,12 @@ def _header(review: Review) -> str:
     failed = sum(case.outcome.result is None for case in review.cases)
     not_assessed = sum(case.is_not_assessed for case in review.cases)
     lines = [
-        "# appliedAI disagreement review",
+        TITLE,
         "",
         CREDIT,
         "",
         f"- Run id: `{info.id}`",
-        *settings_lines(info),
-        f"- Started: {info.started_at.isoformat()}",
-        f"- Model: {info.model or 'n/a'}",
-        f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
+        *run_lines(info),
         f"- Cases: {len(review.cases)} ({failed} failed, {not_assessed} not assessed)",
     ]
     if review.scoring_errors:
@@ -110,10 +111,6 @@ def _header(review: Review) -> str:
     return "\n".join(lines)
 
 
-def _rate(rate: Rate) -> str:
-    return f"{rate.percent} ({rate.hits}/{rate.total})"
-
-
 def _accuracy(review: Review, others: Sequence[ReviewCase], annex_i: Sequence[ReviewCase]) -> str:
     outdated = review.outdated
     rows = (
@@ -127,7 +124,7 @@ def _accuracy(review: Review, others: Sequence[ReviewCase], annex_i: Sequence[Re
         "| Cases | Before excluding outdated labels | After excluding outdated labels |",
         "| --- | ---: | ---: |",
         *(
-            f"| {name} | {_rate(accuracy(cases))} | {_rate(accuracy(cases, outdated))} |"
+            f"| {name} | {accuracy(cases).with_counts} | {accuracy(cases, outdated).with_counts} |"
             for name, cases in rows
         ),
         "",
@@ -173,8 +170,8 @@ def _by_function(review: Review) -> str:
         cases = groups[function]
         disagreements = sum(case.needs_review for case in cases)
         lines.append(
-            f"| {function} | {len(cases)} | {disagreements} | {_rate(accuracy(cases))} "
-            f"| {_rate(accuracy(cases, review.outdated))} |"
+            f"| {_cell(function)} | {len(cases)} | {disagreements} "
+            f"| {accuracy(cases).with_counts} | {accuracy(cases, review.outdated).with_counts} |"
         )
     return "\n".join([*lines, ""])
 
@@ -192,7 +189,8 @@ def _table(heading: str, note: str, cases: Sequence[ReviewCase], review: Review)
     for case in cases:
         review_mark = "yes" if case.needs_review else ""
         lines.append(
-            f"| {case.case_id} | {case.function} | {case.outcome.case.label} | {engine_text(case)} "
+            f"| {case.case_id} | {_cell(case.function)} | {case.outcome.case.label} "
+            f"| {_cell(engine_text(case))} "
             f"| {match_text(case)} | {review_mark} | {_verdict_cell(case, review)} |"
         )
     return "\n".join([*lines, ""])
@@ -206,7 +204,11 @@ def _verdict_cell(case: ReviewCase, review: Review) -> str:
 
 
 def engine_text(case: ReviewCase) -> str:
-    """The engine's answer in a few words: class, status and Annex point."""
+    """The engine's answer in a few words, on one line: class, status and Annex point."""
+    return _one_line(_engine_text(case))
+
+
+def _engine_text(case: ReviewCase) -> str:
     result = case.outcome.result
     if result is None:
         return "failed (no result)"
@@ -250,7 +252,7 @@ def _disagreement(case: ReviewCase) -> list[str]:
     lines = [
         f"### Case {case.case_id}",
         "",
-        f"- Function: {case.function}",
+        f"- Function: {_one_line(case.function)}",
         f"- Experts: {case.outcome.case.label}",
         f"- Engine: {engine_text(case)}",
         f"- Match: {match_text(case)}",
@@ -258,7 +260,7 @@ def _disagreement(case: ReviewCase) -> list[str]:
     found = failure(case.outcome)
     if found is not None:
         group, shown = found
-        lines.append(f"- Look first at: {group} ({shown})")
+        lines.append(f"- Look first at: {_one_line(f'{group} ({shown})')}")
     lines.append(f"- Experts' comment: {comment}")
     result = case.outcome.result
     steps = result.steps if result is not None else ()
@@ -273,3 +275,8 @@ def _disagreement(case: ReviewCase) -> list[str]:
 def _one_line(text: str) -> str:
     """A text on one line, so it can't start a heading or a verdict."""
     return " ".join(text.split())
+
+
+def _cell(text: str) -> str:
+    """A text on one line with `|` escaped, so it stays in its table cell."""
+    return _one_line(text).replace("|", "\\|")

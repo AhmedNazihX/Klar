@@ -138,6 +138,11 @@ class Rate(ContractModel):
         """The rate as a report shows it: a percentage, or n/a when nothing was counted."""
         return "n/a" if self.value is None else f"{self.value:.1%}"
 
+    @property
+    def with_counts(self) -> str:
+        """The percentage with its counts, for example `50.0% (3/6)`."""
+        return f"{self.percent} ({self.hits}/{self.total})"
+
 
 class PrecisionRecall(ContractModel):
     """How well one uncertain status is predicted against the labels that carry it."""

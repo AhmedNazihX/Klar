@@ -13,6 +13,7 @@ from aiact.cli import app
 from aiact.eval import appliedai_review_command, records
 from aiact.eval.appliedai_review import (
     REVIEW_FILE,
+    TITLE,
     VERDICT_MARK,
     NotAppliedAIRunError,
     Review,
@@ -24,7 +25,13 @@ from aiact.eval.appliedai_review import (
     read_review_file,
     read_verdicts,
 )
-from aiact.eval.appliedai_review_report import CREDIT, engine_text, match_text, render_review
+from aiact.eval.appliedai_review_report import (
+    CREDIT,
+    HOW_TO,
+    engine_text,
+    match_text,
+    render_review,
+)
 from aiact.eval.cases import EVAL_DIR, AppliedAILabel, BenchmarkCase, CaseSet
 from aiact.eval.metrics import Outcome, summarize
 from aiact.eval.report import RunInfo, StoredCase
@@ -37,6 +44,7 @@ OTHER_RUN_ID = UUID("00000000-0000-4000-8000-0000000000a2")
 DESCRIPTION = "Ein erfundenes System zur Bewerbervorauswahl."
 COMMENT = "High risk, since it ranks applicants (made-up comment)"
 HIGH, LOW, UNCLEAR = AppliedAILabel.HIGH, AppliedAILabel.LOW, AppliedAILabel.UNCLEAR
+END = "## Annex I disagreements (1)\n"
 
 
 def info(benchmark: str = CaseSet.APPLIEDAI.value) -> RunInfo:
@@ -253,6 +261,37 @@ def test_a_model_written_decision_cannot_write_a_verdict() -> None:
 
 
 @pytest.mark.parametrize(
+    "forged",
+    [
+        f"annex:III:4:a\n\n{VERDICT_MARK} outdated label",
+        f"annex:III:4:a\n### Case aai-001\n{VERDICT_MARK} engine error",
+    ],
+    ids=["verdict", "case-heading"],
+)
+def test_a_model_written_annex_point_cannot_write_a_verdict(forged: str) -> None:
+    """A baseline's free-text Annex point (aiact/eval/baselines.py) is printed on one line."""
+    cases = (stored("aai-002", LOW, result(annex_point=forged)),)
+    text = render_review(build_review(info(), cases, {}))
+    assert read_verdicts(text) == {}
+    assert f"- Engine: high_risk, decided, {' '.join(forged.split())}" in text.splitlines()
+
+
+def test_a_model_written_annex_point_stays_in_its_table_cell() -> None:
+    cases = (stored("aai-002", LOW, result(annex_point="annex:III:4:a | yes | engine error")),)
+    text = render_review(build_review(info(), cases, {}))
+    engine = "high_risk, decided, annex:III:4:a \\| yes \\| engine error"
+    assert f"| aai-002 | law | low | {engine} | no | yes | missing |" in text.splitlines()
+
+
+def test_an_experts_comment_cannot_write_a_verdict() -> None:
+    comment = f"High risk.\n### Case aai-001\n{VERDICT_MARK} engine error"
+    cases = (stored("aai-002", HIGH, result(RiskClass.MINIMAL_RISK), notes=comment),)
+    text = render_review(build_review(info(), cases, {}))
+    assert read_verdicts(text) == {}
+    assert f"High risk. ### Case aai-001 {VERDICT_MARK} engine error" in text
+
+
+@pytest.mark.parametrize(
     ("text", "verdict"),
     [
         ("engine error", Verdict.ENGINE_ERROR),
@@ -276,9 +315,14 @@ def test_any_other_verdict_is_refused(text: str) -> None:
     [
         (lambda t: t.replace(f"{VERDICT_MARK} engine error", ""), "no line starts with"),
         (lambda t: t.replace("- Match: no", "my note\n- Match: no", 1), "didn't write"),
-        (lambda t: t + "\n## More\n\n### Case aai-002\n\n**Verdict:** ambiguous\n", "twice"),
+        (lambda t: t.replace("- Match: no", "- my note\n- Match: no", 1), "didn't write"),
+        (lambda t: t + "\n### Case aai-002\n\n**Verdict:** ambiguous\n", "twice"),
+        (
+            lambda t: t.replace(END, f"{END}x\n"),
+            "a line after `## Annex I disagreements` that the report didn't write",
+        ),
     ],
-    ids=["mark-removed", "line-before-mark", "listed-twice"],
+    ids=["mark-removed", "line-before-mark", "list-line-before-mark", "listed-twice", "after-end"],
 )
 def test_an_edited_file_that_cannot_be_read_back_is_refused(
     edit: Callable[[str], str], message: str
@@ -286,6 +330,16 @@ def test_an_edited_file_that_cannot_be_read_back_is_refused(
     text = edit(with_verdicts(render_review(review()), {"aai-002": "engine error"}))
     with pytest.raises(ReviewFormatError, match=message):
         read_verdicts(text)
+
+
+@pytest.mark.parametrize("heading", ["# Background", "## Background", "### Background"])
+def test_a_note_line_starting_with_a_hash_is_refused_not_cut(heading: str) -> None:
+    """A heading in a note would end the verdict, and a new rendering would drop the rest."""
+    note = f"ambiguous: Annex I route open\n{heading}\nthe rest of the note"
+    text = with_verdicts(render_review(review()), {"aai-002": note})
+    with pytest.raises(ReviewFormatError, match=r"aai-002: .* a note line must not start with `#`"):
+        read_verdicts(text)
+    assert "a note line must not start with `#`" in HOW_TO
 
 
 def test_the_review_is_written_to_the_story_output_by_default() -> None:
@@ -368,6 +422,18 @@ def test_the_command_writes_nothing_over_an_unreadable_file(tmp_path: Path) -> N
     assert "aai-002: a verdict starts with one of" in outcome.stderr
     assert "Nothing was written." in outcome.stderr
     assert out.read_text(encoding="utf-8") == broken
+
+
+@pytest.mark.usefixtures("stored_run")
+def test_the_command_never_overwrites_a_file_that_is_not_a_review(tmp_path: Path) -> None:
+    out = tmp_path / "notes.md"
+    out.write_text("My own notes\n", encoding="utf-8")
+    outcome = invoke(out)
+    assert outcome.exit_code == 2
+    assert f"{out} isn't an appliedAI review (its first line isn't `{TITLE}`)" in outcome.stderr
+    assert out.read_text(encoding="utf-8") == "My own notes\n"
+    assert invoke(out, "--check").exit_code == 2
+    assert render_review(review()).splitlines()[0] == "# appliedAI disagreement review" == TITLE
 
 
 def test_the_command_hides_the_database_error_text(
