@@ -1808,7 +1808,7 @@ KNOWN_GAPS: dict[str, KnownGap] = {
         "first recording (pre-E20 prompt) settled it the same way, and six of the eight hold it "
         "open; the request differs from E19's variance-check recording only by the exemption "
         "rule (and one retrieved passage's place), and the rule applies to an exemption the "
-        "company relies on, which own-e-09 doesn't",
+        "company relies on, which own-e-09 doesn't; kept by the user, 2026-10-14",
         _decides_high_risk_on_its_annex_i_point,
     ),
     "own-e-10-in-house-nodule-finder": KnownGap(
@@ -2198,7 +2198,8 @@ OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {
         "passage, para 198), against the H4 rule that a tool planning investment is no safety "
         "component (minimal_risk label); over-strict, not a false low risk. Run-to-run "
         "variance: E19's recording read `uses` 'no' on a request that differs only by E20's "
-        "exemption rule, which is about the Annex I conformity route, not point 2",
+        "exemption rule, which is about the Annex I conformity route, not point 2; kept by the "
+        "user, 2026-10-14",
         _assumes_high_risk_on_point_2,
     ),
 }
