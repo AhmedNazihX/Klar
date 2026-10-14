@@ -2,8 +2,8 @@
 
 - **Date:** 2026-10-14
 - **Story:** B11 (docs/BACKLOG.md); feeds V9
-- **Status:** accepted 2026-10-14 for the licence (option A) and the language (German); the Annex I tag name
-  (`annex_i`) is proposed and waits for the user's confirmation
+- **Status:** accepted 2026-10-14: licence option A, German only, and the Annex I tag `annex_i` (all three the
+  user's choices)
 
 ## Question
 INIT › Open questions asked us to "open the PDF and confirm the fields per entry, the languages, and any
