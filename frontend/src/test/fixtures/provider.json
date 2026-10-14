@@ -47,32 +47,32 @@
         "decision": "Role: provider. Art. 25(1)(a): it puts its own name or trademark on the high-risk system, so it is considered its provider. 21 duties listed for this high-risk system (amended text). 3 conditional duties left out because their condition doesn't apply. 2 duties left out because no earlier check reported the finding they depend on.",
         "facts_used": [
           {
-            "text": "The company resells the Tallinn provider’s system to clients, before the own-brand switch.",
+            "text": "The company resells another provider’s system; before the own-brand switch, it acts as a distributor.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The company resells a ready-made screening engine and does not build its own AI system on a GPAI model.",
+            "text": "The description does not indicate that the company builds its system on another provider’s general-purpose AI model.",
+            "evidence": "assumed",
+            "source_span": null
+          },
+          {
+            "text": "The company sells the system under its own name and displays its logo, while the original provider’s name no longer appears.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The company puts its own name and logo on the system supplied by the Tallinn software house.",
+            "text": "The company says it has not touched the model itself.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The company has not changed the model or made a substantial modification.",
+            "text": "The system is used for candidate screening, the purpose described for the system.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The system remains a candidate-screening tool used for recruitment, its stated purpose.",
-            "evidence": "inferred",
-            "source_span": null
-          },
-          {
-            "text": "The system has been licensed since last spring and is being sold to clients.",
+            "text": "The company has licensed the system since last spring and is already selling it.",
             "evidence": "inferred",
             "source_span": null
           }
@@ -114,32 +114,32 @@
     "transparency_duties": [],
     "deciding_facts": [
       {
-        "text": "The company resells the Tallinn provider’s system to clients, before the own-brand switch.",
+        "text": "The company resells another provider’s system; before the own-brand switch, it acts as a distributor.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The company resells a ready-made screening engine and does not build its own AI system on a GPAI model.",
+        "text": "The description does not indicate that the company builds its system on another provider’s general-purpose AI model.",
+        "evidence": "assumed",
+        "source_span": null
+      },
+      {
+        "text": "The company sells the system under its own name and displays its logo, while the original provider’s name no longer appears.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The company puts its own name and logo on the system supplied by the Tallinn software house.",
+        "text": "The company says it has not touched the model itself.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The company has not changed the model or made a substantial modification.",
+        "text": "The system is used for candidate screening, the purpose described for the system.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The system remains a candidate-screening tool used for recruitment, its stated purpose.",
-        "evidence": "inferred",
-        "source_span": null
-      },
-      {
-        "text": "The system has been licensed since last spring and is being sold to clients.",
+        "text": "The company has licensed the system since last spring and is already selling it.",
         "evidence": "inferred",
         "source_span": null
       }
@@ -581,6 +581,19 @@
         ],
         "if_yes": null,
         "citations": []
+      },
+      {
+        "id": "confirm_the_description_does_not_indicate_that_the_company",
+        "text": "Please confirm: The description does not indicate that the company builds its system on another provider’s general-purpose AI model.",
+        "about": null,
+        "hint": null,
+        "options": [
+          "yes",
+          "no",
+          "not_sure"
+        ],
+        "if_yes": null,
+        "citations": []
       }
     ]
   },
@@ -632,32 +645,32 @@
         "decision": "Rolle: Anbieter, zugleich Betreiber. Art. 25 Abs. 1 Buchst. c: Es ändert die Zweckbestimmung so, dass das System hochriskant wird, und gilt daher als dessen Anbieter. 34 Pflichten für ein System der Risikoklasse „Hochrisiko“ (geänderte Fassung). 3 bedingte Pflichten entfallen, weil ihre Bedingung nicht erfüllt ist. 4 Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet hat, von dem sie abhängen.",
         "facts_used": [
           {
-            "text": "Das Sozialamt hat die Software gekauft und nutzt sie unter eigener Verantwortung.",
+            "text": "Das Sozialamt hat die Software gekauft und nutzt sie für seine eigenen Aufgaben.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "Es gibt keinen Hinweis darauf, dass das Sozialamt ein eigenes KI-System auf einem GPAI-Modell aufbaut.",
+            "text": "Es wird nicht beschrieben, dass das Sozialamt auf einem GPAI-Modell ein eigenes KI-System aufbaut.",
             "evidence": "assumed",
             "source_span": null
           },
           {
-            "text": "Es gibt keinen Hinweis darauf, dass das Sozialamt der Software seinen eigenen Namen oder seine Marke gibt.",
+            "text": "Es wird nicht beschrieben, dass das Sozialamt seinen Namen oder seine Marke auf die Software eines anderen Anbieters setzt.",
             "evidence": "assumed",
             "source_span": null
           },
           {
-            "text": "Das Sozialamt nutzt die ursprünglich nur zur Postzuordnung angebotene Software nun auch, um Wohngeldanträge anhand von Einkommensnachweisen vorläufig zu bewerten; dieser neue Zweck macht den Einsatz hochriskant.",
+            "text": "Das Sozialamt nutzt die für die Postzuordnung angebotene Software zusätzlich, um Wohngeldanträge als voraussichtlich berechtigt oder abzulehnen zu markieren.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "Die Software ist gekauft und bereits erweitert worden, also schon im Einsatz.",
+            "text": "Die Sachbearbeitung nutzt die Software bereits und übernimmt ihre Markierungen meistens.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "Das Sozialamt einer Kreisstadt ist eine öffentliche Stelle, für deren Nutzung das System vorgesehen ist.",
+            "text": "Das Sozialamt einer Kreisstadt nutzt das System.",
             "evidence": "inferred",
             "source_span": null
           }
@@ -699,32 +712,32 @@
     "transparency_duties": [],
     "deciding_facts": [
       {
-        "text": "Das Sozialamt hat die Software gekauft und nutzt sie unter eigener Verantwortung.",
+        "text": "Das Sozialamt hat die Software gekauft und nutzt sie für seine eigenen Aufgaben.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "Es gibt keinen Hinweis darauf, dass das Sozialamt ein eigenes KI-System auf einem GPAI-Modell aufbaut.",
+        "text": "Es wird nicht beschrieben, dass das Sozialamt auf einem GPAI-Modell ein eigenes KI-System aufbaut.",
         "evidence": "assumed",
         "source_span": null
       },
       {
-        "text": "Es gibt keinen Hinweis darauf, dass das Sozialamt der Software seinen eigenen Namen oder seine Marke gibt.",
+        "text": "Es wird nicht beschrieben, dass das Sozialamt seinen Namen oder seine Marke auf die Software eines anderen Anbieters setzt.",
         "evidence": "assumed",
         "source_span": null
       },
       {
-        "text": "Das Sozialamt nutzt die ursprünglich nur zur Postzuordnung angebotene Software nun auch, um Wohngeldanträge anhand von Einkommensnachweisen vorläufig zu bewerten; dieser neue Zweck macht den Einsatz hochriskant.",
+        "text": "Das Sozialamt nutzt die für die Postzuordnung angebotene Software zusätzlich, um Wohngeldanträge als voraussichtlich berechtigt oder abzulehnen zu markieren.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "Die Software ist gekauft und bereits erweitert worden, also schon im Einsatz.",
+        "text": "Die Sachbearbeitung nutzt die Software bereits und übernimmt ihre Markierungen meistens.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "Das Sozialamt einer Kreisstadt ist eine öffentliche Stelle, für deren Nutzung das System vorgesehen ist.",
+        "text": "Das Sozialamt einer Kreisstadt nutzt das System.",
         "evidence": "inferred",
         "source_span": null
       }
@@ -1402,8 +1415,8 @@
         "citations": []
       },
       {
-        "id": "confirm_es_gibt_keinen_hinweis_darauf_dass_das_sozialamt_ein",
-        "text": "Bitte bestätigen Sie: Es gibt keinen Hinweis darauf, dass das Sozialamt ein eigenes KI-System auf einem GPAI-Modell aufbaut.",
+        "id": "confirm_es_wird_nicht_beschrieben_dass_das_sozialamt_auf_einem",
+        "text": "Bitte bestätigen Sie: Es wird nicht beschrieben, dass das Sozialamt auf einem GPAI-Modell ein eigenes KI-System aufbaut.",
         "about": null,
         "hint": null,
         "options": [
@@ -1415,8 +1428,8 @@
         "citations": []
       },
       {
-        "id": "confirm_es_gibt_keinen_hinweis_darauf_dass_das_sozialamt_der",
-        "text": "Bitte bestätigen Sie: Es gibt keinen Hinweis darauf, dass das Sozialamt der Software seinen eigenen Namen oder seine Marke gibt.",
+        "id": "confirm_es_wird_nicht_beschrieben_dass_das_sozialamt_seinen",
+        "text": "Bitte bestätigen Sie: Es wird nicht beschrieben, dass das Sozialamt seinen Namen oder seine Marke auf die Software eines anderen Anbieters setzt.",
         "about": null,
         "hint": null,
         "options": [
@@ -1474,47 +1487,57 @@
       },
       {
         "step": "role_obligations",
-        "decision": "Role: provider. It builds its own system on a general-purpose AI model, so it is the provider of that system; the model provider's own duties (Art. 53) are flagged. 23 duties listed for this high-risk system (amended text). 1 conditional duties left out because their condition doesn't apply. 2 duties left out because no earlier check reported the finding they depend on.",
+        "decision": "Role: provider, and also deployer. Art. 25(1)(c): it uses the system for a new purpose that makes it high-risk, so it is considered its provider. 32 duties listed for this high-risk system (amended text). 5 conditional duties left out because their condition doesn't apply. 4 duties left out because no earlier check reported the finding they depend on.",
         "facts_used": [
           {
-            "text": "The company built and put into service its own recruitment workflow system using the general AI assistant.",
+            "text": "The company uses the vendor's assistant under its own authority for recruitment and studio operations.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The company built a recruitment workflow around a general AI assistant, using its own prompt and email automation.",
+            "text": "The company uses a ready-made general AI assistant rather than building its own AI system on a model.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The recruitment workflow is already in use.",
+            "text": "There is no indication that the company puts its own name or trademark on the vendor's assistant.",
+            "evidence": "assumed",
+            "source_span": null
+          },
+          {
+            "text": "The company uses a general AI assistant to make recruitment decisions, a use the vendor's policy prohibits.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "The workflow is described for the company's own hiring, not for use by public authorities.",
+            "text": "The assistant and the company's recruitment workflow are already in use.",
+            "evidence": "inferred",
+            "source_span": null
+          },
+          {
+            "text": "The system is used for the company's private fitness-studio operations, with no indication that public authorities are meant to use it.",
             "evidence": "inferred",
             "source_span": null
           }
         ],
         "citations": [
           {
-            "provision_id": "art:3:3",
+            "provision_id": "art:3:4",
             "document_id": "ai-act-consolidated",
             "law_version": "amended",
             "document_status": null,
             "language": "en",
-            "quote": "‘provider’ means a natural or legal person, public authority, agency or other body that develops an AI system or a general-purpose AI model or that has an AI system or a general-purpose AI model developed and places it on the market or puts the AI system into service under its own name or trademark, whether for payment or free of charge;",
+            "quote": "‘deployer’ means a natural or legal person, public authority, agency or other body using an AI system under its authority except where the AI system is used in the course of a personal non-professional activity;",
             "english_only": false,
             "changed_by_omnibus": false
           },
           {
-            "provision_id": "art:3:68",
+            "provision_id": "art:25:1:c",
             "document_id": "ai-act-consolidated",
             "law_version": "amended",
             "document_status": null,
             "language": "en",
-            "quote": "‘downstream provider’ means a provider of an AI system, including a general-purpose AI system, which integrates an AI model, regardless of whether the AI model is provided by themselves and vertically integrated or provided by another entity based on contractual relations.",
+            "quote": "they modify the intended purpose of an AI system, including a general-purpose AI system, which has not been classified as high-risk and has already been placed on the market or put into service in such a way that the AI system concerned becomes a high-risk AI system in accordance with Article 6.",
             "english_only": false,
             "changed_by_omnibus": false
           }
@@ -1528,28 +1551,38 @@
     "risk_class": "high_risk",
     "status": "decided",
     "role": "provider",
-    "also_role": null,
-    "role_switch_reason": null,
+    "also_role": "deployer",
+    "role_switch_reason": "Art. 25(1)(c): it uses the system for a new purpose that makes it high-risk, so it is considered its provider.",
     "annex_point": "annex:III:4:a",
     "transparency_duties": [],
     "deciding_facts": [
       {
-        "text": "The company built and put into service its own recruitment workflow system using the general AI assistant.",
+        "text": "The company uses the vendor's assistant under its own authority for recruitment and studio operations.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The company built a recruitment workflow around a general AI assistant, using its own prompt and email automation.",
+        "text": "The company uses a ready-made general AI assistant rather than building its own AI system on a model.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The recruitment workflow is already in use.",
+        "text": "There is no indication that the company puts its own name or trademark on the vendor's assistant.",
+        "evidence": "assumed",
+        "source_span": null
+      },
+      {
+        "text": "The company uses a general AI assistant to make recruitment decisions, a use the vendor's policy prohibits.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "The workflow is described for the company's own hiring, not for use by public authorities.",
+        "text": "The assistant and the company's recruitment workflow are already in use.",
+        "evidence": "inferred",
+        "source_span": null
+      },
+      {
+        "text": "The system is used for the company's private fitness-studio operations, with no indication that public authorities are meant to use it.",
         "evidence": "inferred",
         "source_span": null
       }
@@ -1974,23 +2007,194 @@
         "note": "Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties only reach high-risk systems once their high-risk rules apply."
       },
       {
-        "key": "gpai-model-provider-duties",
-        "duty": "The provider of the general-purpose AI model has its own duties under Chapter V (Art. 53, and Art. 55 for models with systemic risk), which this assessment doesn't cover. It must give you the information and documentation you need to understand the model's capabilities and limitations and to meet your own duties (Art. 53(1)(b)).",
-        "duty_de": "Der Anbieter des KI-Modells mit allgemeinem Verwendungszweck hat eigene Pflichten nach Kapitel V (Art. 53, bei Modellen mit systemischem Risiko auch Art. 55), die diese Bewertung nicht abdeckt. Er muss Ihnen die Informationen und die Dokumentation bereitstellen, die Sie brauchen, um die Fähigkeiten und Grenzen des Modells zu verstehen und Ihren eigenen Pflichten nachzukommen (Art. 53 Abs. 1 Buchst. b).",
-        "label_en": "Get the information you need from the model's maker",
-        "label_de": "Vom Anbieter des Modells die Informationen erhalten, die Sie brauchen",
-        "group": "build",
+        "key": "hr-deployer-instructions",
+        "duty": "Use the system according to the provider's instructions for use, with appropriate technical and organisational measures.",
+        "duty_de": "Das System gemäß der beigefügten Betriebsanleitung verwenden und dafür geeignete technische und organisatorische Maßnahmen treffen.",
+        "label_en": "Use the tool as the vendor's instructions say",
+        "label_de": "Das Tool gemäß der Betriebsanleitung des Anbieters einsetzen",
+        "group": null,
         "document": null,
-        "article": "art:53:1:b",
-        "applies_from": "2025-08-02",
-        "high_risk_route": null,
-        "applies_if": "The system is built on a general-purpose AI model from another provider.",
-        "applies_if_de": "Das System beruht auf einem KI-Modell mit allgemeinem Verwendungszweck eines anderen Anbieters.",
-        "is_informational": true,
+        "article": "art:26:1",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "applies_if_de": null,
+        "is_informational": false,
         "legacy": null,
         "relief_note": null,
         "relief_note_de": null,
-        "note": "Chapter V applies from 2 August 2025 (Art. 113(b))."
+        "note": null
+      },
+      {
+        "key": "hr-deployer-human-oversight",
+        "duty": "Assign human oversight to people with the necessary competence, training, authority and support.",
+        "duty_de": "Die menschliche Aufsicht natürlichen Personen übertragen, die über die erforderliche Kompetenz, Ausbildung und Befugnis verfügen, und ihnen die erforderliche Unterstützung zukommen lassen.",
+        "label_en": "Put trained people in charge of reviewing its output",
+        "label_de": "Geschulten Personen die menschliche Aufsicht übertragen",
+        "group": null,
+        "document": "art_26_2_oversight",
+        "article": "art:26:2",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "applies_if_de": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-input-data",
+        "duty": "Make sure the input data is relevant and sufficiently representative for the intended purpose.",
+        "duty_de": "Dafür sorgen, dass die Eingabedaten der Zweckbestimmung des Systems entsprechen und ausreichend repräsentativ sind.",
+        "label_en": "Check that the input data suits the purpose, where you control it",
+        "label_de": "Prüfen, ob die Eingabedaten zum Zweck passen, soweit Sie sie kontrollieren",
+        "group": null,
+        "document": null,
+        "article": "art:26:4",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": "You control the input data.",
+        "applies_if_de": "Die Eingabedaten unterliegen Ihrer Kontrolle.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-monitoring",
+        "duty": "Monitor the system's operation; if it presents a risk, inform the provider or distributor and the market surveillance authority and suspend its use; report serious incidents to the provider first.",
+        "duty_de": "Den Betrieb des Systems überwachen; birgt es ein Risiko, den Anbieter oder Händler und die Marktüberwachungsbehörde informieren und die Verwendung aussetzen; schwerwiegende Vorfälle zuerst dem Anbieter melden.",
+        "label_en": "Watch how it performs and report serious problems to the vendor",
+        "label_de": "Den Betrieb überwachen und schwerwiegende Probleme dem Anbieter melden",
+        "group": null,
+        "document": null,
+        "article": "art:26:5",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "applies_if_de": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-logs",
+        "duty": "Keep the logs the system generates, where they are under your control, for at least six months.",
+        "duty_de": "Die vom System automatisch erzeugten Protokolle, soweit sie Ihrer Kontrolle unterliegen, mindestens sechs Monate aufbewahren.",
+        "label_en": "Keep the logs it creates for at least six months",
+        "label_de": "Die automatisch erzeugten Protokolle mindestens sechs Monate aufbewahren",
+        "group": null,
+        "document": null,
+        "article": "art:26:6",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "applies_if_de": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-inform-workers",
+        "duty": "Inform workers' representatives and the affected workers before using the system at the workplace.",
+        "duty_de": "Vor der Inbetriebnahme oder Verwendung am Arbeitsplatz die Arbeitnehmervertreter und die betroffenen Arbeitnehmer informieren, dass sie der Verwendung des Systems unterliegen werden.",
+        "label_en": "Tell workers' representatives and staff before you start",
+        "label_de": "Arbeitnehmervertretung und Beschäftigte vor dem Einsatz informieren",
+        "group": null,
+        "document": "art_26_7_workers",
+        "article": "art:26:7",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": "You are an employer and use the system at the workplace.",
+        "applies_if_de": "Sie sind Arbeitgeber und verwenden das System am Arbeitsplatz.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-dpia",
+        "duty": "Use the provider's information (Art. 13) for your data protection impact assessment.",
+        "duty_de": "Die gemäß Art. 13 bereitgestellten Informationen für Ihre Datenschutz-Folgenabschätzung verwenden.",
+        "label_en": "Use the vendor's information for your data protection impact assessment",
+        "label_de": "Die Angaben des Anbieters für Ihre Datenschutz-Folgenabschätzung nutzen",
+        "group": null,
+        "document": null,
+        "article": "art:26:9",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": "A data protection impact assessment is required under Art. 35 GDPR or Art. 27 of Directive (EU) 2016/680.",
+        "applies_if_de": "Eine Datenschutz-Folgenabschätzung ist nach Art. 35 DSGVO oder Art. 27 der Richtlinie (EU) 2016/680 erforderlich.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-inform-persons",
+        "duty": "Inform the people concerned that they are subject to the use of the high-risk system.",
+        "duty_de": "Die betroffenen natürlichen Personen darüber informieren, dass sie der Verwendung des Hochrisiko-KI-Systems unterliegen.",
+        "label_en": "Tell the people affected that it's used in decisions about them",
+        "label_de": "Betroffene Personen informieren, dass das Tool bei Entscheidungen über sie eingesetzt wird",
+        "group": null,
+        "document": "art_26_11_affected",
+        "article": "art:26:11",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": "The system makes, or helps make, decisions about natural persons.",
+        "applies_if_de": "Das System trifft Entscheidungen über natürliche Personen oder wirkt daran mit.",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-cooperate",
+        "duty": "Cooperate with the competent authorities in any action they take about the system.",
+        "duty_de": "Mit den zuständigen Behörden bei allen Maßnahmen zusammenarbeiten, die diese im Zusammenhang mit dem System ergreifen.",
+        "label_en": "Cooperate with the authorities when they act on it",
+        "label_de": "Mit den Behörden bei ihren Maßnahmen zusammenarbeiten",
+        "group": null,
+        "document": null,
+        "article": "art:26:12",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": null,
+        "applies_if_de": null,
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": null
+      },
+      {
+        "key": "hr-deployer-explanation",
+        "duty": "On request, give an affected person clear and meaningful explanations of the role of the system in the decision and the main elements of the decision taken.",
+        "duty_de": "Betroffenen Personen auf Anfrage eine klare und aussagekräftige Erläuterung zur Rolle des Systems im Entscheidungsprozess und zu den wichtigsten Elementen der getroffenen Entscheidung geben.",
+        "label_en": "Explain its role in a decision when an affected person asks",
+        "label_de": "Auf Anfrage Betroffener die Rolle des Systems bei einer Entscheidung erläutern",
+        "group": null,
+        "document": null,
+        "article": "art:86:1",
+        "applies_from": "2027-12-02",
+        "high_risk_route": "annex_iii",
+        "applies_if": "Decisions taken on the basis of the system's output produce legal effects on people or similarly significantly affect them (not for Annex III point 2, critical infrastructure).",
+        "applies_if_de": "Entscheidungen auf Grundlage der Ausgaben des Systems haben rechtliche Auswirkungen auf Personen oder beeinträchtigen sie ähnlich erheblich (nicht bei Anhang III Nr. 2).",
+        "is_informational": false,
+        "legacy": null,
+        "relief_note": null,
+        "relief_note_de": null,
+        "note": "Chapter IX formally applies from 2 August 2026 (Art. 113, general date), but these duties only reach high-risk systems once their high-risk rules apply."
       }
     ],
     "law_version": "amended",
@@ -2009,6 +2213,19 @@
         "text": "Is a significant change to the system's design or intended purpose planned or foreseen for on or after 2 December 2027?",
         "about": "art:111:2",
         "hint": "The answer decides the company's role and its duties (Art. 111(2)).",
+        "options": [
+          "yes",
+          "no",
+          "not_sure"
+        ],
+        "if_yes": null,
+        "citations": []
+      },
+      {
+        "id": "confirm_there_is_no_indication_that_the_company_puts_its_own",
+        "text": "Please confirm: There is no indication that the company puts its own name or trademark on the vendor's assistant.",
+        "about": null,
+        "hint": null,
         "options": [
           "yes",
           "no",
@@ -2067,12 +2284,12 @@
         "decision": "Rolle: Anbieter. Es baut ein eigenes System auf einem KI-Modell mit allgemeinem Verwendungszweck auf und ist daher dessen Anbieter; die eigenen Pflichten des Modellanbieters (Art. 53) werden ausgewiesen. 3 Pflichten für ein System der Risikoklasse „begrenztes Risiko“ (geänderte Fassung). 2 Pflichten entfallen, weil keine frühere Prüfung den Befund gemeldet hat, von dem sie abhängen.",
         "facts_used": [
           {
-            "text": "Das Unternehmen entwickelt durch die Integration des Sprachmodells ein eigenes Chat-System und verkauft es unter dem eigenen Produktnamen.",
+            "text": "Das Start-up entwickelt den Chat auf Grundlage eines fremden Sprachmodells und vertreibt ihn unter dem eigenen Produktnamen.",
             "evidence": "inferred",
             "source_span": null
           },
           {
-            "text": "Das Unternehmen integriert das Sprachmodell eines anderen Anbieters über dessen Schnittstelle in sein eigenes Chat-System.",
+            "text": "Der Chat wird mit dem Sprachmodell eines anderen Anbieters über dessen Schnittstelle aufgebaut und in ein eigenes Produkt integriert.",
             "evidence": "inferred",
             "source_span": null
           }
@@ -2116,12 +2333,12 @@
     ],
     "deciding_facts": [
       {
-        "text": "Das Unternehmen entwickelt durch die Integration des Sprachmodells ein eigenes Chat-System und verkauft es unter dem eigenen Produktnamen.",
+        "text": "Das Start-up entwickelt den Chat auf Grundlage eines fremden Sprachmodells und vertreibt ihn unter dem eigenen Produktnamen.",
         "evidence": "inferred",
         "source_span": null
       },
       {
-        "text": "Das Unternehmen integriert das Sprachmodell eines anderen Anbieters über dessen Schnittstelle in sein eigenes Chat-System.",
+        "text": "Der Chat wird mit dem Sprachmodell eines anderen Anbieters über dessen Schnittstelle aufgebaut und in ein eigenes Produkt integriert.",
         "evidence": "inferred",
         "source_span": null
       }

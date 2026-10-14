@@ -178,13 +178,16 @@ def engine_route(
 ) -> ChatRoute:
     """A node's models: the given `chat` and `refusal_chat` (the run's, or a test's; without a
     `refusal_chat` a refusal gets no second call), or, without a `chat`, the engine model and
-    the refusal model, each with the node's output cap. Raises `LLMConfigError` when a model
-    built here lacks its model, provider or API key setting."""
+    the refusal model, each with the node's output cap. A route with both models is a
+    classification run's, and asks a reply cut off at the output cap once more
+    (`ChatRoute.retry_cut_off`, E20); a given `chat` alone (the smoke harness's probes, decision
+    004; tests) makes one call. Raises `LLMConfigError` when a model built here lacks its model,
+    provider or API key setting."""
     if chat is not None:
-        return ChatRoute(chat, refusal_chat)
+        return ChatRoute(chat, refusal_chat, retry_cut_off=refusal_chat is not None)
     engine = engine_chat_model(max_tokens=max_tokens, settings=settings)
     second = refusal_chat or refusal_chat_model(max_tokens=max_tokens, settings=settings)
-    return ChatRoute(engine, second)
+    return ChatRoute(engine, second, retry_cut_off=True)
 
 
 def _pinned_chat_model(

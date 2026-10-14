@@ -39,6 +39,7 @@ from tests.e2e.runs import (
     replayed_recordings,
     run_date,
 )
+from tests.engine.nodes.known_gaps import raise_if_recording_stale
 from tests.engine.replayed_engine import LUNA
 from tests.engine.test_classify_worked_example import AS_OF, worked_example_request
 
@@ -262,12 +263,16 @@ async def _classify(app: FastAPI, body: dict[str, str]) -> list[ClassifyEvent]:
     return sse_events(response.text)
 
 
+MERGED_STALE = "a merged recording is stale; re-record the run it belongs to"
+
+
 @pytest.mark.anyio
 async def test_the_worked_example_as_the_app_sends_it_replays_to_its_result(
-    replayed: FastAPI,
+    replayed: FastAPI, caplog: pytest.LogCaptureFixture
 ) -> None:
     body = {"description": worked_example_request().description, "language": "en"}
     events = await _classify(replayed, body)
+    raise_if_recording_stale(events, caplog.text, MERGED_STALE)
     assert outline(events) == FULL_RUN
     result = events[-1]
     assert isinstance(result, ResultEvent)

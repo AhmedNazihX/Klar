@@ -4,6 +4,7 @@ import type { ClassificationResult } from '@/api'
 import { decidedHighRisk, limitedRiskProvider } from '@/test/classify-fixtures'
 import {
   GPAI_HIGH_RISK,
+  GPAI_LIMITED,
   OWN_BRAND_PROVIDER,
   ownBrandCiting,
   PROVIDER_ALSO_DEPLOYER,
@@ -72,6 +73,7 @@ describe('simplifiedFormFor (Art. 11(1))', () => {
 
 describe('isGpaiBased', () => {
   it('reads the role step citing Art. 3(68)', () => {
+    expect(isGpaiBased(GPAI_LIMITED)).toBe(true)
     expect(isGpaiBased(GPAI_HIGH_RISK)).toBe(true)
     expect(isGpaiBased(OWN_BRAND_PROVIDER)).toBe(false)
   })
@@ -109,6 +111,7 @@ describe('providerReason', () => {
     ['switch_bc', ownBrandCiting('art:25:1:c', 'art:25:1:b')],
     ['switch_abc', ownBrandCiting('art:25:1:a', 'art:25:1:b', 'art:25:1:c')],
     ['own', { ...OWN_BRAND_PROVIDER, role_switch_reason: null }],
+    ['gpai', GPAI_LIMITED],
     ['gpai', GPAI_HIGH_RISK],
   ] as const)('is %s', (expected, result) => {
     expect(providerReason(result)).toBe(expected)

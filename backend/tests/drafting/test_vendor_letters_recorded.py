@@ -20,6 +20,7 @@ from tests.drafting.builders import changed, edit_section
 from tests.drafting.recorded_results import (
     AMBIGUOUS_CASSETTE,
     AMBIGUOUS_DIR,
+    AMBIGUOUS_RECORDING_PENDING,
     PROHIBITED_CASSETTE,
     PROHIBITED_DIR,
     recorded_ambiguous_result,
@@ -118,6 +119,7 @@ def test_the_message_on_a_recorded_prohibited_result(
         assert _section(document, "facts") == tuple(fact.text for fact in result.deciding_facts)
 
 
+@AMBIGUOUS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     ("vcr_cassette_dir", "default_cassette_name"),

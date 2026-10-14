@@ -18,43 +18,47 @@ interactions:
       name\n    or trademark of a provider established outside the EU (Art. 3(6)).\n  -
       \"distributor\": it makes a system available on the EU market without being
       its provider or\n    importer (Art. 3(7)).\n  - null: the description doesn''t
-      say and nothing points either way.\n- builds_on_gpai: the company builds its
-      own AI system on top of a general-purpose AI model from\n  another provider,
-      for example by integrating a foundation model through an API into its own\n  product.
-      Merely using a ready-made general-purpose AI system (a chat assistant) as it
-      is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)): the company puts its own name
-      or trademark on a system that someone\n  else already placed on the market or
-      put into service.\n- substantial_modification (Art. 25(1)(b)): the company makes
-      a substantial modification to a\n  system that was already high-risk for the
-      purpose its provider intended and is already on the\n  market or in service:
-      a change the provider''s initial conformity assessment didn''t foresee or\n  plan,
-      that affects whether the system meets the high-risk requirements or changes
-      its intended\n  purpose (Art. 3(23)), for example retraining it for new tasks
-      or changing how it decides. Mere\n  configuration, and changes the provider''s
-      documentation foresees, are \"no\". Answer \"contested\"\n  when the description
-      says what the company changed and what the provider''s documentation says\n  about
-      such a change, but the Act and its definition don''t settle whether that change
-      is\n  substantial: that is a question of law, not a missing fact. Answer \"unknown\"
-      only when the\n  description hints at a change but doesn''t say what was changed
-      or what the provider''s\n  documentation says about it.\n- changed_purpose (Art.
-      25(1)(c)): the company uses a system, including a general-purpose AI\n  system,
-      that was not high-risk for the purpose its provider intended, for a purpose
-      the provider\n  did not intend, and that new purpose is what makes it high-risk
-      (for example using a general\n  chat assistant to rank job applicants).\n- conditions:
-      one answer per listed condition, by its id: does the condition hold for this
-      system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\", \"no\"
-      or \"unknown\" (substantial_modification may also be \"contested\").\n- evidence:
-      \"stated\" when the description says it, \"inferred\" when it follows from what
-      the\n  description says, \"assumed\" when the description is silent and you
-      take the usual default.\n- fact: the answer as one short fact, in the language
-      asked for (for example \"The company bought\n  the tool and did not change it\").\n-
-      fact_numbers: the numbers of the listed facts the answer rests on; empty when
-      none do.\n\nWhen the description is silent about a switch and nothing hints
-      at it, answer \"no\" with evidence\n\"assumed\": a company that buys a tool
-      is normally a deployer that did not rebrand, modify or\nrepurpose it. Answer
-      \"unknown\" only when the description hints at the fact but doesn''t settle
-      it\n(for example \"we adapted the vendor''s model\" without saying how). For
-      a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
+      say and nothing points either way.\n  When the company builds its own system
+      on another provider''s model (builds_on_gpai below),\n  answer \"deployer\"
+      when it also uses that system itself under its own authority, and\n  \"provider\"
+      when only others use it; the application then adds the provider role, since
+      one\n  operator may hold more than one role at once (Art. 3(4); recital 83).\n-
+      builds_on_gpai: the company builds its own AI system on top of a general-purpose
+      AI model from\n  another provider, for example by integrating a foundation model
+      through an API into its own\n  product. Merely using a ready-made general-purpose
+      AI system (a chat assistant) as it is, is\n  \"no\".\n- own_brand (Art. 25(1)(a)):
+      the company puts its own name or trademark on a system that someone\n  else
+      already placed on the market or put into service.\n- substantial_modification
+      (Art. 25(1)(b)): the company makes a substantial modification to a\n  system
+      that was already high-risk for the purpose its provider intended and is already
+      on the\n  market or in service: a change the provider''s initial conformity
+      assessment didn''t foresee or\n  plan, that affects whether the system meets
+      the high-risk requirements or changes its intended\n  purpose (Art. 3(23)),
+      for example retraining it for new tasks or changing how it decides. Mere\n  configuration,
+      and changes the provider''s documentation foresees, are \"no\". Answer \"contested\"\n  when
+      the description says what the company changed and what the provider''s documentation
+      says\n  about such a change, but the Act and its definition don''t settle whether
+      that change is\n  substantial: that is a question of law, not a missing fact.
+      Answer \"unknown\" only when the\n  description hints at a change but doesn''t
+      say what was changed or what the provider''s\n  documentation says about it.\n-
+      changed_purpose (Art. 25(1)(c)): the company uses a system, including a general-purpose
+      AI\n  system, that was not high-risk for the purpose its provider intended,
+      for a purpose the provider\n  did not intend, and that new purpose is what makes
+      it high-risk (for example using a general\n  chat assistant to rank job applicants).\n-
+      conditions: one answer per listed condition, by its id: does the condition hold
+      for this system\n  and this company?\n\nFor every key fact:\n- answer: \"yes\",
+      \"no\" or \"unknown\" (substantial_modification may also be \"contested\").\n-
+      evidence: \"stated\" when the description says it, \"inferred\" when it follows
+      from what the\n  description says, \"assumed\" when the description is silent
+      and you take the usual default.\n- fact: the answer as one short fact, in the
+      language asked for (for example \"The company bought\n  the tool and did not
+      change it\").\n- fact_numbers: the numbers of the listed facts the answer rests
+      on; empty when none do.\n\nWhen the description is silent about a switch and
+      nothing hints at it, answer \"no\" with evidence\n\"assumed\": a company that
+      buys a tool is normally a deployer that did not rebrand, modify or\nrepurpose
+      it. Answer \"unknown\" only when the description hints at the fact but doesn''t
+      settle it\n(for example \"we adapted the vendor''s model\" without saying how).
+      For a condition, answer\n\"unknown\" when the description doesn''t settle it.\n","role":"system"},{"content":"Language
       for facts: en\n\nRisk class so far: limited_risk\n\nEarlier checks:\n-\n\nConditions:\n-\n\nFacts:\n-\n\nDescription:\nWe''re
       an accounting firm in Dublin with 45 employees. Since January everyone has a
       seat on a well-known general AI assistant under a business plan. Staff use it
@@ -84,24 +88,30 @@ interactions:
     uri: https://openrouter.ai/api/v1/chat/completions
   response:
     body:
-      string: "{\"id\": \"gen-1791312638-4CA2B8oSfkIuTY0Psy9A\", \"object\": \"chat.completion\",
-        \"created\": 1791312638, \"model\": \"openai/gpt-6-luna\", \"provider\": \"Azure\",
-        \"system_fingerprint\": null, \"service_tier\": \"default\", \"choices\":
-        [{\"index\": 0, \"logprobs\": null, \"finish_reason\": \"stop\", \"native_finish_reason\":
-        \"completed\", \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"role\\\":{\\\"role\\\":\\\"deployer\\\",\\\"evidence\\\":\\\"inferred\\\",\\\"fact\\\":\\\"The
-        firm uses another provider\u2019s general AI assistant under its authority.\\\",\\\"fact_numbers\\\":[]},\\\"builds_on_gpai\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"stated\\\",\\\"fact\\\":\\\"The
-        firm says it has not built anything on top of the assistant.\\\",\\\"fact_numbers\\\":[]},\\\"own_brand\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"assumed\\\",\\\"fact\\\":\\\"Nothing
-        indicates that the firm puts its name or trademark on the assistant.\\\",\\\"fact_numbers\\\":[]},\\\"substantial_modification\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"assumed\\\",\\\"fact\\\":\\\"Nothing
-        indicates that the firm substantially modifies the assistant.\\\",\\\"fact_numbers\\\":[]},\\\"changed_purpose\\\":{\\\"answer\\\":\\\"no\\\",\\\"evidence\\\":\\\"assumed\\\",\\\"fact\\\":\\\"Nothing
-        indicates that the firm uses the assistant for a purpose its provider did
-        not intend that makes it high-risk.\\\",\\\"fact_numbers\\\":[]},\\\"conditions\\\":[]}\",
-        \"refusal\": null}}], \"usage\": {\"prompt_tokens\": 1792, \"completion_tokens\":
-        330, \"total_tokens\": 2122, \"cost\": 0.000220484, \"is_byok\": false, \"prompt_tokens_details\":
-        {\"cached_tokens\": 1639, \"cache_write_tokens\": 150, \"audio_tokens\": 0,
-        \"video_tokens\": 0}, \"cost_details\": {\"upstream_inference_cost\": 0.000220484,
-        \"upstream_inference_prompt_cost\": 3.8984e-05, \"upstream_inference_completions_cost\":
-        0.0001815}, \"completion_tokens_details\": {\"reasoning_tokens\": 137, \"image_tokens\":
-        0, \"audio_tokens\": 0}}}"
+      string: '{"id": "gen-1791921565-WvaKgQclGMJ38ijc4U8P", "object": "chat.completion",
+        "created": 1791921565, "model": "openai/gpt-6-luna", "provider": "Azure",
+        "system_fingerprint": null, "service_tier": "default", "choices": [{"index":
+        0, "logprobs": null, "finish_reason": "stop", "native_finish_reason": "completed",
+        "message": {"role": "assistant", "content": "{\n  \"role\": {\n    \"role\":
+        \"deployer\",\n    \"evidence\": \"inferred\",\n    \"fact\": \"The firm uses
+        a ready-made general AI assistant under its own authority.\",\n    \"fact_numbers\":
+        []\n  },\n  \"builds_on_gpai\": {\n    \"answer\": \"no\",\n    \"evidence\":
+        \"stated\",\n    \"fact\": \"The firm has not built anything on top of the
+        assistant.\",\n    \"fact_numbers\": []\n  },\n  \"own_brand\": {\n    \"answer\":
+        \"no\",\n    \"evidence\": \"assumed\",\n    \"fact\": \"There is no indication
+        that the firm put its own name or trademark on the assistant.\",\n    \"fact_numbers\":
+        []\n  },\n  \"substantial_modification\": {\n    \"answer\": \"no\",\n    \"evidence\":
+        \"assumed\",\n    \"fact\": \"There is no indication that the firm modified
+        the assistant.\",\n    \"fact_numbers\": []\n  },\n  \"changed_purpose\":
+        {\n    \"answer\": \"no\",\n    \"evidence\": \"inferred\",\n    \"fact\":
+        \"The firm uses the assistant for drafting, summarising and translation, not
+        for a purpose that makes it high-risk.\",\n    \"fact_numbers\": []\n  },\n  \"conditions\":
+        []\n}", "refusal": null}}], "usage": {"prompt_tokens": 1876, "completion_tokens":
+        423, "total_tokens": 2299, "cost": 0.000272558, "is_byok": false, "prompt_tokens_details":
+        {"cached_tokens": 1723, "cache_write_tokens": 150, "audio_tokens": 0, "video_tokens":
+        0}, "cost_details": {"upstream_inference_cost": 0.000272558, "upstream_inference_prompt_cost":
+        3.9908e-05, "upstream_inference_completions_cost": 0.00023265}, "completion_tokens_details":
+        {"reasoning_tokens": 148, "image_tokens": 0, "audio_tokens": 0}}}'
     headers:
       content-type:
       - application/json

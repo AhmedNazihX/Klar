@@ -2,11 +2,12 @@
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.messages import AIMessage
-from pydantic import SecretStr
+from langchain_core.messages import AIMessage, HumanMessage
+from pydantic import BaseModel, SecretStr
 
 from aiact.engine.usage import UsageMeter
 from aiact.llm.embeddings import EmbeddingBatch, OpenRouterEmbeddings, format_query
+from aiact.llm.structured import ChatRoute, json_schema_format
 from aiact.schemas import StepName
 from aiact.settings import Settings
 
@@ -39,6 +40,29 @@ def test_each_reply_is_counted_under_its_node() -> None:
     assert usage.by_node["scope"].calls == 2
     assert usage.by_node["scope"].cost_usd == pytest.approx(0.005)
     assert usage.is_cost_complete
+
+
+class Answer(BaseModel):
+    value: int
+
+
+def test_a_cut_off_reply_and_its_second_try_are_both_counted() -> None:
+    """E20: a reply the output cap cut off is paid for too, and so is the one more try."""
+    meter = UsageMeter()
+    cut_off = reply(0.0066, 10000).model_copy(
+        update={
+            "content": '{"value": [1,2,3',
+            "response_metadata": {"cost": 0.0066, "finish_reason": "length"},
+        }
+    )
+    answered = reply(0.002, 700).model_copy(update={"content": '{"value": 2}'})
+    chat = metered_chat(meter, StepName.HIGH_RISK, cut_off, answered)
+    format_ = json_schema_format("answer", Answer)
+    route = ChatRoute(chat, retry_cut_off=True)  # a classification run's route (engine_route)
+    assert route.ask([HumanMessage("a")], format_, Answer) == Answer(value=2)
+    usage = meter.usage().by_node["high_risk"]
+    assert (usage.calls, usage.tokens) == (2, 10700)
+    assert usage.cost_usd == pytest.approx(0.0086)
 
 
 def test_a_reply_without_its_cost_is_counted_and_flagged() -> None:

@@ -25,6 +25,7 @@ from aiact.settings import Settings
 from tests.drafting.recorded_results import (
     AMBIGUOUS_CASSETTE,
     AMBIGUOUS_DIR,
+    AMBIGUOUS_RECORDING_PENDING,
     recorded_ambiguous_result,
 )
 from tests.drafting.vendor_builders import letter, letter_checks
@@ -90,6 +91,7 @@ def _letters(result: ClassificationResult) -> dict[str, object]:
     return letters
 
 
+@AMBIGUOUS_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     ("vcr_cassette_dir", "default_cassette_name"),

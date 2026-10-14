@@ -131,20 +131,25 @@ def test_a_route_built_here_has_both_models_at_the_nodes_cap() -> None:
     assert isinstance(route.refusal_chat, ChatOpenRouter)
     assert (route.chat.model_name, route.chat.max_tokens) == (CHEAP_MODEL, 300)
     assert (route.refusal_chat.model_name, route.refusal_chat.max_tokens) == (GEMINI, 300)
+    assert route.retry_cut_off  # a run's route asks a cut-off reply once more (E20)
 
 
 def test_a_given_chat_alone_gets_no_second_model() -> None:
-    """The smoke harness's nodes (decision 004) and tests: a refusal is the outcome."""
+    """The smoke harness's nodes (decision 004) and tests: a refusal is the outcome, and a
+    cut-off reply is never asked again (one call per probe)."""
     given = chat_model(model=CHEAP_MODEL, settings=_settings())
     route = engine_route(max_tokens=300, settings=_settings(), chat=given)
     assert route.chat is given
     assert route.refusal_chat is None
+    assert not route.retry_cut_off
 
 
 def test_a_given_pair_is_used_as_it_is() -> None:
+    """A classification run's models (`engine_nodes`), so a cut-off reply is asked once more."""
     first, second = (chat_model(model=m, settings=_settings()) for m in (CHEAP_MODEL, GEMINI))
     route = engine_route(max_tokens=300, settings=_settings(), chat=first, refusal_chat=second)
     assert (route.chat, route.refusal_chat) == (first, second)
+    assert route.retry_cut_off
 
 
 def _assert_chat_roundtrip(settings: Settings) -> None:

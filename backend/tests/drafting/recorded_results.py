@@ -17,6 +17,8 @@ from datetime import date
 from pathlib import Path
 from typing import NoReturn
 
+import pytest
+
 from aiact.engine.graph import EngineNodes, build_graph
 from aiact.engine.nodes.finalize import finalize
 from aiact.engine.nodes.high_risk import HighRiskCheck
@@ -31,6 +33,7 @@ from aiact.schemas import (
     HighRiskRoute,
     RiskClass,
     Role,
+    Status,
     StepName,
     StepResult,
 )
@@ -39,6 +42,7 @@ from tests.conftest import RECORDINGS_DIR
 from tests.engine.nodes.corpus_recording import (
     CORPUS_SUFFIX,
     RecordedGuidelineLibrary,
+    RecordingPendingError,
     corpus_recording,
 )
 from tests.engine.nodes.test_high_risk import RecordedHighRiskLibrary
@@ -123,9 +127,20 @@ def _deployer_step() -> CheckOutcome:
     )
 
 
+AMBIGUOUS_RECORDING_PENDING = pytest.mark.xfail(
+    strict=True,
+    raises=RecordingPendingError,
+    reason="recording pending (orchestrator): E20's re-record of own-e-09 settles its "
+    "safety-component question (a known gap in test_high_risk.py, run-to-run variance), so no "
+    "recorded result is legally ambiguous; re-record own-e-09 there",
+)
+"""The tests on the recorded ambiguous result, while own-e-09's recording isn't ambiguous."""
+
+
 def recorded_ambiguous_result(settings: Settings, record_mode: str) -> ClassificationResult:
     """own-e-09 from its recorded high-risk check; call it inside the cassette's `vcr`
-    context."""
+    context. Raises `RecordingPendingError` when the recording isn't legally ambiguous, which
+    makes it no source for these tests."""
     case = own_case("e", AMBIGUOUS_CASE)
     with corpus_recording(
         str(AMBIGUOUS_DIR), AMBIGUOUS_CASSETTE, record_mode, RECORD_COMMAND, _no_live_corpus
@@ -133,4 +148,7 @@ def recorded_ambiguous_result(settings: Settings, record_mode: str) -> Classific
         check = HighRiskCheck(replay_settings(settings), library=RecordedHighRiskLibrary(recording))
         outcome = check(replay_state(case, AS_OF))
     checks = {StepName.HIGH_RISK: outcome, StepName.ROLE_OBLIGATIONS: _deployer_step()}
-    return _finalized(case, checks)
+    result = _finalized(case, checks)
+    if result.status is not Status.LEGALLY_AMBIGUOUS:
+        raise RecordingPendingError(f"{AMBIGUOUS_CASSETTE} is not legally ambiguous; re-record it")
+    return result

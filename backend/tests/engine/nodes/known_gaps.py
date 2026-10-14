@@ -4,8 +4,8 @@ Each gap names the reason and the wrong reading it documents (`reads`). A replay
 when it starts matching its label (the entry is then removed), and fails too when it misses in
 any other way than the documented one; otherwise it is an expected failure.
 
-Also how a whole run that met a stale recording is told apart from a node error, and E18's
-negative fixtures.
+Also how a whole run, or a streamed one, that met a stale recording is told apart from a node
+error, and E18's negative fixtures.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -17,7 +17,7 @@ import pytest
 from openrouter.utils.retries import PermanentError
 from vcr.errors import CannotOverwriteExistingCassetteException
 
-from aiact.engine import ClassificationFailedError
+from aiact.engine import ClassificationFailedError, ClassifyEvent, ErrorEvent
 from aiact.engine.state import CheckOutcome
 from aiact.eval.cases import BenchmarkCase, load_yaml_file
 from tests.engine.nodes.corpus_recording import RecordingPendingError
@@ -53,6 +53,18 @@ def stale_recording_pending() -> Iterator[None]:
         if not is_stale_recording(error):
             raise
         raise RecordingPendingError(f"the {error.step} node met a stale recording") from error
+
+
+STALE_RECORDING_LOG = "CannotOverwriteExistingCassetteException"
+"""What the engine logs when a node's request isn't in the recording (only its type's name)."""
+
+
+def raise_if_recording_stale(events: list[ClassifyEvent], log: str, stale: str) -> None:
+    """A stale recording stops a streamed run in an error event and the engine only logs its
+    cause, so name it here: `RecordingPendingError` (saying `stale`) rather than an assertion on
+    the stream."""
+    if events and isinstance(events[-1], ErrorEvent) and STALE_RECORDING_LOG in log:
+        raise RecordingPendingError(stale)
 
 
 NEGATIVE_CASES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "negative_cases"

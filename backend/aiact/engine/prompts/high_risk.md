@@ -165,6 +165,13 @@ answer `condition` "none" and `profiling` "no".
   "unknown" when the description leaves open facts the legislation's conformity route depends on.
   When the description says the conformity route is not decided yet, answer "unknown"; do not
   fill it in from what you know of the sector law.
+  An exemption from that legislation's conformity procedure that the company relies on (for
+  example an in-house or own-use exemption, or a derogation) is never "no" by itself. While the
+  description doesn't show that the exemption's conditions are met, answer "unknown". Once it
+  does, whether Art. 6(1)(b) still applies is open in law: the product "is required to undergo a
+  third-party conformity assessment" can mean the product's class under that legislation or
+  the product as the company handles it. Answer `settled_in_law` "no" and `open_on`
+  "third_party_assessment".
 
 When no legislation covers the product, answer `point` null and every key fact "no".
 

@@ -7,4 +7,6 @@ instructions name them, read `annex_i` by Art. 6(1) and the definition in Art. 3
 - `third_party_assessment`: "yes" when that legislation requires the product to undergo a
   third-party conformity assessment before it is placed on the market or put into service,
   whatever risks the assessment covers (radio spectrum use and electromagnetic interference
-  included); "no" when the manufacturer may assess conformity itself.
+  included); "no" when the manufacturer may assess conformity itself. An exemption from that
+  legislation's conformity procedure that the company relies on is read as the instructions
+  say: never "no" by itself.

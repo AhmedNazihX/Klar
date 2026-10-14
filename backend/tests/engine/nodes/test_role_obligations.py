@@ -60,7 +60,11 @@ from aiact.schemas.result import derived_status
 from aiact.settings import Settings
 from tests.conftest import REFUSAL_ROUTE
 from tests.engine.built_corpus import unresolved_citations, whole_articles
-from tests.engine.nodes.known_gaps import NOT_ASSESSED, KnownGap, expect_known_gap
+from tests.engine.nodes.known_gaps import (
+    NOT_ASSESSED,
+    KnownGap,
+    expect_known_gap,
+)
 from tests.engine.nodes.pinned import assert_pinned_route
 from tests.schemas.builders import open_question
 
@@ -1555,6 +1559,26 @@ def test_the_prompt_puts_the_instructions_first_and_the_description_last() -> No
     assert "didn't foresee or plan" in human
 
 
+E20_ROLE_RULE = (
+    "When the company builds its own system on another provider's model (builds_on_gpai below), "
+    'answer "deployer" when it also uses that system itself under its own authority, and '
+    '"provider" when only others use it; the application then adds the provider role, since one '
+    "operator may hold more than one role at once (Art. 3(4); recital 83)."
+)
+"""E20's base role for a company that builds on another provider's model (decision 035 follow-up
+1), as role_obligations.md words it: it deploys what it uses itself (Art. 3(4)), and one operator
+can be both provider and deployer (recital 83; guide-prohibited para 19, guide-art50 para 15)."""
+
+
+def test_the_prompt_states_the_base_role_of_a_builder_on_a_gpai_model() -> None:
+    """The sentence sits in `role`, after its options and before `builds_on_gpai`'s own
+    definition."""
+    flat = " ".join(node.ROLE_INSTRUCTIONS.split())
+    assert E20_ROLE_RULE in flat
+    start = flat.index("- role: the company's own role for this system, before any switch.")
+    assert start < flat.index(E20_ROLE_RULE) < flat.index("- builds_on_gpai:")
+
+
 def test_only_a_high_risk_request_asks_the_legacy_facts() -> None:
     # Other classes send the request E7 recorded, unchanged.
     for risk_class in (RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK, RiskClass.PROHIBITED):
@@ -1675,44 +1699,51 @@ def _role_cases() -> list[BenchmarkCase]:
 B5D_CASES = _role_cases()
 
 
-def _provider_through_gpai(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
-    """Provider by building on a GPAI model, not by the Art. 25(1)(c) switch; no other role."""
-    found, cites = finding(outcome), set(cited(outcome))
-    return (
-        found.role is Role.PROVIDER
-        and {"art:3:3", "art:3:68"} <= cites
-        and "art:25:1:c" not in cites
-        and found.also_role is None
-    )
-
-
-KNOWN_GAPS: dict[str, KnownGap] = {
-    "own-d-03-assistant-repurposed-hiring": KnownGap(
-        "reaches provider through the GPAI build route (Art. 3(3), 3(68)) instead of the Art. "
-        "25(1)(c) switch, and keeps no deployer role (E10 re-record, user 2026-10-06). E14: "
-        "variance; the base role was 'deployer' (which matches) in four of five recordings, "
-        "including E8's on the same prompt, and 'provider' in this one",
-        _provider_through_gpai,
-    ),
-}
+KNOWN_GAPS: dict[str, KnownGap] = {}
 """Recorded cases whose role outcome differs from the label, with the reason; each fails when it
-starts matching, so the entry is removed."""
+starts matching, so the entry is removed. E20 removed own-d-03's (a base role of provider, which
+lost the deployer role; decision 035 follow-up 1): the role prompt now says which base role a
+company has that builds its own system on another provider's model."""
 
 
 def b5d_matches(outcome: CheckOutcome, case: BenchmarkCase) -> bool:
     """Everything `test_b5d_case_replay` asserts: the role, exactly the tagged Art. 25(1)
-    switches, any tagged `also_role`, and `role_matches`."""
+    switches, any tagged `also_role`, no deployer role kept on a case with no `also_role` tag (E20:
+    the base-role rule for a builder on a GPAI model must not add one, as on own-d-06; another
+    kept role, such as importer under a provider working assumption, may stand), and
+    `role_matches`."""
     label = case.label
     assert isinstance(label, CaseLabel)
     found = finding(outcome)
     switches = {f"art:25:1:{s[-1]}" for s in tag(case, "role_switch") if s != "none"}
     cited = {c.provision_id for c in outcome.step.citations}
+    also = [Role(role) for role in tag(case, "also_role")]
     return (
         found.role is label.role
         and (not switches or {c for c in cited if c.startswith("art:25:1:")} == switches)
-        and all(found.also_role is Role(also) for also in tag(case, "also_role"))
+        and all(found.also_role is role for role in also)
+        and (bool(also) or found.also_role is not Role.DEPLOYER)
         and role_matches(outcome, case)
     )
+
+
+@pytest.mark.parametrize(
+    ("base", "is_match"),
+    [(Role.PROVIDER, True), (Role.DEPLOYER, False)],
+    ids=["only-others-use-it", "also-uses-it"],
+)
+def test_a_provider_only_builder_matches_only_without_a_deployer_role(
+    base: Role, is_match: bool
+) -> None:
+    """E20's guard on own-d-06 (provider only, no `also_role` tag): built on a GPAI model, a
+    provider base matches; a deployer base, which keeps the deployer role, doesn't."""
+    case = next(c for c in B5D_CASES if c.id == "own-d-06-shop-chat-on-llm")
+    run_state = role_check_state(case, ROLE_AS_OF)
+    gpai = key_fact(Answer.YES, EvidenceTag.STATED)
+    answer = role_answer(base, risk_class=RiskClass.LIMITED_RISK, route=None, builds_on_gpai=gpai)
+    outcome = to_outcome(answer, run_state)
+    assert finding(outcome).role is Role.PROVIDER
+    assert b5d_matches(outcome, case) is is_match
 
 
 @pytest.mark.vcr
@@ -1725,7 +1756,9 @@ def test_b5d_case_replay(case: BenchmarkCase, luna_settings: Settings) -> None:
     """Each B5d case's expected role, from the class its label gives, and its status when the
     label is legally ambiguous (own-d-12, closed by E8's contested answer); a case tagged with
     Art. 25(1) switches cites exactly those points (every switch that applies is reported, user,
-    2026-10-06), and one tagged `also_role:` keeps that role. Replays the recording
+    2026-10-06), one tagged `also_role:` keeps that role, and an untagged one keeps no deployer
+    role (E20).
+    Replays the recording
     `recordings/engine/nodes/test_role_obligations/test_b5d_case_replay[<id>].yaml`; a missing
     one fails. Record with `RECORD_COMMAND`."""
     if not runs_role_check(case):
