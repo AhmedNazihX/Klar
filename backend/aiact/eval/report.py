@@ -24,9 +24,11 @@ stored in each row's scores, never judged again here, and P8a's deterministic "n
 content" check on the documents the results call for (`judged.code_checked_documents`, no model
 call). A Q&A run (`aiact evaluate ragas`) gets its settings and its judged metrics only.
 
-A Pile B (`commission_b`) run's printed report names no case: the scoring errors, contaminated
-cases, refusals and failures are counted only, and a line names the file that holds the full
-report, under `eval/reports/pile_b/`, which the Engine lane can't read (`run_reports`, V11).
+A Pile B (`commission_b`) run's report names no case unless the caller asks for it
+(`should_name_cases`): the scoring errors, contaminated cases, refusals and failures are counted
+only, and a line names the file that holds the full report, under `eval/reports/pile_b/`, which
+the Engine lane can't read (`run_reports`, V11). A stored row the report can't read is named by
+its position in such a run, never by its case id.
 """
 
 from collections.abc import Mapping, Sequence
@@ -39,7 +41,7 @@ import psycopg
 from pydantic import Field, TypeAdapter, ValidationError
 
 from aiact.eval.cases import BenchmarkCase, CaseSet
-from aiact.eval.failures import render_failures
+from aiact.eval.failures import NAMED_IN_PILE_B_FILE, render_failures
 from aiact.eval.isolation import ContaminatedList, load_contaminated
 from aiact.eval.judge import JudgeCheck
 from aiact.eval.judged import (
@@ -55,6 +57,7 @@ from aiact.eval.judged import (
     run_totals,
 )
 from aiact.eval.label_filter import reports_folder
+from aiact.eval.label_filter_report import display_path
 from aiact.eval.metrics import (
     CITATION_EXISTENCE_KEY,
     Outcome,
@@ -88,10 +91,8 @@ PILE_B_POINTER = (
     "- Case ids and expected labels: `{file}` (Pile B's, kept out of this text: the Engine lane "
     "can't read that folder, V11)"
 )
-NAMED_THERE = "named in the Pile B file"
-PILE_B_HEADING = (
-    "# Pile B run {run}: every case named\n\n"
-    "Written by `aiact evaluate report {run}`: the full report, with the case ids and expected "
+PILE_B_INTRO = (
+    "\nWritten by `aiact evaluate report {run}`: the full report, with the case ids and expected "
     "labels its printed text leaves out. The Engine lane denies this folder (V11). "
     "Classifications are guidance, not legal advice.\n\n"
 )
@@ -102,7 +103,8 @@ class RunNotFoundError(LookupError):
 
 
 class RunRecordError(ValueError):
-    """A stored case row doesn't hold what the report expects; the message names the case."""
+    """A stored case row doesn't hold what the report expects; the message names the case, or
+    for a Pile B run the row's position."""
 
 
 class RunInfo(ContractModel):
@@ -202,18 +204,31 @@ def _number(settings: Mapping[str, object], key: str) -> int | None:
 
 
 def load_stored_cases(conn: psycopg.Connection, run_id: UUID) -> tuple[StoredCase, ...]:
+    """The run's case rows, by case id; a Pile B run's unreadable row is named by position."""
     rows = conn.execute(
-        "select case_id, label, predicted, scores from eval_case_results "
-        "where run_id = %s order by case_id",
+        "select r.case_id, r.label, r.predicted, r.scores, e.benchmark"
+        " from eval_case_results r join eval_runs e on e.id = r.run_id"
+        " where r.run_id = %s order by r.case_id",
         (run_id,),
     ).fetchall()
-    return tuple(stored_case(*row) for row in rows)
+    return tuple(
+        stored_case(
+            case_id,
+            label,
+            predicted,
+            scores,
+            row=f"row {position}" if benchmark == CaseSet.COMMISSION_B.value else None,
+        )
+        for position, (case_id, label, predicted, scores, benchmark) in enumerate(rows, 1)
+    )
 
 
 def stored_case(
-    case_id: str, label: object, predicted: object, scores: object = None
+    case_id: str, label: object, predicted: object, scores: object = None, row: str | None = None
 ) -> StoredCase:
-    """Parse one `eval_case_results` row (its `label`, `predicted` and `scores` columns)."""
+    """Parse one `eval_case_results` row (its `label`, `predicted` and `scores` columns). An
+    error names `row` when given (a Pile B run's row position), else `case <case_id>`."""
+    name = row or f"case {case_id}"
     try:
         case = BenchmarkCase.model_validate(label)
         result = None if is_failed(predicted) else ClassificationResult.model_validate(predicted)
@@ -222,37 +237,38 @@ def stored_case(
         # included.
         fields = sorted({".".join(str(part) for part in error["loc"]) for error in exc.errors()})
         raise RunRecordError(
-            f"case {case_id}: stored label or prediction is invalid at {', '.join(fields)}"
+            f"{name}: stored label or prediction is invalid at {', '.join(fields)}"
         ) from exc
     if case.id != case_id:
-        raise RunRecordError(f"case {case_id}: stored label belongs to case {case.id}")
+        other = "another case" if row else f"case {case.id}"
+        raise RunRecordError(f"{name}: stored label belongs to {other}")
     stored = scores if isinstance(scores, Mapping) else {}
     citation_score = stored.get(CITATION_EXISTENCE_KEY)
     return StoredCase(
         outcome=Outcome(case=case, result=result),
         is_scoring_error=stored.get(SCORING_ERROR_KEY) is True,
         citation_existence=citation_score if isinstance(citation_score, bool) else None,
-        models=_served_models(case_id, stored.get(MODELS_KEY)),
-        judged=_judged(case_id, stored),
+        models=_served_models(name, stored.get(MODELS_KEY)),
+        judged=_judged(name, stored),
     )
 
 
-def _judged(case_id: str, scores: Mapping[str, object]) -> dict[JudgeCheck, CheckScore]:
-    """The stored judged tallies; a malformed one is a `RunRecordError` naming the case."""
+def _judged(name: str, scores: Mapping[str, object]) -> dict[JudgeCheck, CheckScore]:
+    """The stored judged tallies; a malformed one is a `RunRecordError` naming the row."""
     try:
         return read_stored(scores)
     except JudgedRecordError as exc:
-        raise RunRecordError(f"case {case_id}: {exc}") from exc
+        raise RunRecordError(f"{name}: {exc}") from exc
 
 
-def _served_models(case_id: str, value: object) -> dict[str, dict[str, int]]:
-    """The stored `models` score; a malformed one is a `RunRecordError` naming the case."""
+def _served_models(name: str, value: object) -> dict[str, dict[str, int]]:
+    """The stored `models` score; a malformed one is a `RunRecordError` naming the row."""
     if value is None:
         return {}
     try:
         return SERVED_MODELS.validate_python(value)
     except ValidationError as exc:
-        raise RunRecordError(f"case {case_id}: stored models are malformed") from exc
+        raise RunRecordError(f"{name}: stored models are malformed") from exc
 
 
 @dataclass(frozen=True)
@@ -263,36 +279,40 @@ class RunReport:
     """The report to print and paste. A Pile B run's names no case id and no expected label,
     only the file `pile_b_text` goes to."""
     pile_b_text: str | None = None
-    """A Pile B run's full report, every case named with what it shows, for its Pile B file."""
+    """A Pile B run's full report, every case named with what it shows, for `pile_b_file`."""
 
 
-def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
-    """The markdown report for one stored run, every case named (`run_reports` keeps a Pile B
-    run's cases out of the text to paste); a Q&A run's holds its judged metrics."""
-    return run_reports(conn, run_id).text
-
-
-def run_reports(
-    conn: psycopg.Connection, run_id: UUID, pile_b_file: str | None = None
-) -> RunReport:
-    """The report for one stored run. With `pile_b_file`, a Pile B (`commission_b`) run's text
-    names that file instead of its cases, and `pile_b_text` is what goes in the file."""
+def run_reports(conn: psycopg.Connection, run_id: UUID) -> RunReport:
+    """The report for one stored run; a Q&A run's holds its judged metrics. A Pile B
+    (`commission_b`) run's text names `pile_b_file` instead of its cases, and `pile_b_text` is
+    what goes in that file."""
     info = load_run_info(conn, run_id)
     if info.benchmark == QA_BENCHMARK:
         return RunReport(build_qa_report(info, load_qa_tallies(conn, run_id)))
     cases, contaminated = load_stored_cases(conn, run_id), load_contaminated()
-    full = build_report(info, cases, contaminated)
-    if pile_b_file is None or info.benchmark != CaseSet.COMMISSION_B.value:
-        return RunReport(full)
+    if not is_pile_b(info):
+        return RunReport(build_report(info, cases, contaminated))
+    named = build_report(info, cases, contaminated, should_name_cases=True)
+    pointer = display_path(pile_b_file(info.id))
     return RunReport(
-        build_report(info, cases, contaminated, pile_b_file=pile_b_file),
-        PILE_B_HEADING.format(run=info.id) + full,
+        build_report(info, cases, contaminated, pile_b_pointer=pointer),
+        pile_b_heading(info.id) + PILE_B_INTRO.format(run=info.id) + named,
     )
 
 
+def is_pile_b(info: RunInfo) -> bool:
+    return info.benchmark == CaseSet.COMMISSION_B.value
+
+
 def pile_b_file(run_id: UUID) -> Path:
-    """Where a Pile B run's full report goes by default: the folder the Engine lane denies."""
+    """Where a Pile B run's full report goes: the folder the Engine lane denies."""
     return reports_folder(CaseSet.COMMISSION_B) / f"run-{run_id}.md"
+
+
+def pile_b_heading(run_id: UUID) -> str:
+    """The Pile B file's first line; a file there that doesn't start with it is never
+    overwritten."""
+    return f"# Pile B run {run_id}: every case named\n"
 
 
 QaTally = Mapping[JudgeCheck, CheckScore] | None
@@ -343,15 +363,24 @@ def build_report(
     info: RunInfo,
     cases: tuple[StoredCase, ...],
     contaminated: ContaminatedList | None = None,
-    pile_b_file: str | None = None,
+    *,
+    should_name_cases: bool | None = None,
+    pile_b_pointer: str | None = None,
 ) -> str:
-    """The report's markdown. With `pile_b_file` it names no case (no id, no expected label):
-    it counts them and points to that file (a Pile B run's printed text, V11)."""
+    """The report's markdown. A Pile B run's names no case (no id, no expected label) unless
+    `should_name_cases` is True: it counts them, and `pile_b_pointer` names the file that does
+    (V11). Another run's names its cases unless `should_name_cases` is False."""
+    should_name_cases = _names_cases(info, should_name_cases)
     scored = [case for case in cases if not case.is_scoring_error]
     scoring_errors = [case.outcome.case.id for case in cases if case.is_scoring_error]
     outcomes = [case.outcome for case in scored]
-    lines = render_markdown(info, scored_metrics(scored), scoring_errors, pile_b_file).splitlines()
-    should_name_cases = pile_b_file is None
+    lines = render_markdown(
+        info,
+        scored_metrics(scored),
+        scoring_errors,
+        should_name_cases=should_name_cases,
+        pile_b_pointer=pile_b_pointer,
+    ).splitlines()
     flagged = contaminated_cases(outcomes, contaminated)
     if flagged and contaminated is not None:
         clean = summarize([o for o in outcomes if o.case.id not in flagged], None)
@@ -402,10 +431,15 @@ def contaminated_cases(
     }
 
 
+def _names_cases(info: RunInfo, should_name_cases: bool | None) -> bool:
+    """Whether a report names its cases: as asked, else every run's but a Pile B run's."""
+    return not is_pile_b(info) if should_name_cases is None else should_name_cases
+
+
 def _named(flagged: Mapping[str, str], should_name_cases: bool) -> str:
     """The contaminated cases, each with its example; their count alone for a Pile B text."""
     if not should_name_cases:
-        return f"{len(flagged)} ({NAMED_THERE})"
+        return f"{len(flagged)} {NAMED_IN_PILE_B_FILE}"
     return ", ".join(f"{case_id} (from {example})" for case_id, example in flagged.items())
 
 
@@ -424,16 +458,20 @@ def render_markdown(
     info: RunInfo,
     metrics: RunMetrics,
     scoring_errors: list[str] | None = None,
-    pile_b_file: str | None = None,
+    *,
+    should_name_cases: bool | None = None,
+    pile_b_pointer: str | None = None,
 ) -> str:
-    """The header and the metric table; with `pile_b_file`, the scoring errors are counted, not
-    named, and a line points to that file."""
+    """The header and the metric table. Unnamed (by default for a Pile B run, as in
+    `build_report`), the scoring errors are counted only; `pile_b_pointer` adds a line naming
+    the Pile B file."""
+    should_name_cases = _names_cases(info, should_name_cases)
     header = [
         f"## Run {info.id}",
         "",
         *run_lines(info),
         f"- Cases: {metrics.cases} ({metrics.failed} failed)",
-        *([PILE_B_POINTER.format(file=pile_b_file)] if pile_b_file is not None else []),
+        *([PILE_B_POINTER.format(file=pile_b_pointer)] if pile_b_pointer is not None else []),
         "",
         "| Metric | Value | Count |",
         "| --- | ---: | ---: |",
@@ -442,9 +480,9 @@ def render_markdown(
     lines = [*header, *(_row(name, value) for name, value in _rows(metrics, is_development))]
     if scoring_errors:
         named = (
-            f"{len(scoring_errors)} ({NAMED_THERE})"
-            if pile_b_file is not None
-            else ", ".join(scoring_errors)
+            ", ".join(scoring_errors)
+            if should_name_cases
+            else f"{len(scoring_errors)} {NAMED_IN_PILE_B_FILE}"
         )
         lines += ["", f"Scoring failed, left out of the metrics: {named}"]
     return "\n".join(lines) + "\n"

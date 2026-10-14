@@ -14,7 +14,7 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
    `eval/isolation/contaminated.json` and pinned by
    `test_the_contaminated_overlaps_are_as_recorded` (and the local cosine re-check).
 4. No tracked file outside the folders the Engine lane denies names a Pile B case (V11), except
-   the few `NAMES_PILE_B_CASES` lists with a reason.
+   the ids `NAMES_PILE_B_CASES` pins for two files, each with a reason: any other id fails.
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 
 The corpus checks read the loaded corpus. CI's isolation job loads it from the committed
@@ -688,9 +688,9 @@ def test_the_engine_lane_never_sees_pile_b_label_filter_output() -> None:
 
 # --- Pile B case ids in tracked files (V11) -------------------------------------------------
 
-PILE_B_CASE_ID = re.compile(r"\bcb-\d{3}\b")
-"""A Pile B case id, `cb-NNN-<slug>`, or its short form `cb-NNN`. Tests use made-up ids that
-don't match (`cb-test-…`)."""
+PILE_B_CASE_ID = re.compile(r"(?<![A-Za-z0-9])cb-(\d{3})(?!\d)", re.IGNORECASE)
+"""A Pile B case id, `cb-NNN-<slug>`, or its short form `cb-NNN`, in any case; the group is its
+number. Tests use made-up ids that don't match (`cb-test-…`)."""
 PILE_B_PLACES = (
     "eval/commission_examples",
     "eval/cases/commission_b",
@@ -698,13 +698,48 @@ PILE_B_PLACES = (
     "eval/reports/pile_b",
 )
 """Where Pile B's ids and labels belong: exactly the paths the Engine lane denies."""
-NAMES_PILE_B_CASES: dict[str, str] = {
-    "eval/LABEL_CHANGES.md": "the label-change log names each changed case and its labels, "
-    "and the label-freeze check (B10a) matches its rows by case id",
-    "docs/BACKLOG.md": "the orchestrator's hand-over notes on the Pile B stories (B4, B9, B10b, "
-    "X0b); only the orchestrator edits it",
+
+
+@dataclass(frozen=True)
+class KnownPileBNames:
+    """A tracked file outside `PILE_B_PLACES` that already names Pile B cases, and why."""
+
+    reason: str
+    numbers: frozenset[str]
+    """The case numbers (`cb-NNN`) it names today; any other one is a leak. Numbers only, so
+    this file names no case itself."""
+
+
+NAMES_PILE_B_CASES: dict[str, KnownPileBNames] = {
+    "eval/LABEL_CHANGES.md": KnownPileBNames(
+        "the label-change log names each changed case and its labels, and the label-freeze "
+        "check (B10a) matches its rows by case id",
+        frozenset(["030", "097", "098", "222", "269", "304"]),
+    ),
+    "docs/BACKLOG.md": KnownPileBNames(
+        "the orchestrator's hand-over notes on the Pile B stories (B4, B9, B10b, X0b); only the "
+        "orchestrator edits it",
+        frozenset(
+            [
+                "030",
+                "041",
+                "042",
+                "098",
+                "108",
+                "123",
+                "173",
+                "222",
+                "240",
+                "269",
+                "293",
+                "304",
+                "307",
+            ]
+        ),
+    ),
 }
-"""Tracked files allowed to name a Pile B case outside `PILE_B_PLACES`, each with its reason."""
+"""The pinned baseline: tracked files allowed to name these Pile B cases outside
+`PILE_B_PLACES`, each with its reason (V11)."""
 
 
 def _is_pile_b_place(name: str) -> bool:
@@ -713,19 +748,18 @@ def _is_pile_b_place(name: str) -> bool:
 
 def pile_b_id_leaks(repo: Path, names: Iterable[str]) -> dict[str, list[str]]:
     """Each file of `names` (paths from `repo`) outside the allowed places that names a Pile B
-    case, with the ids it names. A file this worktree leaves out (a lane's sparse checkout) or
-    that isn't text is skipped."""
+    case its baseline doesn't hold, with those ids. A file this worktree leaves out (a lane's
+    sparse checkout) is skipped; one that isn't UTF-8 is read with its bad bytes replaced."""
     leaks: dict[str, list[str]] = {}
     for name in names:
         path = repo / name
-        if _is_pile_b_place(name) or name in NAMES_PILE_B_CASES or not path.is_file():
+        if _is_pile_b_place(name) or not path.is_file():
             continue
-        try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
-        if found := sorted(set(PILE_B_CASE_ID.findall(text))):
-            leaks[name] = found
+        text = path.read_text(encoding="utf-8", errors="replace")
+        known = NAMES_PILE_B_CASES.get(name)
+        allowed = known.numbers if known else frozenset()
+        if found := sorted({number for number in PILE_B_CASE_ID.findall(text)} - allowed):
+            leaks[name] = [f"cb-{number}" for number in found]
     return leaks
 
 
@@ -749,25 +783,55 @@ def test_the_pile_b_places_are_the_engine_lanes_deny_list() -> None:
     assert sorted(PILE_B_PLACES) == sorted(config["lanes"]["Engine"]["deny"])
 
 
+def test_the_files_allowed_to_name_pile_b_cases_are_pinned() -> None:
+    assert set(NAMES_PILE_B_CASES) == {"eval/LABEL_CHANGES.md", "docs/BACKLOG.md"}
+    assert all(known.reason and known.numbers for known in NAMES_PILE_B_CASES.values())
+
+
+NEW = "999"
+"""A case number no baseline holds, for planted ids."""
+
+
 def test_a_planted_pile_b_id_is_caught_outside_the_allowed_places(tmp_path: Path) -> None:
-    planted = "cb-" + "123-made-up-system (expected high_risk)"  # split: no id in this file
+    assert all(NEW not in known.numbers for known in NAMES_PILE_B_CASES.values())
+    old = min(NAMES_PILE_B_CASES["eval/LABEL_CHANGES.md"].numbers)
+    planted = f"- **scope** (1): {'cb-'}{NEW}-made-up-system (expected high_risk)\n"
     names = (
         "eval/reports/run-2099-01-01.md",
         "eval/reports/pile_b/run-2099-01-01.md",
+        "eval/commission_examples/made-up.md",
         "eval/split.json.bak",
         "eval/LABEL_CHANGES.md",
+        "docs/BACKLOG.md",
+        "docs/notes.md",
+        ".claude/skills/eval/notes.md",
         "backend/notes.md",
     )
     for name in names:
         (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
-        (tmp_path / name).write_text(f"- **scope** (1): {planted}\n", encoding="utf-8")
-    (tmp_path / "short.md").write_text("see " + "cb-" + "123 and cb-12, scb-1234\n")
+        (tmp_path / name).write_text(planted, encoding="utf-8")
+    (tmp_path / "known.md").write_text(f"see {'cb-'}{old}\n", encoding="utf-8")
+    (tmp_path / "short.md").write_text(f"see CB-{NEW}, x_{'cb-'}{NEW}, cb-12, scb-1234, cb-1234\n")
     (tmp_path / "binary.bin").write_bytes(b"\xff\xfe" + planted.encode())
-    leaks = pile_b_id_leaks(tmp_path, (*names, "short.md", "binary.bin", "missing.md"))
-    expected = ["cb-" + "123"]
+    leaks = pile_b_id_leaks(tmp_path, (*names, "known.md", "short.md", "binary.bin", "missing.md"))
+    expected = [f"{'cb-'}{NEW}"]
     assert leaks == {
         "eval/reports/run-2099-01-01.md": expected,
         "eval/split.json.bak": expected,
+        "eval/LABEL_CHANGES.md": expected,
+        "docs/BACKLOG.md": expected,
+        "docs/notes.md": expected,
+        ".claude/skills/eval/notes.md": expected,
         "backend/notes.md": expected,
+        "known.md": [f"{'cb-'}{old}"],
         "short.md": expected,
+        "binary.bin": expected,
     }
+
+
+def test_an_allowed_file_may_keep_the_pile_b_cases_it_names_today(tmp_path: Path) -> None:
+    for name, known in NAMES_PILE_B_CASES.items():
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        ids = ", ".join(f"{'cb-'}{number}-x" for number in sorted(known.numbers))
+        (tmp_path / name).write_text(ids, encoding="utf-8")
+    assert pile_b_id_leaks(tmp_path, NAMES_PILE_B_CASES) == {}

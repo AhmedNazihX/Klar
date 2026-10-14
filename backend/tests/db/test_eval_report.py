@@ -16,7 +16,6 @@ from aiact.eval.report import (
     RunNotFoundError,
     RunRecordError,
     load_stored_cases,
-    run_report,
     run_reports,
 )
 from aiact.eval.runner import DummyClassifier, ExcludeMode, RunOptions, run_benchmark
@@ -30,10 +29,10 @@ GIT_SHA = "0123456789abcdef0123456789abcdef01234567"
 CONFIG = {"model": "openai/gpt-6-luna", "embedding": None, "retrieval": None}
 
 
-def _insert_run(db: psycopg.Connection) -> UUID:
+def _insert_run(db: psycopg.Connection, benchmark: str = "own") -> UUID:
     row = db.execute(
-        "insert into eval_runs (git_sha, benchmark, config) values (%s, 'own', %s) returning id",
-        (GIT_SHA, Jsonb(CONFIG)),
+        "insert into eval_runs (git_sha, benchmark, config) values (%s, %s, %s) returning id",
+        (GIT_SHA, benchmark, Jsonb(CONFIG)),
     ).fetchone()
     assert row is not None
     return row[0]
@@ -114,7 +113,7 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
     assert [row.outcome.case.id for row in stored] == ["a", "b", "c"]
     assert stored[2].outcome.result is None
 
-    report = run_report(db, run_id)
+    report = run_reports(db, run_id).text
     assert f"## Run {run_id}" in report
     assert "- Model: openai/gpt-6-luna" in report
     assert "| Risk-class accuracy (development cases) | 33.3% | 1/3 |" in report
@@ -129,33 +128,32 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
         (DOCUMENT_ID,),
     )
     assert "art:5:1" in WORKED_EXAMPLE_PROVISIONS
-    assert run_report(db, run_id) == report
+    assert run_reports(db, run_id).text == report
 
 
 def test_a_stored_pile_b_runs_text_names_no_case(db: psycopg.Connection) -> None:
-    row = db.execute(
-        "insert into eval_runs (git_sha, benchmark, config)"
-        " values (%s, 'commission_b', %s) returning id",
-        (GIT_SHA, Jsonb(CONFIG)),
-    ).fetchone()
-    assert row is not None
-    run_id = row[0]
+    run_id = _insert_run(db, "commission_b")
     missed = case("cb-test-missed", set_name=CaseSet.COMMISSION_B)  # made up: see test_isolation
     _insert_case(db, run_id, _dump(missed), _dump(result(RiskClass.OUT_OF_SCOPE)))
 
-    parts = run_reports(db, run_id, "eval/reports/pile_b/run-x.md")
+    parts = run_reports(db, run_id)
     assert "cb-test-missed" not in parts.text
-    assert "- **scope** (1)" in parts.text.splitlines()
-    assert "`eval/reports/pile_b/run-x.md`" in parts.text
+    assert "- **scope** (1) (named in the Pile B file)" in parts.text.splitlines()
+    assert f"`eval/reports/pile_b/run-{run_id}.md`" in parts.text
     assert parts.pile_b_text is not None
+    assert parts.pile_b_text.startswith(f"# Pile B run {run_id}: every case named\n")
     assert "- **scope** (1): cb-test-missed (expected high_risk" in parts.pile_b_text
-    assert run_reports(db, run_id).pile_b_text is None
-    assert "cb-test-missed" in run_report(db, run_id)
+
+    own_run = _insert_run(db)
+    _insert_case(db, own_run, _dump(missed), _dump(result(RiskClass.OUT_OF_SCOPE)))
+    own = run_reports(db, own_run)
+    assert own.pile_b_text is None
+    assert "- **scope** (1): cb-test-missed (expected high_risk" in own.text
 
 
 def test_unknown_run_is_an_error(db: psycopg.Connection) -> None:
     with pytest.raises(RunNotFoundError):
-        run_report(db, uuid4())
+        run_reports(db, uuid4())
 
 
 def test_invalid_stored_prediction_names_the_case(db: psycopg.Connection) -> None:
@@ -164,6 +162,16 @@ def test_invalid_stored_prediction_names_the_case(db: psycopg.Connection) -> Non
     with pytest.raises(RunRecordError, match="case a") as raised:
         load_stored_cases(db, run_id)
     assert "made-up system" not in str(raised.value).lower()
+
+
+def test_an_invalid_pile_b_row_is_named_by_its_position(db: psycopg.Connection) -> None:
+    run_id = _insert_run(db, "commission_b")
+    first, broken = (case(f"cb-test-{n}", set_name=CaseSet.COMMISSION_B) for n in ("a", "b"))
+    _insert_case(db, run_id, _dump(first), _dump(result()))
+    _insert_case(db, run_id, _dump(broken), {"risk_class": "high_risk"})
+    with pytest.raises(RunRecordError, match=r"^row 2: stored label or prediction") as raised:
+        load_stored_cases(db, run_id)
+    assert "cb-test" not in str(raised.value)
 
 
 class RecordingStore(PostgresRunStore):
@@ -198,7 +206,7 @@ def test_a_dummy_run_written_by_the_runner_reads_back_into_the_report(
         run_benchmark(cases, DummyClassifier(), store, options, None, scorer)
     assert store.run_id is not None
 
-    report = run_report(db, store.run_id)
+    report = run_reports(db, store.run_id).text
     # The dummy answers out_of_scope; a and b are labelled high_risk; c's scoring failed.
     assert "- Cases: 2 (0 failed)" in report
     assert "| Risk-class accuracy (development cases) | 0.0% | 0/2 |" in report

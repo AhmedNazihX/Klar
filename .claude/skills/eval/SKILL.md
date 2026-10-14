@@ -92,17 +92,20 @@ to the questions it asked in the first run ("don't know" to any other). Report b
 uv run aiact evaluate report <run_id>
 ```
 
-This reads `eval_runs` and `eval_case_results` only. Its output (a `## Run <run_id>` section with
-the run's settings, status, exclude mode and uncommitted-changes flag, the metric table, the
-accuracy without the contaminated cases when the run has any, the provider refusals, the failure
-cases grouped by step and the model-written texts) is what goes into the report, unchanged.
+This reads the run from `eval_runs` and `eval_case_results` and changes no row. Its printed
+output (a `## Run <run_id>` section with the run's settings, status, exclude mode and
+uncommitted-changes flag, the metric table, the accuracy without the contaminated cases when the
+run has any, the provider refusals, the failure cases grouped by step and the model-written
+texts) is what goes into the report, unchanged.
 
-For a `commission_b` run (Pile B) the printed output names no case: it counts the failures,
-refusals and contaminated cases, and its `- Case ids and expected labels:` line names the file
-the command wrote with the full report, `eval/reports/pile_b/run-<run_id>.md` (V11). The Engine
-lane can't read that folder. Paste only the printed output; never copy a case id (`cb-…`) or an
-expected label from the Pile B file, or from anywhere else, into `eval/reports/run-<date>.md`.
-`tests/test_isolation.py` fails on a Pile B case id outside the Pile B folders.
+For a `commission_b` run (Pile B) the command also writes the full report, every case named, to
+`eval/reports/pile_b/run-<run_id>.md` (V11), a folder the Engine lane can't read; it refuses to
+overwrite a file there that isn't that run's Pile B report. The printed output names no case: it
+counts the failures, refusals and contaminated cases, marks each "(named in the Pile B file)",
+and its `- Case ids and expected labels:` line names that file. Paste only the printed output;
+never copy a case id (`cb-…`) or an expected label from the Pile B file, or from anywhere else,
+into `eval/reports/run-<date>.md`. `tests/test_isolation.py` fails on a Pile B case id outside
+the Pile B folders.
 
 ## 5. Write the report
 

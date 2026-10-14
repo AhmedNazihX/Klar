@@ -22,7 +22,7 @@ from aiact.eval.judged_run import (
     load_run,
     plan_run,
 )
-from aiact.eval.report import run_report
+from aiact.eval.report import run_reports
 from aiact.schemas import Language
 from tests.db.test_eval_report import _insert_worked_example_provisions
 from tests.eval.outcomes import case
@@ -86,7 +86,7 @@ def test_a_judged_classification_run_shows_its_scores_in_the_report(
     run_id = _insert_run(db, "own")
     label = case("a").model_dump(mode="json")
     _insert_case(db, run_id, "a", label, worked_example_result().model_dump(mode="json"))
-    assert "not judged yet" in run_report(db, run_id)
+    assert "not judged yet" in run_reports(db, run_id).text
 
     run = load_run(db, run_id)
     planned = plan_run(run, _no_source)
@@ -100,7 +100,7 @@ def test_a_judged_classification_run_shows_its_scores_in_the_report(
     assert scores["judged_evidence_tag_cost_usd"] == pytest.approx(0.0003)
     assert load_run(db, run_id).settings == SETTINGS
 
-    report = run_report(db, run_id)
+    report = run_reports(db, run_id).text
     assert "- Cases judged: 1 of 1" in report
     assert "| Citation support | 100.0% | 5/5 | 0 | 0 | $0.0005 | $0.000100 |" in report
     assert "| Evidence-tag accuracy | 100.0% | 3/3 | 0 | 0 | $0.0003 | $0.000100 |" in report
@@ -158,7 +158,7 @@ def test_a_judged_qa_run_shows_q_and_a_support_in_its_report(db: psycopg.Connect
     planned = plan_run(run, lambda hit, language: "[art:113] text")
     judge_run(run, planned, Holding(), SETTINGS, PostgresJudgedStore(db), JudgedOptions())
 
-    report = run_report(db, run_id)
+    report = run_reports(db, run_id).text
     assert "- Benchmark: `qa`" in report
     assert "| Q&A support | 100.0% | 1/1 | 0 | 0 | $0.0001 | $0.000100 |" in report
 
@@ -194,7 +194,7 @@ def test_a_qa_runs_report_leaves_out_a_row_with_no_answer_drawn_from_the_sources
     assert [planned_case.case_id for planned_case in planned] == ["qa-en-01"]
     judge_run(run, planned, Holding(), SETTINGS, PostgresJudgedStore(db), JudgedOptions())
 
-    report = run_report(db, run_id)
+    report = run_reports(db, run_id).text
     assert "- Items: 2, 1 with an answer drawn from the sources" in report
     assert "- Cases judged: 1 of 1" in report
     assert "| Q&A support | 100.0% | 1/1 | 0 | 0 | $0.0001 | $0.000100 |" in report

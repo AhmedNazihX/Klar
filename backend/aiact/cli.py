@@ -771,32 +771,33 @@ def _read_errors_exit(*known: type[Exception]) -> Iterator[None]:
 @eval_app.command("report")
 def eval_report(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id to report on")],
-    pile_b_file: Annotated[
-        Path | None,
-        typer.Option(
-            help="Where a commission_b run's case ids and expected labels go "
-            "[default: eval/reports/pile_b/run-<run_id>.md]"
-        ),
-    ] = None,
 ) -> None:
-    """Print a stored run's deterministic metrics as a markdown table (reads the database only).
+    """Print a stored run's deterministic metrics as a markdown table (writes no database row).
 
-    A Pile B (commission_b) run's printed report names no case: its full report goes to the
-    Pile B file, which the Engine lane can't read, and the printed one names that file (V11)."""
-    path = (pile_b_file or report.pile_b_file(run_id)).resolve()
+    A Pile B (commission_b) run's printed report names no case: its full report goes to
+    eval/reports/pile_b/run-<run_id>.md, which the Engine lane can't read, and the printed one
+    names that file (V11)."""
     with (
         _read_errors_exit(report.RunNotFoundError, report.RunRecordError),
         records.connect() as connection,
     ):
-        parts = report.run_reports(connection, run_id, label_filter_report.display_path(path))
+        parts = report.run_reports(connection, run_id)
     if parts.pile_b_text is not None:
-        _write_pile_b_report(path, parts.pile_b_text)
+        _write_pile_b_report(
+            report.pile_b_file(run_id), report.pile_b_heading(run_id), parts.pile_b_text
+        )
     typer.echo(parts.text, nl=False)
 
 
-def _write_pile_b_report(path: Path, text: str) -> None:
-    """Write a Pile B run's full report; exit 2, printing nothing else, when it can't be."""
+def _write_pile_b_report(path: Path, heading: str, text: str) -> None:
+    """Write a Pile B run's full report; exit 2, printing nothing else, when it can't be, or
+    when a file there isn't this run's Pile B report (it would be overwritten)."""
     try:
+        if path.exists() and not path.read_text(encoding="utf-8", errors="replace").startswith(
+            heading
+        ):
+            typer.echo(f"Error: {path} isn't this run's Pile B report; not overwritten", err=True)
+            raise typer.Exit(code=2)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
     except OSError as error:
