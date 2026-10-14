@@ -1,0 +1,214 @@
+{
+  "labels_ref": "labels-v1",
+  "labels_commit": "be072f05768902eac8c6244bf367269a43dd0ee5",
+  "seed": 20261014,
+  "size": 25,
+  "step_minimum": 2,
+  "rule": "Pool: commission_b and own cases at labels-v1, English, label status decided with a class. Strata: the label's risk class; the draw size is split evenly over the classes in the pool, a class whose share isn't whole getting one more in seeded order. Steps: each engine step, in order (scope, prohibited, annex_iii, annex_i, art_6_3, transparency, roles), first gets seeded picks among the cases that exercise it and whose class still has room, until it has the step minimum and, for annex_iii and annex_i, a positive (label class high_risk) when the pool has one: while it lacks that positive, the pick is among its positives. Then each class is filled to its share by a seeded sample. A case exercises: own category a transparency, b scope, c prohibited, d roles, e annex_i, f annex_iii; Commission area annex_i or annex_iii_*; label class out_of_scope scope, prohibited prohibited, limited_risk transparency; art_6_3 when its basis is the Art. 6(3) filter or it cites a lettered Art. 6(3) condition. Cases are sorted by set, then id.",
+  "cases": [
+    {
+      "case_id": "cb-014-bank-fraud-voice-watchlist",
+      "set_name": "commission_b",
+      "risk_class": "high_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-103-certification-exam-proctoring",
+      "set_name": "commission_b",
+      "risk_class": "high_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-117-staffing-vacancy-matching",
+      "set_name": "commission_b",
+      "risk_class": "high_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-119-job-ad-wording-check",
+      "set_name": "commission_b",
+      "risk_class": "minimal_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-156-caseworker-fact-lookup",
+      "set_name": "commission_b",
+      "risk_class": "minimal_risk",
+      "steps": [
+        "annex_iii",
+        "art_6_3"
+      ]
+    },
+    {
+      "case_id": "cb-206-device-data-recovery",
+      "set_name": "commission_b",
+      "risk_class": "minimal_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-242-entry-check-traveller-score",
+      "set_name": "commission_b",
+      "risk_class": "high_risk",
+      "steps": [
+        "annex_iii"
+      ]
+    },
+    {
+      "case_id": "cb-261-case-file-folder-sorting",
+      "set_name": "commission_b",
+      "risk_class": "minimal_risk",
+      "steps": [
+        "annex_iii",
+        "art_6_3"
+      ]
+    },
+    {
+      "case_id": "own-a-05-vacuum-ad-synthetic-customers",
+      "set_name": "own",
+      "risk_class": "limited_risk",
+      "steps": [
+        "transparency"
+      ]
+    },
+    {
+      "case_id": "own-a-07-surfing-cows-ad",
+      "set_name": "own",
+      "risk_class": "limited_risk",
+      "steps": [
+        "transparency"
+      ]
+    },
+    {
+      "case_id": "own-a-09-newsroom-reviewed-drafts",
+      "set_name": "own",
+      "risk_class": "limited_risk",
+      "steps": [
+        "transparency"
+      ]
+    },
+    {
+      "case_id": "own-b-01-overtime-payroll-rules",
+      "set_name": "own",
+      "risk_class": "out_of_scope",
+      "steps": [
+        "scope"
+      ]
+    },
+    {
+      "case_id": "own-b-06-recon-vehicle-detection",
+      "set_name": "own",
+      "risk_class": "out_of_scope",
+      "steps": [
+        "scope"
+      ]
+    },
+    {
+      "case_id": "own-b-08-university-protein-model",
+      "set_name": "own",
+      "risk_class": "out_of_scope",
+      "steps": [
+        "scope"
+      ]
+    },
+    {
+      "case_id": "own-b-10-open-source-plant-app",
+      "set_name": "own",
+      "risk_class": "out_of_scope",
+      "steps": [
+        "scope"
+      ]
+    },
+    {
+      "case_id": "own-b-12-texas-booking-chat",
+      "set_name": "own",
+      "risk_class": "out_of_scope",
+      "steps": [
+        "scope"
+      ]
+    },
+    {
+      "case_id": "own-c-01-undress-photo-app",
+      "set_name": "own",
+      "risk_class": "prohibited",
+      "steps": [
+        "prohibited"
+      ]
+    },
+    {
+      "case_id": "own-c-05-gossip-site-fake-nudes",
+      "set_name": "own",
+      "risk_class": "prohibited",
+      "steps": [
+        "prohibited"
+      ]
+    },
+    {
+      "case_id": "own-c-07-unfiltered-image-generator",
+      "set_name": "own",
+      "risk_class": "prohibited",
+      "steps": [
+        "prohibited"
+      ]
+    },
+    {
+      "case_id": "own-c-11-police-burglary-risk-list",
+      "set_name": "own",
+      "risk_class": "prohibited",
+      "steps": [
+        "prohibited"
+      ]
+    },
+    {
+      "case_id": "own-c-14-kids-game-sad-pet-offers",
+      "set_name": "own",
+      "risk_class": "prohibited",
+      "steps": [
+        "prohibited"
+      ]
+    },
+    {
+      "case_id": "own-d-07-office-assistant-seats",
+      "set_name": "own",
+      "risk_class": "limited_risk",
+      "steps": [
+        "transparency",
+        "roles"
+      ]
+    },
+    {
+      "case_id": "own-d-11-importer-stock-forecast",
+      "set_name": "own",
+      "risk_class": "minimal_risk",
+      "steps": [
+        "roles"
+      ]
+    },
+    {
+      "case_id": "own-e-03-talking-plush-toy",
+      "set_name": "own",
+      "risk_class": "limited_risk",
+      "steps": [
+        "annex_i",
+        "transparency"
+      ]
+    },
+    {
+      "case_id": "own-e-05-emergency-braking-supplier",
+      "set_name": "own",
+      "risk_class": "high_risk",
+      "steps": [
+        "annex_i"
+      ]
+    }
+  ]
+}

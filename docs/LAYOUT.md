@@ -118,6 +118,11 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── answers.py           fixed answers for the downgrade rate's second run, `run --answers-from` (V8)
 │   │   │   ├── gap.py               held-out vs in-corpus gap of two stored runs; `aiact evaluate gap` (V8)
 │   │   │   ├── held_out_hits.py     held-out rows a stored run's traces retrieved; `aiact evaluate held-out-hits` (V8)
+│   │   │   ├── head_to_head.py      the head-to-head case draw from the labels-v1 tag: seeded, by class, every
+│   │   │   │                        engine step covered (V10a, decision 036)
+│   │   │   ├── head_to_head_sheet.py  the checker answer sheet: schema, checks, template (V10a)
+│   │   │   ├── head_to_head_report.py the report and its per-column scores; V10b fills the engine column (V10a)
+│   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render`, registered by cli.py (V10a)
 │   │   │   ├── appliedai_review.py  an appliedai run's disagreements, the user's verdicts read back, accuracy
 │   │   │   │                        before and after the outdated labels (V9); appliedai_review_report.py: the
 │   │   │   │                        markdown; appliedai_review_command.py: `aiact evaluate appliedai-review` (V9)
@@ -255,7 +260,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                only: Pile B's labels and the second model's reasons (B9). The Engine
 │   │                                lane denies this folder; no cb-* id goes in the files above it
 │   │                                (tests/test_isolation.py, V11). run-<run_id>.md: a commission_b run's full
-│   │                                report, written by `aiact evaluate report`; run-2026-10-12.md: V8's moved lines
+│   │                                report, written by `aiact evaluate report`; run-2026-10-12.md: V8's moved lines;
+│   │                                head_to_head_draw.json (the draw), head_to_head.yaml (the user's checker
+│   │                                runs), head_to_head.md (generated from them), head_to_head/ (screenshots) (V10a)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
 │   └── private/                     local-only files (gitignored, never tracked; may be absent)
 │
