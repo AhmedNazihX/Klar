@@ -103,14 +103,17 @@ Some points depend on who uses the system or what a decision means:
   lead to physical harm to natural persons or damage to property, or detects the need for
   maintenance or inspection whose omission may directly lead to such harm or damage, is a safety
   component, and so is one whose output prevents, controls or limits such harm (for example by
-  stopping an operation): answer `uses` "yes" for point 2. A tool that plans or prioritises
-  investment in, or maintenance of, the infrastructure only informs the operator's decisions and
-  is not itself such a component, so it is not a safety component (guidelines, paragraphs 180 and
-  181): answer `uses` "no" for point 2. That holds whether or not the operator is a critical
-  entity under the CER Directive: that status only limits point 2 to the safety components a
-  critical entity uses (paragraph 190), it never makes a tool a safety component, so don't ask
-  about it for such a tool. A component used solely for cybersecurity purposes is not a safety
-  component (recital 55).
+  stopping an operation): answer `uses` "yes" for point 2. A tool that only plans or prioritises
+  investment in, or maintenance of, the infrastructure from information it is given, without its
+  own output detecting a dangerous situation or a need for maintenance or inspection (an offline
+  planning or investment tool), only informs the operator's decisions and is not itself such a
+  component, so it is not a safety component (guidelines, paragraphs 180 and 181): answer `uses`
+  "no" for point 2. That holds whether or not the operator is a critical entity under the CER
+  Directive: that status only limits point 2 to the safety components a critical entity uses
+  (paragraph 190), it never makes a tool a safety component, so don't ask about it for such a
+  tool. A system whose own output detects such a situation or need stays a safety component
+  (paragraph 184), even when it also ranks or schedules the work. A component used solely for
+  cybersecurity purposes is not a safety component (recital 55).
 
 ## art_6_3: the Art. 6(3) filter
 

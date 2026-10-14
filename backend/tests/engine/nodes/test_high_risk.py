@@ -2091,16 +2091,19 @@ def test_e18_negative_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 
 E18_POSITIVE_CASES = negative_cases("h4-positive")
-"""H4's counterweight: a component on a road bridge whose own output detects that a load-bearing
+"""H4's counterweights: a component on a road bridge whose own output detects that a load-bearing
 part needs inspection, and closes the lane until it is done, is a safety component (guide-annex-iii
-para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2."""
+para 184(b) and (c)), so the H4 rule must keep it under Annex III point 2. E21's gas-main fixture
+only detects (para 184(b)): its own output finds the pipe sections that need inspection or repair
+and ranks them, and acts on nothing, so E21's narrowed planning rule must not take it out of
+point 2 either."""
 
 
 @E21_PROMPT_RECORDING_PENDING
 @pytest.mark.vcr
 @pytest.mark.parametrize("case", E18_POSITIVE_CASES, ids=lambda case: case.id)
 def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskCheck) -> None:
-    """The H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
+    """Each H4 counterpart is decided high-risk through Annex III point 2, with no Art. 6(3)
     exemption."""
     run_state = replay_state(case, AS_OF)
     result = e18_replay_check(run_state)
@@ -2116,7 +2119,8 @@ def test_e18_positive_replay(case: BenchmarkCase, e18_replay_check: HighRiskChec
 
 def test_h4_has_its_positive_fixture() -> None:
     assert [case.id for case in E18_POSITIVE_CASES] == [
-        "fixture-e18-h4-positive-bridge-bearing-wear"
+        "fixture-e18-h4-positive-bridge-bearing-wear",
+        "fixture-e21-h4-positive-gas-main-corrosion",
     ]
 
 
@@ -2191,8 +2195,9 @@ def own_f_replay_check(
 OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {}
 """own/f cases whose recorded outcome differs from the label (`KNOWN_GAPS`, for own/f). E21
 removed own-f-07's (Annex III point 2 assumed until the utility says whether it is a critical
-entity under the CER Directive): the H4 rule in high_risk.md says a tool that plans investment
-or maintenance is no safety component, whatever the operator's status."""
+entity under the CER Directive): the H4 rule in high_risk.md says a tool that only plans
+investment or maintenance from information it is given is no safety component, whatever the
+operator's status."""
 
 
 @E21_PROMPT_RECORDING_PENDING
@@ -2309,14 +2314,20 @@ def test_the_prompt_states_the_e20_exemption_rule() -> None:
 
 
 E21_H4_RULE = (
-    "A tool that plans or prioritises investment in, or maintenance of, the infrastructure only "
-    "informs the operator's decisions and is not itself such a component, so it is not a safety "
+    "A tool that only plans or prioritises investment in, or maintenance of, the infrastructure "
+    "from information it is given, without its own output detecting a dangerous situation or a "
+    "need for maintenance or inspection (an offline planning or investment tool), only informs "
+    "the operator's decisions and is not itself such a component, so it is not a safety "
     'component (guidelines, paragraphs 180 and 181): answer `uses` "no" for point 2. That '
     "holds whether or not the operator is a critical entity under the CER Directive: that status "
     "only limits point 2 to the safety components a critical entity uses (paragraph 190), it "
-    "never makes a tool a safety component, so don't ask about it for such a tool."
+    "never makes a tool a safety component, so don't ask about it for such a tool. A system "
+    "whose own output detects such a situation or need stays a safety component (paragraph "
+    "184), even when it also ranks or schedules the work."
 )
-"""E21's H4 rule (guide-annex-iii paras 180, 181 and 190), as high_risk.md words it."""
+"""E21's H4 rule (guide-annex-iii paras 180, 181 and 190), as high_risk.md words it: narrowed to
+a tool that plans from information it is given, so it never overrides the para 184(b) detector
+rule just before it (E21 review)."""
 
 
 def test_the_prompt_states_the_e21_planning_rule() -> None:
