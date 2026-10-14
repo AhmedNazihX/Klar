@@ -77,8 +77,8 @@ then, before any case is scored.
   towards the right class; the agent never sees them, but is from the same project as the engine.
 - **Decision: A.** One fresh agent per case gets only that case's description (no id, label, notes, engine output)
   and a fixed answering rule: answer from the description only; where it doesn't settle a question, pick the
-  checker's "don't know"-style option if there is one, otherwise the reading the description most directly supports,
-  and list that question as uncertain. It records every question and answer, the result and its headings verbatim,
+  reading the description most directly supports (never a "don't know"-style option) and list that question as
+  uncertain. The user's hand runs follow the same rule. It records every question and answer, the result and its headings verbatim,
   and the checker's question release.
 - **Spot-check.** Seed 20261015: for each risk class in the order out_of_scope, prohibited, high_risk, limited_risk,
   minimal_risk, `random.Random(20261015).choice` over the sorted ids of the drawn cases of that class (one call per
@@ -88,3 +88,8 @@ then, before any case is scored.
   holds the user's spot-check runs apart from the scored ones; the report states that an agent answered, instead of
   "by hand" (a V10a follow-up). V10a is done when the 25 agent runs and the 5 spot-checks pass `check --complete`.
   A spot-check disagreement on the class is discussed with the user case by case before the report is committed.
+- **Answering rule changed 2026-10-14 (user, option B), after case-02.** The first rule picked a "don't know"-style
+  option where the description didn't settle a question. A side review noted that this tilts against the checker:
+  the engine always commits to a class (flagging "needs more information"), while a "don't know" can lead the checker
+  to "can't determine", a miss. Rule B gives both the same footing; case-02 was re-run under it, and the report
+  counts the uncertain answers per run.
