@@ -74,7 +74,11 @@ calibration error, and the margin table) come from `eval/judge_validation/report
   says it (a likely reading is no); a left-out detail makes an answer no only when it changes what
   the answer tells the asker; a point of Art. 5(1) cited without the list's opening sentence
   supports "prohibited". Caveat: the labels are Claude's reading checked by the user, not an
-  independent human reference; Haiku (a Claude model) still agreed less with them than Jev.
+  independent human reference. Haiku 4.5 agreed with them less than Jev (39/48 against 45/48),
+  but Haiku 5.5, the backup judge in use, agrees as often as Jev (45/48, re-run below), so these
+  numbers cannot rule out that Claude-drafted labels favour a Claude judge. The effect on the
+  design is small: at margin 0.1 one case of 48 (about 2%) reached the backup judge, and V6's
+  RAGAS faithfulness stays the independent cross-check on Jev's verdicts.
 
 | Judge | Agreement with the labels | Cohen's kappa |
 | --- | --- | --- |
