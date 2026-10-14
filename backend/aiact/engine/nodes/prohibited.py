@@ -24,7 +24,12 @@ Act's rules are applied here, in code:
   deciding fact left open makes it `needs_more_information`; either way prohibited is the
   labelled working assumption, `matched` is set, and the run goes on (decision 010). The fact a
   practice is open on in law is read on its stricter side, so only another fact can rule the
-  practice out (E19, `open_in_law`).
+  practice out (E19, `open_in_law`). A fact left open on Art. 5(1)(d) assumes the ban only when
+  the description gives a sign of the practice (it assesses a person's risk of offending, or
+  rests on profiling alone); without one the step asks the question and assumes nothing
+  (`has_cue`, user, 2026-10-15).
+- **Matched points.** A match names the points it rests on (`prohibited_points`), so the role
+  step lists only the duties of the prohibition the system falls under.
 
 Every citation is fetched through `get_provision`, or is a retrieved guideline passage. The step
 cites the Art. 5 points and paragraphs its finding names, never the whole article (E16).
@@ -137,12 +142,29 @@ class Settlement:
     not_yet: tuple[Practice, ...] = ()
     missing: tuple[KeyQuestion, ...] = ()
     """Every open fact of a practice in force, in the order of the Act, each once."""
+    not_assumed: tuple[Practice, ...] = ()
+    """The practices open on a fact that the description gives no sign of (`has_cue`): not
+    assumed, only asked."""
+
+    @property
+    def questions(self) -> tuple[KeyQuestion, ...]:
+        """`missing`, then the questions of the practices not assumed, each id once."""
+        asked = (*self.missing, *_open_facts(self.not_assumed))
+        return tuple({key.id: key for key in asked}.values())
+
+
+def _open_facts(read: Sequence[Practice]) -> tuple[KeyQuestion, ...]:
+    """The first open fact of each practice, in order, each once."""
+    asked = (p.reading.missing for p in read if p.reading.missing)
+    return tuple({key.id: key for key in asked}.values())
 
 
 def settle(answer: ProhibitedAnswer, law_version: LawVersion, as_of: date) -> Settlement:
     """Apply Art. 5 to the model's answers on `as_of`. A practice met, with no question of law
-    open on it, decides prohibited; otherwise one the law leaves open, then one open on a fact,
-    keeps prohibited as the working assumption; otherwise no practice matches."""
+    open on it, decides prohibited; otherwise one the law leaves open, then one open on a fact
+    that the description gives a sign of, keeps prohibited as the working assumption; otherwise
+    no practice matches. A practice open on a fact with no sign of it is asked, not assumed
+    (Art. 5(1)(d), user, 2026-10-15)."""
     read = practices(answer, law_version)
     in_force = [p for p in read if as_of >= p.applies_from]
     not_yet = tuple(
@@ -152,29 +174,29 @@ def settle(answer: ProhibitedAnswer, law_version: LawVersion, as_of: date) -> Se
     )
     met = tuple(p for p in in_force if p.reading.answer is Answer.YES and not p.is_open)
     opened = tuple(p for p in in_force if p.is_open)
-    unknown = tuple(p for p in in_force if p.reading.answer is Answer.UNKNOWN and not p.is_open)
-    asked = (p.reading.missing for p in unknown if p.reading.missing)
-    questions = tuple({key.id: key for key in asked}.values())
+    open_fact = [p for p in in_force if p.reading.answer is Answer.UNKNOWN and not p.is_open]
+    unknown = tuple(p for p in open_fact if p.has_cue)
+    not_assumed = tuple(p for p in open_fact if not p.has_cue)
     if met:
         return Settlement(Status.DECIDED, matched=True, deciding=met, not_yet=not_yet)
-    if opened:
+    if opened or unknown:
+        status = Status.LEGALLY_AMBIGUOUS if opened else Status.NEEDS_MORE_INFORMATION
         return Settlement(
-            Status.LEGALLY_AMBIGUOUS,
+            status,
             matched=True,
             deciding=(*opened, *unknown),
             not_yet=not_yet,
-            missing=questions,
+            missing=_open_facts(unknown),
+            not_assumed=not_assumed,
         )
-    if unknown:
-        return Settlement(
-            Status.NEEDS_MORE_INFORMATION,
-            matched=True,
-            deciding=unknown,
-            not_yet=not_yet,
-            missing=questions,
-        )
-    considered = tuple(p for p in in_force if p.is_raised)
-    return Settlement(Status.DECIDED, matched=False, considered=considered, not_yet=not_yet)
+    considered = tuple(p for p in in_force if p.is_raised and p not in not_assumed)
+    return Settlement(
+        Status.DECIDED,
+        matched=False,
+        considered=considered,
+        not_yet=not_yet,
+        not_assumed=not_assumed,
+    )
 
 
 # --- The step -----------------------------------------------------------------------------------
@@ -230,15 +252,27 @@ def _finding(settled: Settlement, language: Language, question: str) -> tuple[st
     return (words["none"], *considered, *notify)
 
 
+def _not_assumed_sentences(practice: Practice, language: Language) -> tuple[str, ...]:
+    """A practice open on a fact the description gives no sign of: its reading, and that its
+    ban is asked rather than assumed."""
+    missing = practice.reading.missing
+    question = missing.question[language] if missing else ""
+    point = texts.point_name(practice.point, language)
+    sentence = texts.TEXTS[language]["not_assumed"].format(point=point, question=question)
+    return (practice.summary.fact, sentence)
+
+
 def _decision(settled: Settlement, language: Language, as_of: date, question: str) -> str:
+    asked = (s for p in settled.not_assumed for s in _not_assumed_sentences(p, language))
     later = (_not_yet_sentence(p, language, as_of) for p in settled.not_yet)
-    return " ".join((*_finding(settled, language, question), *later))
+    return " ".join((*_finding(settled, language, question), *asked, *later))
 
 
 def _cited_ids(settled: Settlement) -> tuple[tuple[str, bool], ...]:
     """Each provision the step cites, once, with whether it may be missing from the text read:
     a point that applies only later may postdate it (before 27 July 2026 the text has no (ba))."""
-    now = (pid for p in (*settled.deciding, *settled.considered) for pid in p.cited)
+    shown = (*settled.deciding, *settled.considered, *settled.not_assumed)
+    now = (pid for p in shown for pid in p.cited)
     cited: dict[str, bool] = dict.fromkeys(now, False)
     for practice in settled.not_yet:
         for pid in practice.cited:
@@ -263,7 +297,7 @@ def _provisions(
 
 def _facts_used(settled: Settlement, facts: Sequence[Fact]) -> tuple[Fact, ...]:
     """The facts the answer parts of the practices shown rest on, each part once."""
-    shown = (*settled.deciding, *settled.considered, *settled.not_yet)
+    shown = (*settled.deciding, *settled.considered, *settled.not_assumed, *settled.not_yet)
     parts = tuple({id(p.summary): p.summary for p in shown}.values())
     return facts_used(parts, facts)
 
@@ -285,7 +319,7 @@ def to_outcome(
     is_ambiguous = settled.status is Status.LEGALLY_AMBIGUOUS
     deciding = settled.deciding[0] if is_ambiguous else None
     open_question = _open_question(deciding, language, citations) if deciding else None
-    questions = tuple(ask(key, language, StepName.PROHIBITED) for key in settled.missing)
+    questions = tuple(ask(key, language, StepName.PROHIBITED) for key in settled.questions)
     is_missing = settled.status is Status.NEEDS_MORE_INFORMATION
     missing_fact = questions[0] if is_missing else None
     asked = open_question.question if open_question else missing_fact.text if missing_fact else ""
@@ -298,7 +332,13 @@ def to_outcome(
         missing_fact=missing_fact,
         open_question=open_question,
     )
-    return CheckOutcome(step=step, matched=settled.matched, follow_up_questions=questions)
+    points = tuple(p.point for p in settled.deciding) if settled.matched else ()
+    return CheckOutcome(
+        step=step,
+        matched=settled.matched,
+        prohibited_points=points,
+        follow_up_questions=questions,
+    )
 
 
 def refusal_outcome(state: EngineState, library: GuidelineLibrary) -> CheckOutcome:

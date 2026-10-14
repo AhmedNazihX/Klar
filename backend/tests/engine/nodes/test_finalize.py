@@ -129,7 +129,11 @@ def high_risk(
 
 
 def prohibited_match(status: Status = Status.DECIDED) -> CheckOutcome:
-    return CheckOutcome(step=step(StepName.PROHIBITED, NO_PRACTICE, status=status), matched=True)
+    return CheckOutcome(
+        step=step(StepName.PROHIBITED, NO_PRACTICE, status=status),
+        matched=True,
+        prohibited_points=("art:5:1:a",),
+    )
 
 
 Check = CheckOutcome | CheckNode

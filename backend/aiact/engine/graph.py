@@ -97,6 +97,8 @@ def _check_node(name: StepName, node: CheckNode) -> GraphNode:
 def _findings(outcome: CheckOutcome) -> StateUpdate:
     """The findings a check set, as state keys; unset findings leave the state alone."""
     findings: StateUpdate = {}
+    if outcome.prohibited_points:
+        findings["prohibited_points"] = outcome.prohibited_points
     if outcome.high_risk_route is not None:
         findings["high_risk_route"] = outcome.high_risk_route
     if outcome.annex_iii_exempt:

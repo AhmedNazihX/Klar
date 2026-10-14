@@ -746,6 +746,129 @@ def test_an_exception_or_a_missing_condition_rules_a_practice_out(
     assert "Considered" in result.step.decision
 
 
+# --- Art. 5(1)(d): a ban assumed only on a sign of the practice (E21) ---------------------------
+
+NO_CRIME_RISK_CUE = part(
+    CrimeRiskAnswer, crime_risk_assessment=Answer.UNKNOWN, solely_profiling=Answer.UNKNOWN
+)
+"""A description that says neither whether the system assesses a person's risk of offending nor
+what such an assessment would rest on."""
+NOT_ASSUMED_D = {
+    Language.EN: "No ban under Art. 5(1)(d) is assumed, as the description gives no sign of "
+    "that practice; it is asked instead: Does the system assess or predict how likely "
+    "individual people are to commit a criminal offence?",
+    Language.DE: "Ein Verbot nach Art. 5 Abs. 1 Buchst. d wird nicht angenommen, da die "
+    "Beschreibung keinen Hinweis auf diese Praxis gibt; stattdessen wird gefragt: Bewertet oder "
+    "prognostiziert das System, wie wahrscheinlich einzelne Menschen eine Straftat begehen?",
+}
+"""The step's sentence for such a description, by language, written out."""
+
+
+@pytest.mark.parametrize("law_version", [LawVersion.AMENDED, LawVersion.ORIGINAL])
+@pytest.mark.parametrize("language", [Language.EN, Language.DE])
+def test_no_sign_of_crime_prediction_is_asked_not_assumed(
+    language: Language, law_version: LawVersion
+) -> None:
+    """The user's rule (2026-10-15): with no sign of the practice of point (d), the step decides
+    not prohibited and asks whether the system predicts offending; it assumes no ban, so a
+    later Annex III finding isn't overridden. The same under the original text, which has (d)."""
+    result = outcome(answer(NO_CRIME_RISK_CUE), state(language=language, law_version=law_version))
+    step = result.step
+    assert not result.matched
+    assert result.prohibited_points == ()
+    assert step.status is Status.DECIDED
+    assert step.missing_fact is None and step.open_question is None
+    assert [q.id for q in result.follow_up_questions] == ["crime_risk_assessment"]
+    assert [q.about for q in result.follow_up_questions] == ["art:5:1:d"]
+    assert NOT_ASSUMED_D[language] in step.decision
+    assert "Considered" not in step.decision and "Geprüft" not in step.decision
+    assert cited(result) == ["art:5:1:d"]
+
+
+@pytest.mark.parametrize(
+    ("facts", "asked"),
+    [
+        (
+            {"crime_risk_assessment": Answer.YES, "solely_profiling": Answer.UNKNOWN},
+            "solely_profiling",
+        ),
+        (
+            {"crime_risk_assessment": Answer.UNKNOWN, "solely_profiling": Answer.YES},
+            "crime_risk_assessment",
+        ),
+        (
+            {
+                "crime_risk_assessment": Answer.YES,
+                "solely_profiling": Answer.YES,
+                "fact_based_assessment": Answer.UNKNOWN,
+            },
+            "fact_based_assessment",
+        ),
+    ],
+    ids=["predicts-offending", "rests-on-profiling", "exception-open"],
+)
+def test_a_sign_of_crime_prediction_keeps_the_ban_assumed(
+    facts: dict[str, Answer], asked: str
+) -> None:
+    """A "yes" to either fact that describes the practice is a sign of it: a fact left open then
+    keeps prohibited as the working assumption (decision 010), so no profiling-based crime
+    prediction falls below prohibited."""
+    result = outcome(answer(part(CrimeRiskAnswer, **facts)))
+    assert result.matched
+    assert result.prohibited_points == ("art:5:1:d",)
+    assert result.step.status is Status.NEEDS_MORE_INFORMATION
+    assert result.step.missing_fact is not None
+    assert result.step.missing_fact.id == asked
+    assert "Assumed prohibited under Art. 5(1)(d)" in result.step.decision
+
+
+def test_crime_prediction_the_law_leaves_open_stays_assumed_without_a_sign() -> None:
+    """A question of law open on whether it assesses the risk of offending is no missing fact:
+    the open fact is held strict, so the ban stays assumed pending legal review."""
+    given = unsettled(NO_CRIME_RISK_CUE, on="crime_risk_assessment")
+    result = outcome(answer(given))
+    assert result.matched
+    assert result.step.status is Status.LEGALLY_AMBIGUOUS
+    assert result.prohibited_points == ("art:5:1:d",)
+
+
+def test_a_practice_with_a_sign_still_assumes_the_ban_and_point_d_is_asked_too() -> None:
+    """Another practice open on a fact it gives a sign of keeps prohibited assumed on its point;
+    point (d) without a sign is asked after it, not assumed."""
+    monitoring = part(
+        EmotionAnswer, infers_emotions=Answer.UNKNOWN, workplace_or_education=Answer.YES
+    )
+    result = outcome(answer(NO_CRIME_RISK_CUE, monitoring))
+    step = result.step
+    assert result.matched
+    assert result.prohibited_points == ("art:5:1:f",)
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.missing_fact is not None and step.missing_fact.id == "infers_emotions"
+    assert [q.id for q in result.follow_up_questions] == [
+        "infers_emotions",
+        "crime_risk_assessment",
+    ]
+    assert NOT_ASSUMED_D[Language.EN] in step.decision
+
+
+def test_a_met_practice_names_only_its_own_point() -> None:
+    result = outcome(answer(NO_CRIME_RISK_CUE, WORKPLACE_EMOTIONS))
+    assert result.matched
+    assert result.step.status is Status.DECIDED
+    assert result.prohibited_points == ("art:5:1:f",)
+    assert result.follow_up_questions == ()
+
+
+def test_an_ambiguous_match_names_each_point_it_assumes() -> None:
+    pressure = unsettled(MANIPULATION)
+    monitoring = part(
+        EmotionAnswer, infers_emotions=Answer.UNKNOWN, workplace_or_education=Answer.YES
+    )
+    result = outcome(answer(pressure, monitoring))
+    assert result.prohibited_points == ("art:5:1:a", "art:5:1:f")
+    assert outcome(answer()).prohibited_points == ()
+
+
 # --- Points (ba) and (bb) and their date -----------------------------------------------------
 
 
@@ -1199,10 +1322,25 @@ def test_an_ambiguous_match_runs_every_check_with_prohibited_assumed() -> None:
     check = ProhibitedCheck(_settings(), chat=_fake_chat(answer(pressure)), library=FakeLibrary())
     final = _run(check)
     assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER
+    assert final.get("prohibited_points") == ("art:5:1:a",)  # what the role step reads (E21)
     result = final.get("result")
     assert result is not None
     assert result.risk_class is RiskClass.PROHIBITED
     assert result.status is Status.LEGALLY_AMBIGUOUS
+
+
+def test_no_sign_of_crime_prediction_runs_every_check_with_no_ban_assumed() -> None:
+    """E21: the later checks decide the class, and the step's question is asked."""
+    check = ProhibitedCheck(
+        _settings(), chat=_fake_chat(answer(NO_CRIME_RISK_CUE)), library=FakeLibrary()
+    )
+    final = _run(check)
+    assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER
+    assert "prohibited_points" not in final
+    result = final.get("result")
+    assert result is not None
+    assert result.risk_class is RiskClass.MINIMAL_RISK
+    assert "crime_risk_assessment" in [q.id for q in result.follow_up_questions]
 
 
 REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."

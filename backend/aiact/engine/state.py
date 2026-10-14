@@ -70,6 +70,8 @@ class CheckOutcome(ContractModel):
     or missing-fact match keeps the run going, with the stricter reading as the assumption.
 
     The other findings belong to one check each, and later checks read them from the state:
+    - `prohibited_points` (prohibited): the Art. 5(1) points a match rests on, decided or
+      assumed, e.g. `art:5:1:d`; the role step lists only their prohibition duties (E21).
     - `high_risk_route` (high_risk): the system is, or is assumed, high-risk on this route.
     - `annex_iii_exempt` (high_risk): the system is listed in Annex III but, or is assumed to be,
       exempted under Art. 6(3); the provider then has the Art. 6(4) duty.
@@ -93,6 +95,7 @@ class CheckOutcome(ContractModel):
 
     step: StepResult
     matched: bool = False
+    prohibited_points: tuple[str, ...] = ()
     high_risk_route: HighRiskRoute | None = None
     annex_iii_exempt: bool = False
     annex_point: str | None = None
@@ -117,6 +120,7 @@ class CheckOutcome(ContractModel):
     @model_validator(mode="after")
     def _findings_belong_to_their_step(self) -> Self:
         owners = (
+            (bool(self.prohibited_points), StepName.PROHIBITED, "prohibited_points"),
             (self.high_risk_route is not None, StepName.HIGH_RISK, "high_risk_route"),
             (self.annex_iii_exempt, StepName.HIGH_RISK, "annex_iii_exempt"),
             (self.annex_point is not None, StepName.HIGH_RISK, "annex_point"),
@@ -126,6 +130,8 @@ class CheckOutcome(ContractModel):
         for is_set, owner, name in owners:
             if is_set and self.step.step is not owner:
                 raise ValueError(f"only the {owner.value} check sets {name}")
+        if self.prohibited_points and not self.matched:
+            raise ValueError("prohibited_points are set only with a match")
         if self.annex_iii_exempt and self.high_risk_route is not None:
             raise ValueError("an Art. 6(3)-exempt system is not high-risk")
         if self.annex_point is not None and self.high_risk_route is None:
@@ -140,6 +146,7 @@ class CheckOutcome(ContractModel):
             return self
         if (
             self.matched
+            or self.prohibited_points
             or self.high_risk_route is not None
             or self.annex_iii_exempt
             or self.annex_point is not None
@@ -177,6 +184,7 @@ class EngineState(EngineInput, total=False):
     asked_facts: Annotated[tuple[str, ...], operator.add]
     steps: Annotated[tuple[StepResult, ...], operator.add]
     matches: Annotated[tuple[StepName, ...], operator.add]
+    prohibited_points: tuple[str, ...]
     high_risk_route: HighRiskRoute
     annex_iii_exempt: bool
     annex_point: str

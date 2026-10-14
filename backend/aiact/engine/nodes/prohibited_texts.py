@@ -317,6 +317,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "considered": "Considered {point}: {fact}",
         "missing": "Assumed prohibited under {point} until this is answered: {question}",
         "ambiguous": "Assumed prohibited under {point} pending legal review: {question}",
+        "not_assumed": "No ban under {point} is assumed, as the description gives no sign of "
+        "that practice; it is asked instead: {question}",
         "not_yet": "{point} applies only from {start} (Art. 113(a)), so on {as_of} it does "
         "not yet prohibit this system; from {start} it {verb} apply: {fact}",
         "not_yet_verb_met": "will",
@@ -332,6 +334,8 @@ TEXTS: Mapping[Language, Mapping[str, str]] = {
         "{question}",
         "ambiguous": "Bis zur rechtlichen Prüfung wird ein Verbot nach {point} angenommen: "
         "{question}",
+        "not_assumed": "Ein Verbot nach {point} wird nicht angenommen, da die Beschreibung "
+        "keinen Hinweis auf diese Praxis gibt; stattdessen wird gefragt: {question}",
         "not_yet": "{point} gilt erst ab dem {start} (Art. 113 Buchst. a), daher verbietet es "
         "dieses System am {as_of} noch nicht; ab dem {start} {verb}: {fact}",
         "not_yet_verb_met": "greift es",

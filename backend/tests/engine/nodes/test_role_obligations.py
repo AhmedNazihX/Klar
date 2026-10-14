@@ -160,8 +160,10 @@ def state(
     facts: tuple[Fact, ...] = (),
     description: str = CV_TOOL,
     annex_iii_exempt: bool = False,
+    prohibited_points: tuple[str, ...] = ("art:5:1:d",),
 ) -> EngineState:
-    """The state the node sees after the earlier checks put the system in `risk_class`."""
+    """The state the node sees after the earlier checks put the system in `risk_class` (a
+    prohibited one on `prohibited_points`)."""
     built: EngineState = {
         "description": description,
         "language": language,
@@ -172,6 +174,8 @@ def state(
         "steps": (),
         "matches": (StepName.PROHIBITED,) if risk_class is RiskClass.PROHIBITED else (),
     }
+    if risk_class is RiskClass.PROHIBITED:
+        built["prohibited_points"] = prohibited_points
     if risk_class is RiskClass.HIGH_RISK and route is not None:
         built["high_risk_route"] = route
     if transparency_duties:
@@ -865,11 +869,43 @@ def test_conditions_asked_leave_out_those_settled_by_other_findings() -> None:
     assert not any("interact directly" in c for c in asked)
 
 
-def test_an_ambiguous_art_5_match_keeps_every_prohibition_without_asking() -> None:
+@pytest.mark.parametrize(
+    ("points", "duties"),
+    [
+        (("art:5:1:d",), ["art:5:1"]),
+        (("art:5:1:a", "art:5:1:f"), ["art:5:1"]),
+        (("art:5:1:ba",), ["art:5:1:ba"]),
+        (("art:5:1:bb",), ["art:5:1:bb"]),
+        (("art:5:1:ba", "art:5:1:bb"), ["art:5:1:ba", "art:5:1:bb"]),
+        (("art:5:1:f", "art:5:1:bb"), ["art:5:1", "art:5:1:bb"]),
+    ],
+    ids=["d", "a-and-f", "ba", "bb", "ba-and-bb", "f-and-bb"],
+)
+def test_an_art_5_match_lists_only_its_own_prohibitions_without_asking(
+    points: tuple[str, ...], duties: list[str]
+) -> None:
+    """E21: a prohibited result, decided or assumed, lists the duty of each point it matched:
+    the Art. 5(1) row for points (a) to (h), the Omnibus rows for (ba) and (bb) only for those
+    points. The rest count as not met, never asked."""
     assert conditions_to_ask(RiskClass.PROHIBITED, None, LawVersion.AMENDED) == ()
     answer = role_answer(risk_class=RiskClass.PROHIBITED, route=None)
-    outcome = to_outcome(answer, state(RiskClass.PROHIBITED, None))
-    assert articles(outcome) == ["art:5:1", "art:5:1:ba", "art:5:1:bb"]
+    run_state: EngineState = {
+        **state(RiskClass.PROHIBITED, None, prohibited_points=points),
+        "steps": (StepResult(step=StepName.PROHIBITED, decision="Prohibited."),),
+    }
+    outcome = to_outcome(answer, run_state)
+    assert articles(outcome) == duties
+    left_out = f"{3 - len(duties)} conditional duties left out because their condition"
+    assert left_out in outcome.step.decision
+
+
+def test_art_5_rows_are_left_out_when_no_prohibited_step_reported_its_points() -> None:
+    """A run without the prohibited step (a scripted or partial one) reports no point, so no
+    prohibition row is listed, and the step says no earlier check reported it."""
+    answer = role_answer(risk_class=RiskClass.PROHIBITED, route=None)
+    outcome = to_outcome(answer, state(RiskClass.PROHIBITED, None, prohibited_points=()))
+    assert articles(outcome) == []
+    assert "3 duties left out because no earlier check reported" in outcome.step.decision
 
 
 @pytest.mark.parametrize("risk_class", [RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK])
@@ -1124,6 +1160,11 @@ def test_findings_are_only_accepted_from_their_own_check() -> None:
         CheckOutcome(step=step, role=RoleFinding(role=Role.DEPLOYER))
     with pytest.raises(ValidationError, match="only the high_risk check sets high_risk_route"):
         CheckOutcome(step=step, high_risk_route=HighRiskRoute.ANNEX_III)
+    with pytest.raises(ValidationError, match="only the prohibited check sets prohibited_points"):
+        CheckOutcome(step=step, prohibited_points=("art:5:1:d",))
+    prohibited = StepResult(step=StepName.PROHIBITED, decision="No prohibited practice")
+    with pytest.raises(ValidationError, match="prohibited_points are set only with a match"):
+        CheckOutcome(step=prohibited, prohibited_points=("art:5:1:d",))
     role_step = StepResult(step=StepName.ROLE_OBLIGATIONS, decision="Role: deployer.")
     with pytest.raises(ValidationError, match="only the transparency check"):
         CheckOutcome(step=role_step, transparency_duties=("art:50:1",))
