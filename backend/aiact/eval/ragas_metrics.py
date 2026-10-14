@@ -52,6 +52,7 @@ from aiact.engine.usage import UsageMeter
 from aiact.eval.cases import QAItem
 from aiact.eval.runner import (
     ERROR_MESSAGE_LIMIT,
+    FAILED_KEY,
     CaseRecord,
     RunStatus,
     RunStore,
@@ -477,8 +478,14 @@ def finite(value: object) -> float | None:
 
 
 def context_text(hit: SearchHit) -> str:
-    """One hit as a context: its provision id and document, then its heading and text."""
-    lines = [f"[{hit.provision_id}] {hit.document_title}", hit.heading, hit.text]
+    """One hit as a context (`source_text`)."""
+    return source_text(hit.provision_id, hit.document_title, hit.heading, hit.text)
+
+
+def source_text(provision_id: str, document_title: str, heading: str | None, text: str) -> str:
+    """A provision as the answer was given it: its id and document, then its heading and text.
+    V5's judge reads a stored hit again in this form (`judged_run.corpus_source`)."""
+    lines = [f"[{provision_id}] {document_title}", heading, text]
     return "\n".join(line for line in lines if line)
 
 
@@ -600,7 +607,7 @@ async def _retrieve_answer_score(
     try:
         retrieved_hits = await asyncio.to_thread(parts.retriever, item)
     except Exception as exc:
-        return {"error": _error(item, exc), ANSWER_KIND: ERROR_KIND}, {}, True
+        return {FAILED_KEY: _error(item, exc), ANSWER_KIND: ERROR_KIND}, {}, True
     hits = retrieved_hits.hits
     retrieved: list[JsonValue] = [
         {"doc_key": hit.doc_key, "provision_id": hit.provision_id} for hit in hits
@@ -618,7 +625,7 @@ async def _retrieve_answer_score(
         answer = await parts.answerer.answer(item, contexts, found=retrieved_hits.found)
         judged = await parts.scorer.score(item, contexts, answer.text)
     except Exception as exc:
-        failed: dict[str, JsonValue] = {"error": _error(item, exc), ANSWER_KIND: ERROR_KIND}
+        failed: dict[str, JsonValue] = {FAILED_KEY: _error(item, exc), ANSWER_KIND: ERROR_KIND}
         return {**failed, "retrieved": retrieved}, recall, True
     predicted: dict[str, JsonValue] = {
         "answer": answer.text,
