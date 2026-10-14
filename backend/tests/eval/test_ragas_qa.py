@@ -95,6 +95,7 @@ def test_the_qa_models_are_metered_under_their_own_node_and_share_their_clients(
     for a refused question (decision 033), both counted under the `qa` node."""
     meter = UsageMeter()
     route = metered_qa_route(engine_settings(), meter)
+    assert not route.retry_cut_off  # one call to the first model, as the product's (E20)
     expected = [
         (route.chat, "openai/gpt-6-luna-20260922", "azure/eu"),
         (route.refusal_chat, "google/gemini-3.1-flash-lite", "google-vertex/eu"),

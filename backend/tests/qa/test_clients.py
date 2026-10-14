@@ -49,8 +49,9 @@ def test_the_qa_model_is_luna_pinned_to_azure_eu_with_one_attempt() -> None:
 
 def test_the_route_sends_a_refused_question_to_the_pinned_refusal_model() -> None:
     """Decision 033, as the engine's nodes: Flash-Lite on google-vertex/eu, fallbacks off, with
-    the Q&A's output cap and one attempt."""
+    the Q&A's output cap and one attempt (a cut-off reply is never asked again, E20)."""
     route = qa_route(engine_settings())
+    assert not route.retry_cut_off
     assert route.chat is qa_chat(engine_settings())
     second = route.refusal_chat
     assert second is qa_refusal_chat(engine_settings())

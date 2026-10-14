@@ -58,7 +58,8 @@ def test_a_cut_off_reply_and_its_second_try_are_both_counted() -> None:
     answered = reply(0.002, 700).model_copy(update={"content": '{"value": 2}'})
     chat = metered_chat(meter, StepName.HIGH_RISK, cut_off, answered)
     format_ = json_schema_format("answer", Answer)
-    assert ChatRoute(chat).ask([HumanMessage("a")], format_, Answer) == Answer(value=2)
+    route = ChatRoute(chat, retry_cut_off=True)  # a classification run's route (engine_route)
+    assert route.ask([HumanMessage("a")], format_, Answer) == Answer(value=2)
     usage = meter.usage().by_node["high_risk"]
     assert (usage.calls, usage.tokens) == (2, 10700)
     assert usage.cost_usd == pytest.approx(0.0086)

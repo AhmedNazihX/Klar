@@ -5,7 +5,8 @@ the same model. Validation errors are described by location and message only, so
 description quoted back in an error never reaches a log or an exception. A reply the provider's
 content filter stopped is told apart from a broken one (`parse_reply`, decision 029), and goes
 once to a second pinned model when the caller has one (`ChatRoute`, decision 033). A reply the
-output cap cut off before it parses is asked once more of the same model (`ChatRoute`, E20).
+output cap cut off before it parses is asked once more of the same model on the classification
+engine's routes only (`ChatRoute.retry_cut_off`, E20); every other caller makes one call.
 """
 
 import logging
@@ -120,6 +121,10 @@ class ChatRoute:
     refusal_chat: BaseChatModel | None = None
     """None: no second call, so a refusal reaches the caller at once (the smoke harness, whose
     probes make one call each, decision 004; tests)."""
+    retry_cut_off: bool = False
+    """True on the classification engine's routes only (`aiact.llm.engine_route`, E20): a reply
+    cut off at the output cap is asked once more. False keeps one call to the first model, as
+    Q&A, the RAGAS answerer and the smoke probes (decision 004) need."""
 
     def ask[M: BaseModel](
         self,
@@ -134,7 +139,8 @@ class ChatRoute:
         second model), and also when the second call fails transiently (`is_transient_failure`),
         because the route must never end worse than no route (decision 033); a 4xx config or
         request error of the second call still raises. Raises `ValidationError` when the first
-        model's answer doesn't fit, after `_ask_first`'s one more try for a cut-off reply."""
+        model's answer doesn't fit (on an engine route, after `_ask_first`'s one more try for a
+        cut-off reply)."""
         try:
             return self._ask_first(messages, response_format, model)
         except ProviderRefusalError:
@@ -148,16 +154,17 @@ class ChatRoute:
         response_format: Mapping[str, object],
         model: type[M],
     ) -> M:
-        """The first model's answer. A reply cut off at the output cap that doesn't parse (a
-        runaway answer, such as a number list counting on into the thousands, E20) is asked once
-        more of the same model, and logged by its finish reason only; a second cut-off raises
-        `ValidationError` like any reply that doesn't fit. Each call is a call of its own, so
-        the run's usage counts both."""
+        """The first model's answer. On an engine route (`retry_cut_off`) only, a reply cut off
+        at the output cap that doesn't parse (a runaway answer, such as a number list counting on
+        into the thousands, E20) is asked once more of the same model, and logged by its finish
+        reason only; a second cut-off raises `ValidationError` like any reply that doesn't fit.
+        Each call is a call of its own, so the run's usage counts both. Any other route makes
+        one call."""
         reply = self._invoke(self.chat, messages, response_format)
         try:
             return parse_reply(reply, model)
         except ValidationError:
-            if reply.response_metadata.get("finish_reason") != CUT_OFF:
+            if not self.retry_cut_off or reply.response_metadata.get("finish_reason") != CUT_OFF:
                 raise
         logger.warning("the reply was cut off at the output cap; asking once more")
         return parse_reply(self._invoke(self.chat, messages, response_format), model)

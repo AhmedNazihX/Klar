@@ -577,6 +577,20 @@ def test_the_model_cannot_reply_refused() -> None:
         ask("What counts as a deployer?", chat)
 
 
+def test_a_reply_cut_off_at_the_output_cap_is_a_model_call_error_after_one_call() -> None:
+    """Q&A makes one attempt: only the classification engine asks a cut-off reply once more
+    (E20, user decision 2026-10-14)."""
+    cut_off = AIMessage(
+        content='{"kind": "answered", "answer": "A deployer',
+        response_metadata={"finish_reason": "length"},
+    )
+    whole = AIMessage(content=json.dumps({"kind": "answered", "answer": "A.", "cited": [1]}))
+    chat = RecordingChat(messages=iter([cut_off, whole]))
+    with pytest.raises(ModelCallError, match=r"^ValidationError$"):
+        ask("What counts as a deployer?", chat)
+    assert len(chat.seen) == 1
+
+
 def test_an_error_outside_the_model_call_is_not_a_model_failure() -> None:
     """Only the model call's failures become `ModelCallError` (the API's 503); a bug elsewhere,
     here a search that raises ValueError, is raised as it is."""

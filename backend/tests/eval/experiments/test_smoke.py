@@ -710,6 +710,7 @@ def test_each_node_is_the_engines_own_on_the_arms_pinned_model_without_retries(
     assert isinstance(built, node_class)
     route = built._route  # pyright: ignore[reportAttributeAccessIssue, reportFunctionMemberAccess]
     assert route.refusal_chat is None  # one call per probe: a refusal is the probe's outcome
+    assert not route.retry_cut_off  # and so is a cut-off reply (E20)
     chat = route.chat
     assert chat.model_name == "google/gemini-3.1-flash-lite"
     assert chat.openrouter_provider == {
