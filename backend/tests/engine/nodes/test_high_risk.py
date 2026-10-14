@@ -2195,9 +2195,9 @@ def own_f_replay_check(
 OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {}
 """own/f cases whose recorded outcome differs from the label (`KNOWN_GAPS`, for own/f). E21
 removed own-f-07's (Annex III point 2 assumed until the utility says whether it is a critical
-entity under the CER Directive): the H4 rule in high_risk.md says a tool that only plans
-investment or maintenance from information it is given is no safety component, whatever the
-operator's status."""
+entity under the CER Directive): the H4 rule in high_risk.md says a tool that ranks assets for
+longer-term investment or renewal planning, without monitoring the infrastructure in operation,
+is no safety component, whatever the operator's status."""
 
 
 @E21_PROMPT_RECORDING_PENDING
@@ -2314,20 +2314,25 @@ def test_the_prompt_states_the_e20_exemption_rule() -> None:
 
 
 E21_H4_RULE = (
-    "A tool that only plans or prioritises investment in, or maintenance of, the infrastructure "
-    "from information it is given, without its own output detecting a dangerous situation or a "
-    "need for maintenance or inspection (an offline planning or investment tool), only informs "
-    "the operator's decisions and is not itself such a component, so it is not a safety "
-    'component (guidelines, paragraphs 180 and 181): answer `uses` "no" for point 2. That '
-    "holds whether or not the operator is a critical entity under the CER Directive: that status "
-    "only limits point 2 to the safety components a critical entity uses (paragraph 190), it "
-    "never makes a tool a safety component, so don't ask about it for such a tool. A system "
-    "whose own output detects such a situation or need stays a safety component (paragraph "
-    "184), even when it also ranks or schedules the work."
+    "What divides the two is what the system watches and when its output matters. A safety "
+    "component watches or checks the infrastructure in operation and flags a near-term danger, or "
+    "a near-term need for maintenance or inspection, whose omission may directly lead to such harm "
+    "or damage (guidelines, paragraphs 180 and 184(b)). A tool that is not a component of the "
+    "infrastructure, does not monitor it in operation, and ranks or selects assets for "
+    "longer-term investment or renewal planning, while separate operational systems detect "
+    "dangers and respond to them, only informs the operator's decisions and is not a safety "
+    "component, even when its ranking comes from its own failure-likelihood model (paragraph "
+    '181): answer `uses` "no" for point 2. That holds whether or not the operator is a critical '
+    "entity under the CER Directive: that status only limits point 2 to the safety components a "
+    "critical entity uses (paragraph 190), it never makes a tool a safety component, so don't ask "
+    "about it for such a tool. A system that watches the infrastructure in operation and detects "
+    "such a danger or need stays a safety component (paragraph 184), even when it also ranks or "
+    "schedules the work."
 )
-"""E21's H4 rule (guide-annex-iii paras 180, 181 and 190), as high_risk.md words it: narrowed to
-a tool that plans from information it is given, so it never overrides the para 184(b) detector
-rule just before it (E21 review)."""
+"""E21's H4 rule (guide-annex-iii paras 180, 181, 184(b) and 190), as high_risk.md words it: the
+deciding features (monitoring in operation and a near-term need, against longer-term planning
+beside separate operational systems), so it never overrides the para 184(b) detector rule just
+before it, even for a planner with its own failure-likelihood model (E21 reviews)."""
 
 
 def test_the_prompt_states_the_e21_planning_rule() -> None:

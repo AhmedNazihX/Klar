@@ -37,9 +37,9 @@ E21_PROMPT_RECORDING_PENDING = pytest.mark.xfail(
     strict=True,
     raises=STALE_RECORDING_ERRORS,
     reason="recording pending (orchestrator): E21 changed the high-risk prompt (the H4 rule: a "
-    "tool that only plans or prioritises investment or maintenance of critical infrastructure "
-    "from information it is given is no safety component of it), so the recorded requests are "
-    "stale, and E21's gas-main fixture has none yet; delete and re-record",
+    "tool that ranks critical-infrastructure assets for longer-term investment or renewal "
+    "planning, without monitoring them in operation, is no safety component of it), so the "
+    "recorded requests are stale, and E21's gas-main fixture has none yet; delete and re-record",
 )
 """The replays whose recorded request carries the high-risk prompt E21 changed, until the
 orchestrator re-records them (BACKLOG > E21)."""

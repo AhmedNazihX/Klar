@@ -1,6 +1,6 @@
 # E21 positive counterpart to the narrowed H4 planning rule, written from Annex III point 2, Art.
-# 3(14) and guide para 184(b) and 190 only: not a benchmark case, never scored. Its own output
-# detects that a pipe section needs inspection or repair before it could fail, and ranks the
+# 3(14) and guide para 184(b) and 190 only: not a benchmark case, never scored. Watching the pipes
+# in service, its own output detects that a section needs inspection or repair soon, and ranks the
 # sections by urgency, but acts on nothing itself: a pure para 184(b) detector stays high-risk.
 id: fixture-e21-h4-positive-gas-main-corrosion
 set_name: own
@@ -8,12 +8,14 @@ language: en
 description: >-
   We run the gas distribution network of a mid-sized city, and the national authority has
   identified us as a critical entity under the CER Directive. Since last spring a model we license
-  from a pipeline analytics firm has read the in-line inspection data, cathodic protection readings
-  and soil measurements of our steel distribution pipes. For each pipe section it estimates how far
-  the wall has corroded, and it flags the sections where it judges that an inspection or a repair
-  is needed before the wall could give way and let gas escape into streets and cellars, listed by
-  urgency. The model closes no valves, books no crews and changes nothing in the network: our
-  integrity engineers go through the flagged list and decide which sections to dig up and when.
+  from a pipeline analytics firm has run in our network control centre. It reads the cathodic
+  protection readings and pressure data our steel distribution pipes send while in service, with
+  the latest in-line inspection and soil results. For each pipe section it estimates how far the
+  wall has corroded, and it flags the sections where it judges that an inspection or a repair is
+  needed within weeks, before the wall could give way and let gas escape into streets and
+  cellars, listed by urgency. The model closes no valves, books no crews and changes nothing in
+  the network: our integrity engineers go through the flagged list and decide which sections to
+  dig up and when.
 label:
   risk_class: high_risk
   role: deployer
@@ -25,11 +27,12 @@ label_citation:
   - "guide:guide-high-risk-annex-iii:para:190"
 notes: >-
   H4, positive side, detection only: the model is a component in the management and operation of
-  gas supply. Its own output detects that a corroding pipe section needs inspection or repair, and
+  gas supply: it watches the pipes in service from the control centre. Its own output detects
+  that a corroding pipe section needs inspection or repair within weeks, and
   a missed inspection could, without anything in between, let gas escape and hurt people or damage
   property (guide para 184(b)), so it is a safety component (Art. 3(14)) even though it acts on
-  nothing itself and also ranks the work. It is not a planning tool working from information it
-  is given: the need for maintenance is its own finding. The operator is a critical entity (para
+  nothing itself and also ranks the work. It is no longer-term investment or renewal planner
+  beside separate operational systems (para 181): the near-term need is its own finding. The operator is a critical entity (para
   190), so Annex III point 2 applies (Art. 6(2)). Its output is the evaluation of the pipes, not
   a narrow procedural or preparatory task, and it profiles nobody, so no Art. 6(3) condition.
   Deployer of a licensed model (Art. 3(4)).
