@@ -42,7 +42,7 @@ def _insert_run(db: psycopg.Connection, **overrides: object) -> UUID:
 
 
 def _insert_result(
-    db: psycopg.Connection, run_id: UUID, case_id: str = "cb-017", scores: object = SCORES
+    db: psycopg.Connection, run_id: UUID, case_id: str = "cb-test", scores: object = SCORES
 ) -> None:
     db.execute(
         """
@@ -73,7 +73,7 @@ def test_run_and_case_result_round_trip(db: psycopg.Connection) -> None:
         " where run_id = %s",
         (run_id,),
     ).fetchone()
-    assert result == ("cb-017", PREDICTED, LABEL, SCORES, "trace-1")
+    assert result == ("cb-test", PREDICTED, LABEL, SCORES, "trace-1")
 
 
 def test_run_ids_are_generated_uuids(db: psycopg.Connection) -> None:

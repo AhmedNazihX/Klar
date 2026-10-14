@@ -20,6 +20,7 @@ from collections.abc import Iterable, Mapping, Sequence
 
 from pydantic import Field
 
+from aiact.eval.failures import NAMED_IN_PILE_B_FILE
 from aiact.eval.metrics import Outcome, Rate, is_not_assessed, summarize
 from aiact.schemas.base import ContractModel
 
@@ -96,8 +97,15 @@ def _share(count: int, total: int) -> str:
     return f"{count} of {total} ({Rate(hits=count, total=total).percent})"
 
 
-def render_refusals(summary: RefusalSummary) -> list[str]:
-    """The run report's refusal section, as markdown lines."""
+def render_refusals(summary: RefusalSummary, *, should_name_cases: bool = True) -> list[str]:
+    """The run report's refusal section, as markdown lines; without `should_name_cases`, the
+    counts only, each marked as named in the Pile B file (a Pile B run's printed report, V11)."""
+
+    def _listed(case_ids: Sequence[str]) -> str:
+        if not case_ids:
+            return ""
+        return f": {', '.join(case_ids)}" if should_name_cases else f" {NAMED_IN_PILE_B_FILE}"
+
     lines = ["### Provider refusals (decisions 029, 030, 033)", ""]
     if summary.second_model is None:
         lines.append("- Second model: not recorded for this run (refusals can't be told apart).")
@@ -120,7 +128,3 @@ def render_refusals(summary: RefusalSummary) -> list[str]:
         + (", ".join(f"`{m}` {n}" for m, n in summary.calls_by_model.items()) or "none recorded"),
     ]
     return lines
-
-
-def _listed(case_ids: Sequence[str]) -> str:
-    return f": {', '.join(case_ids)}" if case_ids else ""

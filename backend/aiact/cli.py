@@ -774,13 +774,37 @@ def _read_errors_exit(*known: type[Exception]) -> Iterator[None]:
 def eval_report(
     run_id: Annotated[UUID, typer.Argument(help="The eval_runs id to report on")],
 ) -> None:
-    """Print a stored run's deterministic metrics as a markdown table (read-only)."""
+    """Print a stored run's deterministic metrics as a markdown table (writes no database row).
+
+    A Pile B (commission_b) run's printed report names no case: its full report goes to
+    eval/reports/pile_b/run-<run_id>.md, which the Engine lane can't read, and the printed one
+    names that file (V11)."""
     with (
         _read_errors_exit(report.RunNotFoundError, report.RunRecordError),
         records.connect() as connection,
     ):
-        text = report.run_report(connection, run_id)
-    typer.echo(text, nl=False)
+        parts = report.run_reports(connection, run_id)
+    if parts.pile_b_text is not None:
+        _write_pile_b_report(
+            report.pile_b_file(run_id), report.pile_b_heading(run_id), parts.pile_b_text
+        )
+    typer.echo(parts.text, nl=False)
+
+
+def _write_pile_b_report(path: Path, heading: str, text: str) -> None:
+    """Write a Pile B run's full report; exit 2, printing nothing else, when it can't be, or
+    when a file there isn't this run's Pile B report (it would be overwritten)."""
+    try:
+        if path.exists() and not path.read_text(encoding="utf-8", errors="replace").startswith(
+            heading
+        ):
+            typer.echo(f"Error: {path} isn't this run's Pile B report; not overwritten", err=True)
+            raise typer.Exit(code=2)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    except OSError as error:
+        typer.echo(f"Error: can't write the Pile B file {path} ({type(error).__name__})", err=True)
+        raise typer.Exit(code=2) from error
 
 
 @eval_app.command("tool-calls")

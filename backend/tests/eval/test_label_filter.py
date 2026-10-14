@@ -413,7 +413,7 @@ def test_cases_whose_answers_fail_never_stop_the_run(tmp_path: Path) -> None:
 
 
 def test_pile_b_answers_go_only_to_their_own_folder(tmp_path: Path) -> None:
-    pile_b = make_case(9, id="cb-009-cv-ranker", set_name=CaseSet.COMMISSION_B)
+    pile_b = make_case(9, id="cb-test-cv-ranker", set_name=CaseSet.COMMISSION_B)
     soft = make_case(8, id="sp-008-cv-ranker", set_name=CaseSet.SOFT_PAIRS)
     run_filter((CASES[0], pile_b, soft), CountingFilter(), run_date=RUN_DATE, reports_dir=tmp_path)
     own_file = tmp_path / "label_filter_answers.jsonl"

@@ -260,6 +260,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   └── pile_b/                  label_filter_answers.jsonl and label_disagreements.md for commission_b
 │   │                                only: Pile B's labels and the second model's reasons (B9). The Engine
 │   │                                lane denies this folder; no cb-* id goes in the files above it
+│   │                                (tests/test_isolation.py, V11). run-<run_id>.md: a commission_b run's full
+│   │                                report, written by `aiact evaluate report`; run-2026-10-12.md: V8's moved lines;
 │   │                                head_to_head_draw.json (the draw), head_to_head.yaml (the user's checker
 │   │                                runs), head_to_head.md (generated from them), head_to_head/ (screenshots) (V10a)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)

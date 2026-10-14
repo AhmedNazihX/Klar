@@ -15,7 +15,7 @@ from aiact.eval import records
 from aiact.eval.appliedai_review import VERDICT_MARK, NotAppliedAIRunError, load_review
 from aiact.eval.appliedai_review_report import render_review
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
-from aiact.eval.report import run_report
+from aiact.eval.report import run_reports
 from aiact.schemas import Language, RiskClass
 from tests.eval.outcomes import result
 
@@ -75,8 +75,8 @@ def test_a_stored_run_is_drafted_with_its_run_report_numbers(
     text = render_review(review)
     assert f"- Run id: `{run_id}`" in text.splitlines()
     assert "| Every case | 33.3% (1/3) | 33.3% (1/3) |" in text.splitlines()
-    assert "| Risk-class accuracy | 33.3% | 1/3 |" in run_report(db, run_id).splitlines()
-    assert "| appliedAI disagreement review | 2 | |" in run_report(db, run_id).splitlines()
+    assert "| Risk-class accuracy | 33.3% | 1/3 |" in run_reports(db, run_id).text.splitlines()
+    assert "| appliedAI disagreement review | 2 | |" in run_reports(db, run_id).text.splitlines()
     assert "## Annex I disagreements (1)" in text.splitlines()
 
 

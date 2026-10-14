@@ -334,7 +334,7 @@ def test_the_cases_are_read_as_they_were_at_the_tag(tmp_path: Path) -> None:
     draw."""
     _git(tmp_path, "init", "-q")
     _write_case(tmp_path, "own/a", "own-a-01", "limited_risk")
-    _write_case(tmp_path, "commission_b/annex_i", "cb-001", "high_risk")
+    _write_case(tmp_path, "commission_b/annex_i", "cb-annex-i-high-risk-fixture", "high_risk")
     _git(tmp_path, "add", ".")
     _git(tmp_path, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "c")
     _git(tmp_path, "tag", "labels-test")
@@ -351,7 +351,7 @@ def test_the_cases_are_read_as_they_were_at_the_tag(tmp_path: Path) -> None:
     assert commit == tagged
     labels = {case.id: case.label for case in cases}
     assert labels == {
-        "cb-001": CaseLabel(risk_class=R.HIGH_RISK),
+        "cb-annex-i-high-risk-fixture": CaseLabel(risk_class=R.HIGH_RISK),
         "own-a-01": CaseLabel(risk_class=R.LIMITED_RISK),
     }
 

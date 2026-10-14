@@ -37,6 +37,8 @@ FACTS_GROUP = "facts"
 """The facts node, which ends a run that asks for a description (E13); not a `StepName`."""
 FAILED_GROUP = "no result (the classifier failed)"
 STATUS_GROUP = "uncertain status (appliedAI unclear)"
+NAMED_IN_PILE_B_FILE = "(named in the Pile B file)"
+"""What a Pile B run's printed report shows in place of the cases it counts (V11)."""
 GROUP_ORDER: tuple[str, ...] = (
     FACTS_GROUP,
     *(step.value for step in StepName),
@@ -114,12 +116,14 @@ def failures_by_step(outcomes: Sequence[Outcome]) -> dict[str, list[str]]:
     return {group: groups[group] for group in GROUP_ORDER if groups[group]}
 
 
-def render_failures(outcomes: Sequence[Outcome]) -> list[str]:
-    """The run report's failure section, as markdown lines."""
+def render_failures(outcomes: Sequence[Outcome], *, should_name_cases: bool = True) -> list[str]:
+    """The run report's failure section, as markdown lines; without `should_name_cases`, each
+    group's count only, marked as named in the Pile B file (a Pile B run's printed report, V11)."""
     groups = failures_by_step(outcomes)
     lines = ["### Failures by step", ""]
     if not groups:
         return [*lines, "No failure cases."]
     for group, cases in groups.items():
-        lines.append(f"- **{group}** ({len(cases)}): {'; '.join(cases)}")
+        named = f": {'; '.join(cases)}" if should_name_cases else f" {NAMED_IN_PILE_B_FILE}"
+        lines.append(f"- **{group}** ({len(cases)}){named}")
     return lines
