@@ -66,3 +66,25 @@ then, before any case is scored.
 - **Scoring.** The checker's class is scored against the current labels (a later change has its LABEL_CHANGES
   row), with `metrics.class_match` and `metrics.class_too_low`, the bare-class forms of `risk_class_match` and
   `false_low_risk`; V10b scores the engine column with the same code.
+
+## Amendment 2026-10-14: an agent answers the checker, the user spot-checks (user, option A)
+- **Question.** The checker can be driven by a browser agent (Playwright: no login, no captcha; one radio-button
+  question per step, the page names its question release, "6.5.1" on 2026-10-14). Who interprets each description to
+  answer the checker's questions: an agent, or the user by hand as INIT › Evaluation › Head-to-head says?
+- **Options.** A: a blind agent per case answers all 25, the user re-runs a seeded 5 by hand (about 40–60 min of the
+  user's time; OpenRouter $0; Claude Code tokens a few million, mostly cached, an estimate). B: the user answers all
+  25 by hand (2–4 h). The user knows the labels (they wrote or reviewed many of the cases), which can pull answers
+  towards the right class; the agent never sees them, but is from the same project as the engine.
+- **Decision: A.** One fresh agent per case gets only that case's description (no id, label, notes, engine output)
+  and a fixed answering rule: answer from the description only; where it doesn't settle a question, pick the
+  checker's "don't know"-style option if there is one, otherwise the reading the description most directly supports,
+  and list that question as uncertain. It records every question and answer, the result and its headings verbatim,
+  and the checker's question release.
+- **Spot-check.** Seed 20261015: for each risk class in the order out_of_scope, prohibited, high_risk, limited_risk,
+  minimal_risk, `random.Random(20261015).choice` over the sorted ids of the drawn cases of that class (one call per
+  class, in that order), fixed before any agent run. The user runs these 5 by hand, blind to the agent's answers; the
+  report shows both classes per spot-check case and every answer that differs. The scored column is the agent's.
+- **Consequences.** The sheet records who answered each run, the question release and the uncertain questions, and
+  holds the user's spot-check runs apart from the scored ones; the report states that an agent answered, instead of
+  "by hand" (a V10a follow-up). V10a is done when the 25 agent runs and the 5 spot-checks pass `check --complete`.
+  A spot-check disagreement on the class is discussed with the user case by case before the report is committed.
