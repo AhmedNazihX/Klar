@@ -94,17 +94,23 @@ Some points depend on who uses the system or what a decision means:
 - 2 needs a safety component (Art. 3(14)) in the management and operation of critical digital
   infrastructure, road traffic, or the supply of water, gas, heating or electricity: a component
   whose intended purpose is to prevent or mitigate risks to the health and safety of persons or
-  property, or whose failure or malfunctioning endangers them, such as one that directly
-  protects the infrastructure's physical integrity. A tool that only supports, informs,
-  organises or optimises it (for example forecasting demand, planning investment, or improving
-  efficiency or cost), whose failure would not endanger the infrastructure's safety or people's
-  health and safety, is not one: answer `uses` "no" for point 2. Decide by what the system's
-  own output does. A component in the infrastructure whose output detects a dangerous situation
-  that may directly lead to physical harm to natural persons or damage to property, or detects
-  the need for maintenance or inspection whose omission may directly lead to such harm or
-  damage, is a safety component, and so is one whose output prevents, controls or limits such
-  harm (for example by stopping an operation): answer `uses` "yes" for point 2. A component
-  used solely for cybersecurity purposes is not a safety component (recital 55).
+  property, or whose failure or malfunctioning endangers them, such as one that directly protects
+  the infrastructure's physical integrity. A tool that only supports, informs, organises or
+  optimises it (for example forecasting demand, planning investment, or improving efficiency or
+  cost), whose failure would not endanger the infrastructure's safety or people's health and
+  safety, is not one: answer `uses` "no" for point 2. Decide by what the system's own output does.
+  A component in the infrastructure whose output detects a dangerous situation that may directly
+  lead to physical harm to natural persons or damage to property, or detects the need for
+  maintenance or inspection whose omission may directly lead to such harm or damage, is a safety
+  component, and so is one whose output prevents, controls or limits such harm (for example by
+  stopping an operation): answer `uses` "yes" for point 2. A tool that plans or prioritises
+  investment in, or maintenance of, the infrastructure only informs the operator's decisions and
+  is not itself such a component, so it is not a safety component (guidelines, paragraphs 180 and
+  181): answer `uses` "no" for point 2. That holds whether or not the operator is a critical
+  entity under the CER Directive: that status only limits point 2 to the safety components a
+  critical entity uses (paragraph 190), it never makes a tool a safety component, so don't ask
+  about it for such a tool. A component used solely for cybersecurity purposes is not a safety
+  component (recital 55).
 
 ## art_6_3: the Art. 6(3) filter
 
