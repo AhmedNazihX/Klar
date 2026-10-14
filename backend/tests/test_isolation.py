@@ -13,6 +13,8 @@ Pile B examples are stored in `provisions`, tagged and held out, so this checks 
    limit, so the checks pass with them, not by exempting them. Their overlap is recorded in
    `eval/isolation/contaminated.json` and pinned by
    `test_the_contaminated_overlaps_are_as_recorded` (and the local cosine re-check).
+4. No tracked file outside the folders the Engine lane denies names a Pile B case (V11), except
+   the few `NAMES_PILE_B_CASES` lists with a reason.
 The injection tests show each check fails on a planted leak, inside a rolled-back transaction.
 
 The corpus checks read the loaded corpus. CI's isolation job loads it from the committed
@@ -27,7 +29,9 @@ import inspect
 import json
 import os
 import pkgutil
-from collections.abc import Callable
+import re
+import subprocess
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, fields, replace
 from datetime import date
 from pathlib import Path
@@ -680,3 +684,90 @@ def test_the_engine_lane_never_sees_pile_b_label_filter_output() -> None:
     assert label_filter.reports_folder(CaseSet.OWN) != label_filter.reports_folder(
         CaseSet.COMMISSION_B
     )
+
+
+# --- Pile B case ids in tracked files (V11) -------------------------------------------------
+
+PILE_B_CASE_ID = re.compile(r"\bcb-\d{3}\b")
+"""A Pile B case id, `cb-NNN-<slug>`, or its short form `cb-NNN`. Tests use made-up ids that
+don't match (`cb-test-…`)."""
+PILE_B_PLACES = (
+    "eval/commission_examples",
+    "eval/cases/commission_b",
+    "eval/split.json",
+    "eval/reports/pile_b",
+)
+"""Where Pile B's ids and labels belong: exactly the paths the Engine lane denies."""
+NAMES_PILE_B_CASES: dict[str, str] = {
+    "eval/LABEL_CHANGES.md": "the label-change log names each changed case and its labels, "
+    "and the label-freeze check (B10a) matches its rows by case id",
+    "docs/BACKLOG.md": "the orchestrator's hand-over notes on the Pile B stories (B4, B9, B10b, "
+    "X0b); only the orchestrator edits it",
+}
+"""Tracked files allowed to name a Pile B case outside `PILE_B_PLACES`, each with its reason."""
+
+
+def _is_pile_b_place(name: str) -> bool:
+    return any(name == place or name.startswith(f"{place}/") for place in PILE_B_PLACES)
+
+
+def pile_b_id_leaks(repo: Path, names: Iterable[str]) -> dict[str, list[str]]:
+    """Each file of `names` (paths from `repo`) outside the allowed places that names a Pile B
+    case, with the ids it names. A file this worktree leaves out (a lane's sparse checkout) or
+    that isn't text is skipped."""
+    leaks: dict[str, list[str]] = {}
+    for name in names:
+        path = repo / name
+        if _is_pile_b_place(name) or name in NAMES_PILE_B_CASES or not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if found := sorted(set(PILE_B_CASE_ID.findall(text))):
+            leaks[name] = found
+    return leaks
+
+
+def tracked_files(repo: Path) -> list[str]:
+    listed = subprocess.run(
+        ["git", "-C", str(repo), "ls-files", "-z"], capture_output=True, check=True
+    ).stdout
+    return [name for name in listed.decode().split("\0") if name]
+
+
+def test_no_tracked_file_outside_the_pile_b_places_names_a_pile_b_case() -> None:
+    repo = BACKEND_DIR.parent
+    names = tracked_files(repo)
+    assert "backend/tests/test_isolation.py" in names
+    assert pile_b_id_leaks(repo, names) == {}
+    assert set(NAMES_PILE_B_CASES) <= set(names)
+
+
+def test_the_pile_b_places_are_the_engine_lanes_deny_list() -> None:
+    config = json.loads((BACKEND_DIR.parent / ".claude" / "foreman.json").read_text())
+    assert sorted(PILE_B_PLACES) == sorted(config["lanes"]["Engine"]["deny"])
+
+
+def test_a_planted_pile_b_id_is_caught_outside_the_allowed_places(tmp_path: Path) -> None:
+    planted = "cb-" + "123-made-up-system (expected high_risk)"  # split: no id in this file
+    names = (
+        "eval/reports/run-2099-01-01.md",
+        "eval/reports/pile_b/run-2099-01-01.md",
+        "eval/split.json.bak",
+        "eval/LABEL_CHANGES.md",
+        "backend/notes.md",
+    )
+    for name in names:
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / name).write_text(f"- **scope** (1): {planted}\n", encoding="utf-8")
+    (tmp_path / "short.md").write_text("see " + "cb-" + "123 and cb-12, scb-1234\n")
+    (tmp_path / "binary.bin").write_bytes(b"\xff\xfe" + planted.encode())
+    leaks = pile_b_id_leaks(tmp_path, (*names, "short.md", "binary.bin", "missing.md"))
+    expected = ["cb-" + "123"]
+    assert leaks == {
+        "eval/reports/run-2099-01-01.md": expected,
+        "eval/split.json.bak": expected,
+        "backend/notes.md": expected,
+        "short.md": expected,
+    }

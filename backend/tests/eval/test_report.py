@@ -9,7 +9,7 @@ from pydantic import JsonValue
 from typer.testing import CliRunner
 
 from aiact.cli import app
-from aiact.eval import records, report
+from aiact.eval import label_filter, records, report
 from aiact.eval.cases import BenchmarkCase, CaseSet, load_cases
 from aiact.eval.isolation import ContaminatedExample, ContaminatedList
 from aiact.eval.judge import UNSURE_MARGIN, JudgeCheck
@@ -318,14 +318,14 @@ def _stored(
 
 
 def test_a_run_with_contaminated_cases_reports_accuracy_without_them() -> None:
-    contaminated = case("cb-269-x").model_copy(update={"source_example_id": "hr-ex-269"})
-    clean = case("cb-100-y").model_copy(update={"source_example_id": "hr-ex-100"})
+    contaminated = case("cb-test-x").model_copy(update={"source_example_id": "hr-ex-269"})
+    clean = case("cb-test-y").model_copy(update={"source_example_id": "hr-ex-100"})
     rows = (_stored(contaminated, result()), _stored(clean, result(RiskClass.MINIMAL_RISK)))
     text = build_report(_info(), rows, CONTAMINATED)
     assert "| Risk-class accuracy | 50.0% | 1/2 |" in text
     assert (
         "Contaminated cases, flagged by docs/decisions/016-contaminated-pile-b-cases.md: "
-        "cb-269-x (from hr-ex-269)"
+        "cb-test-x (from hr-ex-269)"
     ) in text
     assert "| Risk-class accuracy without the contaminated cases | 0.0% | 0/1 |" in text
 
@@ -349,6 +349,66 @@ def test_the_report_adds_refusals_failures_and_texts() -> None:
     assert "- Refused by both (not assessed): 1 of 2 (50.0%): b" in text
     assert "- **scope** (1): a (expected high_risk, got out_of_scope (decided))" in text
     assert "- Longest fact or question:" in text
+
+
+GEMINI = "google/gemini-3.1-flash-lite"
+PILE_B_FILE = "eval/reports/pile_b/run-x.md"
+PILE_B_IDS = (
+    "cb-test-tainted",
+    "cb-test-second",
+    "cb-test-refused",
+    "cb-test-missed",
+    "cb-test-failed",
+    "cb-test-unscored",
+)
+
+
+def _pile_b_rows() -> tuple[StoredCase, ...]:
+    """A Pile B run naming its cases in every section that can: a contaminated case, one the
+    second model answered, one refused by both, a failure, a failed classifier and a scoring
+    error. The ids are made up; `tests/test_isolation.py` keeps real Pile B ids out."""
+    tainted, second, refused, missed, failed, unscored = (
+        case(case_id, set_name=CaseSet.COMMISSION_B) for case_id in PILE_B_IDS
+    )
+    models = {"facts": {"openai/gpt-6-luna-20260922": 1, GEMINI: 1}}
+    return (
+        _stored(tainted.model_copy(update={"source_example_id": "hr-ex-269"}), result()),
+        _stored(second, result(), models=models),
+        _stored(refused, refused_result()),
+        _stored(missed, result(RiskClass.OUT_OF_SCOPE)),
+        _stored(failed, None),
+        _stored(unscored, result(), scoring_error=True),
+    )
+
+
+def test_a_pile_b_text_counts_its_cases_and_names_none() -> None:
+    rows = _pile_b_rows()
+    full = build_report(_info(), rows, CONTAMINATED)
+    assert all(case_id in full for case_id in PILE_B_IDS)
+    assert "expected high_risk, got out_of_scope" in full
+
+    text = build_report(_info(), rows, CONTAMINATED, pile_b_file=PILE_B_FILE)
+    lines = text.splitlines()
+    assert not [case_id for case_id in PILE_B_IDS if case_id in text]
+    assert "hr-ex-269" not in text
+    assert "(expected " not in text
+    assert (
+        "- Case ids and expected labels: `eval/reports/pile_b/run-x.md` (Pile B's, kept out of "
+        "this text: the Engine lane can't read that folder, V11)"
+    ) in lines
+    assert "Scoring failed, left out of the metrics: 1 (named in the Pile B file)" in lines
+    assert (
+        "Contaminated cases, flagged by docs/decisions/016-contaminated-pile-b-cases.md: "
+        "1 (named in the Pile B file)"
+    ) in lines
+    assert "- Answered by the second model: 1 of 4 (25.0%)" in lines
+    assert "- Refused by both (not assessed): 1 of 4 (25.0%)" in lines
+    assert "- **scope** (1)" in lines
+    assert "- **no result (the classifier failed)** (1)" in lines
+    # Every number of the full report is kept: only the names go.
+    assert [line for line in full.splitlines() if line.startswith("| ")] == [
+        line for line in lines if line.startswith("| ")
+    ]
 
 
 def test_malformed_stored_models_name_the_case() -> None:
@@ -450,19 +510,85 @@ class FakeConnection:
 
 def test_cli_prints_the_report(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(records, "connect", FakeConnection)
-    monkeypatch.setattr(report, "run_report", lambda conn, run_id: f"## Run {run_id}\n")
+    monkeypatch.setattr(
+        report, "run_reports", lambda conn, run_id, file: report.RunReport(f"## Run {run_id}\n")
+    )
     run_id = uuid4()
     outcome = cli.invoke(app, ["evaluate", "report", str(run_id)])
     assert outcome.exit_code == 0
     assert outcome.stdout == f"## Run {run_id}\n"
 
 
+def _stored_run(monkeypatch: pytest.MonkeyPatch, benchmark: str) -> None:
+    """The CLI reads `_pile_b_rows` as a stored run of `benchmark`."""
+    monkeypatch.setattr(records, "connect", FakeConnection)
+    monkeypatch.setattr(report, "load_run_info", lambda conn, run_id: _info(benchmark))
+    monkeypatch.setattr(report, "load_stored_cases", lambda conn, run_id: _pile_b_rows())
+    monkeypatch.setattr(report, "load_contaminated", lambda: CONTAMINATED)
+
+
+def test_cli_writes_a_pile_b_runs_cases_to_the_pile_b_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _stored_run(monkeypatch, "commission_b")
+    written = tmp_path / "pile_b" / "run.md"
+    outcome = cli.invoke(app, ["evaluate", "report", str(INFO.id), "--pile-b-file", str(written)])
+    assert outcome.exit_code == 0, outcome.output
+    assert not [case_id for case_id in PILE_B_IDS if case_id in outcome.stdout]
+    assert "- Case ids and expected labels: `run.md` (Pile B's" in outcome.stdout
+    pile_b = written.read_text(encoding="utf-8")
+    assert pile_b.startswith(f"# Pile B run {INFO.id}: every case named\n")
+    assert "Classifications are guidance, not legal advice." in pile_b
+    assert all(case_id in pile_b for case_id in PILE_B_IDS)
+    assert "- **scope** (1): cb-test-missed (expected high_risk, got out_of_scope" in pile_b
+
+
+def test_cli_writes_the_pile_b_file_to_the_denied_folder_by_default(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    run_id = UUID("00000000-0000-4000-8000-000000000002")
+    assert report.pile_b_file(run_id) == label_filter.reports_folder(CaseSet.COMMISSION_B) / (
+        "run-00000000-0000-4000-8000-000000000002.md"
+    )
+    assert report.pile_b_file(run_id).parent.parts[-3:] == ("eval", "reports", "pile_b")
+    _stored_run(monkeypatch, "commission_b")
+    written = tmp_path / "default.md"
+    monkeypatch.setattr(report, "pile_b_file", lambda run_id: written)
+    outcome = cli.invoke(app, ["evaluate", "report", str(run_id)])
+    assert outcome.exit_code == 0, outcome.output
+    assert "cb-test-missed" in written.read_text(encoding="utf-8")
+
+
+def test_cli_names_the_cases_of_a_run_on_another_set(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _stored_run(monkeypatch, "own")
+    written = tmp_path / "run.md"
+    outcome = cli.invoke(app, ["evaluate", "report", str(INFO.id), "--pile-b-file", str(written)])
+    assert outcome.exit_code == 0, outcome.output
+    assert "- **scope** (1): cb-test-missed" in outcome.stdout
+    assert "Case ids and expected labels" not in outcome.stdout
+    assert not written.exists()
+
+
+def test_cli_prints_nothing_when_the_pile_b_file_cant_be_written(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _stored_run(monkeypatch, "commission_b")
+    (tmp_path / "taken").write_text("a file, not a folder", encoding="utf-8")
+    written = tmp_path / "taken" / "run.md"
+    outcome = cli.invoke(app, ["evaluate", "report", str(INFO.id), "--pile-b-file", str(written)])
+    assert outcome.exit_code == 2
+    assert outcome.stdout == ""
+    assert outcome.stderr.startswith("Error: can't write the Pile B file")
+
+
 def test_cli_unknown_run_exits_2(monkeypatch: pytest.MonkeyPatch) -> None:
-    def missing(conn: object, run_id: UUID) -> str:
+    def missing(conn: object, run_id: UUID, file: str) -> report.RunReport:
         raise RunNotFoundError(f"no eval run with id {run_id}")
 
     monkeypatch.setattr(records, "connect", FakeConnection)
-    monkeypatch.setattr(report, "run_report", missing)
+    monkeypatch.setattr(report, "run_reports", missing)
     outcome = cli.invoke(app, ["evaluate", "report", str(uuid4())])
     assert outcome.exit_code == 2
     assert outcome.stderr.startswith("Error: no eval run with id")

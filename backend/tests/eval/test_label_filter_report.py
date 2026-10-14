@@ -256,7 +256,7 @@ def test_a_resolution_the_report_cannot_read_back_is_refused(edit: str) -> None:
 runner = CliRunner()
 
 
-PILE_B = make_case(9, id="cb-009-cv-ranker", set_name=CaseSet.COMMISSION_B)
+PILE_B = make_case(9, id="cb-test-cv-ranker", set_name=CaseSet.COMMISSION_B)
 SOFT = make_case(8, id="sp-008-cv-ranker", set_name=CaseSet.SOFT_PAIRS)
 
 

@@ -17,6 +17,7 @@ from aiact.eval.report import (
     RunRecordError,
     load_stored_cases,
     run_report,
+    run_reports,
 )
 from aiact.eval.runner import DummyClassifier, ExcludeMode, RunOptions, run_benchmark
 from aiact.schemas import ClassificationResult, LawVersion, RiskClass, Role
@@ -129,6 +130,27 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
     )
     assert "art:5:1" in WORKED_EXAMPLE_PROVISIONS
     assert run_report(db, run_id) == report
+
+
+def test_a_stored_pile_b_runs_text_names_no_case(db: psycopg.Connection) -> None:
+    row = db.execute(
+        "insert into eval_runs (git_sha, benchmark, config)"
+        " values (%s, 'commission_b', %s) returning id",
+        (GIT_SHA, Jsonb(CONFIG)),
+    ).fetchone()
+    assert row is not None
+    run_id = row[0]
+    missed = case("cb-test-missed", set_name=CaseSet.COMMISSION_B)  # made up: see test_isolation
+    _insert_case(db, run_id, _dump(missed), _dump(result(RiskClass.OUT_OF_SCOPE)))
+
+    parts = run_reports(db, run_id, "eval/reports/pile_b/run-x.md")
+    assert "cb-test-missed" not in parts.text
+    assert "- **scope** (1)" in parts.text.splitlines()
+    assert "`eval/reports/pile_b/run-x.md`" in parts.text
+    assert parts.pile_b_text is not None
+    assert "- **scope** (1): cb-test-missed (expected high_risk" in parts.pile_b_text
+    assert run_reports(db, run_id).pile_b_text is None
+    assert "cb-test-missed" in run_report(db, run_id)
 
 
 def test_unknown_run_is_an_error(db: psycopg.Connection) -> None:

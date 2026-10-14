@@ -23,10 +23,16 @@ texts (`texts`) and the judged metrics (`judged`, V5): the tallies `aiact evalua
 stored in each row's scores, never judged again here, and P8a's deterministic "no invented
 content" check on the documents the results call for (`judged.code_checked_documents`, no model
 call). A Q&A run (`aiact evaluate ragas`) gets its settings and its judged metrics only.
+
+A Pile B (`commission_b`) run's printed report names no case: the scoring errors, contaminated
+cases, refusals and failures are counted only, and a line names the file that holds the full
+report, under `eval/reports/pile_b/`, which the Engine lane can't read (`run_reports`, V11).
 """
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from uuid import UUID
 
 import psycopg
@@ -48,6 +54,7 @@ from aiact.eval.judged import (
     render_judged,
     run_totals,
 )
+from aiact.eval.label_filter import reports_folder
 from aiact.eval.metrics import (
     CITATION_EXISTENCE_KEY,
     Outcome,
@@ -76,6 +83,17 @@ EXCLUDE_MODES: Mapping[str, str] = {
 ANSWERS_FROM = (
     "the stored key-fact answers to the questions run `{run}` asked, any other question "
     'answered "don\'t know" (decision 019)'
+)
+PILE_B_POINTER = (
+    "- Case ids and expected labels: `{file}` (Pile B's, kept out of this text: the Engine lane "
+    "can't read that folder, V11)"
+)
+NAMED_THERE = "named in the Pile B file"
+PILE_B_HEADING = (
+    "# Pile B run {run}: every case named\n\n"
+    "Written by `aiact evaluate report {run}`: the full report, with the case ids and expected "
+    "labels its printed text leaves out. The Engine lane denies this folder (V11). "
+    "Classifications are guidance, not legal advice.\n\n"
 )
 
 
@@ -237,12 +255,44 @@ def _served_models(case_id: str, value: object) -> dict[str, dict[str, int]]:
         raise RunRecordError(f"case {case_id}: stored models are malformed") from exc
 
 
+@dataclass(frozen=True)
+class RunReport:
+    """A stored run's report: the text to print, and for a Pile B run the full one (V11)."""
+
+    text: str
+    """The report to print and paste. A Pile B run's names no case id and no expected label,
+    only the file `pile_b_text` goes to."""
+    pile_b_text: str | None = None
+    """A Pile B run's full report, every case named with what it shows, for its Pile B file."""
+
+
 def run_report(conn: psycopg.Connection, run_id: UUID) -> str:
-    """The markdown report for one stored run; a Q&A run's holds its judged metrics."""
+    """The markdown report for one stored run, every case named (`run_reports` keeps a Pile B
+    run's cases out of the text to paste); a Q&A run's holds its judged metrics."""
+    return run_reports(conn, run_id).text
+
+
+def run_reports(
+    conn: psycopg.Connection, run_id: UUID, pile_b_file: str | None = None
+) -> RunReport:
+    """The report for one stored run. With `pile_b_file`, a Pile B (`commission_b`) run's text
+    names that file instead of its cases, and `pile_b_text` is what goes in the file."""
     info = load_run_info(conn, run_id)
     if info.benchmark == QA_BENCHMARK:
-        return build_qa_report(info, load_qa_tallies(conn, run_id))
-    return build_report(info, load_stored_cases(conn, run_id), load_contaminated())
+        return RunReport(build_qa_report(info, load_qa_tallies(conn, run_id)))
+    cases, contaminated = load_stored_cases(conn, run_id), load_contaminated()
+    full = build_report(info, cases, contaminated)
+    if pile_b_file is None or info.benchmark != CaseSet.COMMISSION_B.value:
+        return RunReport(full)
+    return RunReport(
+        build_report(info, cases, contaminated, pile_b_file=pile_b_file),
+        PILE_B_HEADING.format(run=info.id) + full,
+    )
+
+
+def pile_b_file(run_id: UUID) -> Path:
+    """Where a Pile B run's full report goes by default: the folder the Engine lane denies."""
+    return reports_folder(CaseSet.COMMISSION_B) / f"run-{run_id}.md"
 
 
 QaTally = Mapping[JudgeCheck, CheckScore] | None
@@ -290,16 +340,23 @@ def _judged_lines(
 
 
 def build_report(
-    info: RunInfo, cases: tuple[StoredCase, ...], contaminated: ContaminatedList | None = None
+    info: RunInfo,
+    cases: tuple[StoredCase, ...],
+    contaminated: ContaminatedList | None = None,
+    pile_b_file: str | None = None,
 ) -> str:
+    """The report's markdown. With `pile_b_file` it names no case (no id, no expected label):
+    it counts them and points to that file (a Pile B run's printed text, V11)."""
     scored = [case for case in cases if not case.is_scoring_error]
     scoring_errors = [case.outcome.case.id for case in cases if case.is_scoring_error]
     outcomes = [case.outcome for case in scored]
-    lines = render_markdown(info, scored_metrics(scored), scoring_errors).splitlines()
+    lines = render_markdown(info, scored_metrics(scored), scoring_errors, pile_b_file).splitlines()
+    should_name_cases = pile_b_file is None
     flagged = contaminated_cases(outcomes, contaminated)
     if flagged and contaminated is not None:
         clean = summarize([o for o in outcomes if o.case.id not in flagged], None)
-        lines += _contaminated_lines(flagged, contaminated.decision, clean)
+        named = _named(flagged, should_name_cases)
+        lines += _contaminated_lines(named, contaminated.decision, clean)
     refusals = summarize_refusals(
         [RefusalCase(outcome=case.outcome, models=case.models) for case in scored],
         info.second_model,
@@ -312,8 +369,8 @@ def build_report(
         if (result := case.outcome.result) is not None
     ]
     sections = (
-        render_refusals(refusals),
-        render_failures(outcomes),
+        render_refusals(refusals, should_name_cases=should_name_cases),
+        render_failures(outcomes, should_name_cases=should_name_cases),
         render_texts(outcomes),
         judged,
         render_code_check(code_checked_documents(results)),
@@ -345,8 +402,14 @@ def contaminated_cases(
     }
 
 
-def _contaminated_lines(flagged: Mapping[str, str], decision: str, clean: RunMetrics) -> list[str]:
-    named = ", ".join(f"{case_id} (from {example})" for case_id, example in flagged.items())
+def _named(flagged: Mapping[str, str], should_name_cases: bool) -> str:
+    """The contaminated cases, each with its example; their count alone for a Pile B text."""
+    if not should_name_cases:
+        return f"{len(flagged)} ({NAMED_THERE})"
+    return ", ".join(f"{case_id} (from {example})" for case_id, example in flagged.items())
+
+
+def _contaminated_lines(named: str, decision: str, clean: RunMetrics) -> list[str]:
     return [
         "",
         f"Contaminated cases, flagged by {decision}: {named}",
@@ -358,13 +421,19 @@ def _contaminated_lines(flagged: Mapping[str, str], decision: str, clean: RunMet
 
 
 def render_markdown(
-    info: RunInfo, metrics: RunMetrics, scoring_errors: list[str] | None = None
+    info: RunInfo,
+    metrics: RunMetrics,
+    scoring_errors: list[str] | None = None,
+    pile_b_file: str | None = None,
 ) -> str:
+    """The header and the metric table; with `pile_b_file`, the scoring errors are counted, not
+    named, and a line points to that file."""
     header = [
         f"## Run {info.id}",
         "",
         *run_lines(info),
         f"- Cases: {metrics.cases} ({metrics.failed} failed)",
+        *([PILE_B_POINTER.format(file=pile_b_file)] if pile_b_file is not None else []),
         "",
         "| Metric | Value | Count |",
         "| --- | ---: | ---: |",
@@ -372,7 +441,12 @@ def render_markdown(
     is_development = info.benchmark == CaseSet.OWN.value
     lines = [*header, *(_row(name, value) for name, value in _rows(metrics, is_development))]
     if scoring_errors:
-        lines += ["", f"Scoring failed, left out of the metrics: {', '.join(scoring_errors)}"]
+        named = (
+            f"{len(scoring_errors)} ({NAMED_THERE})"
+            if pile_b_file is not None
+            else ", ".join(scoring_errors)
+        )
+        lines += ["", f"Scoring failed, left out of the metrics: {named}"]
     return "\n".join(lines) + "\n"
 
 

@@ -97,6 +97,13 @@ the run's settings, status, exclude mode and uncommitted-changes flag, the metri
 accuracy without the contaminated cases when the run has any, the provider refusals, the failure
 cases grouped by step and the model-written texts) is what goes into the report, unchanged.
 
+For a `commission_b` run (Pile B) the printed output names no case: it counts the failures,
+refusals and contaminated cases, and its `- Case ids and expected labels:` line names the file
+the command wrote with the full report, `eval/reports/pile_b/run-<run_id>.md` (V11). The Engine
+lane can't read that folder. Paste only the printed output; never copy a case id (`cb-…`) or an
+expected label from the Pile B file, or from anywhere else, into `eval/reports/run-<date>.md`.
+`tests/test_isolation.py` fails on a Pile B case id outside the Pile B folders.
+
 ## 5. Write the report
 
 The file is `eval/reports/run-<YYYY-MM-DD>.md` in the repo root, dated today. Write it with the
@@ -130,13 +137,16 @@ Rules for the file:
   of your own, no rounding, no estimates.
 - Every run mentioned is named by its run_id.
 - No case descriptions (the report command never prints them; don't add any).
+- No Pile B case id or expected label (step 4): they stay in the Pile B file the report names.
 - A `dummy` run is labelled a dry run in its purpose line.
 
 ## 6. Tell the user
 
-Give the run_id, the runner summary line, the report path, and whether the run was a dry run,
-a subset or a full run. Don't commit unless the user asks. When they do, run `git status` first
-and stage only the report file (`git add eval/reports/run-<date>.md` from the repo root), never
-`git add -A`, which would sweep in the user's unrelated edits. Commit with a message like
+Give the run_id, the runner summary line, the report path (and for a `commission_b` run the
+Pile B file's), and whether the run was a dry run, a subset or a full run. Don't commit unless
+the user asks. When they do, run `git status` first and stage only the report file
+(`git add eval/reports/run-<date>.md` from the repo root, plus
+`eval/reports/pile_b/run-<run_id>.md` for each `commission_b` run), never `git add -A`, which
+would sweep in the user's unrelated edits. Commit with a message like
 `docs(benchmark): run report <date>`. If a shell command naming the `eval/` folder is blocked,
 don't work around it: give the user the exact command as a `!` line to run themselves.
