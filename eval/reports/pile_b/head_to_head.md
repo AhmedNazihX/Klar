@@ -12,6 +12,8 @@ Classifications are guidance, not legal advice.
 | Column | Cases answered | Risk-class accuracy | False-low-risk rate |
 | --- | ---: | ---: | ---: |
 | Commission checker | 25 of 25 | 84.0% (21/25) | 0.0% (0/10) |
+| Commission checker, commission_b cases | 8 of 8 | 87.5% (7/8) | 0.0% (0/4) |
+| Commission checker, own cases | 17 of 17 | 82.4% (14/17) | 0.0% (0/6) |
 | Engine | not filled yet (V10b) | | |
 
 ## Cases
@@ -278,6 +280,7 @@ Your AI system is likely not considered as high-risk. It is likely that your AI 
 
 - The checker is a beta and its outcomes may change; each case gives the date it was run.
 - The roles step is in the draw (`own-d-07-office-assistant-seats`, `own-d-11-importer-stock-forecast`), but a class-only score can't show it: roles aren't compared, and these cases' classes don't depend on the role.
+- On borderline descriptions the checker's class turns on how the answerer reads "is it an AI system?" and "does it interact with people?" (decision 036, runs and spot-check outcome).
 - These labels depend on a date (for example the 2025-26 amendments' prohibitions), which the checker may not cover: `own-a-05-vacuum-ad-synthetic-customers` (judged on 2026-10-01), `own-a-07-surfing-cows-ad` (judged on 2026-10-01), `own-a-09-newsroom-reviewed-drafts` (judged on 2026-10-01), `own-c-01-undress-photo-app` (judged on 2026-12-15), `own-c-05-gossip-site-fake-nudes` (judged on 2027-02-15), `own-c-07-unfiltered-image-generator` (judged on 2026-12-28).
 
 ## Runs

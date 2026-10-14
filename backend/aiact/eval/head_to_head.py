@@ -46,6 +46,9 @@ from aiact.schemas.enums import Language, RiskClass, Status
 
 HEAD_TO_HEAD_DIR = REPORTS_DIR / PILE_B_FOLDER
 DRAW_FILE = HEAD_TO_HEAD_DIR / "head_to_head_draw.json"
+HEAD_TO_HEAD_BENCHMARK = "head_to_head"
+"""The `eval_runs.benchmark` of a run of exactly the drawn cases (`aiact evaluate run
+--cases-from-draw`, V10b); it holds Pile B cases, so its report names none (`report.is_pile_b`)."""
 
 LABELS_REF = "labels-v1"
 """The tag of the frozen labels the cases are drawn from (B10b)."""

@@ -27,7 +27,10 @@ from aiact.eval import (
     appliedai_review_command,
     citation_index,
     gap,
+    head_to_head,
     head_to_head_command,
+    head_to_head_report,
+    head_to_head_sheet,
     held_out_hits,
     isolation,
     judge_report,
@@ -372,10 +375,20 @@ def eval_label_freeze(
 
 @eval_app.command("run")
 def eval_run(
-    set_name: Annotated[CaseSet, typer.Option("--set", help="The case set to run")],
     classifier: Annotated[
         str, typer.Option(help=f"One of: {', '.join(sorted(runner.CLASSIFIERS))}")
     ],
+    set_name: Annotated[
+        CaseSet | None, typer.Option("--set", help="The case set to run (or --cases-from-draw)")
+    ] = None,
+    cases_from_draw: Annotated[
+        bool,
+        typer.Option(
+            "--cases-from-draw",
+            help="Run exactly the head-to-head draw's cases, labelled as now, instead of a --set "
+            f"(recorded as benchmark {head_to_head.HEAD_TO_HEAD_BENCHMARK}; V10b)",
+        ),
+    ] = False,
     subset: Annotated[
         int | None, typer.Option(min=1, help="Run a seeded random sample of N cases")
     ] = None,
@@ -402,20 +415,17 @@ def eval_run(
     ] = None,
 ) -> None:
     """Run a classifier over a benchmark set and record it in eval_runs / eval_case_results."""
-    if answers_from is not None and classifier not in answers.ANSWERING_CLASSIFIERS:
-        names = ", ".join(sorted(answers.ANSWERING_CLASSIFIERS))
-        typer.echo(
-            f"Error: --answers-from needs a classifier that takes answers: {names}", err=True
-        )
-        raise typer.Exit(code=2)
+    _check_run_arguments(classifier, set_name, cases_from_draw, subset, answers_from)
     try:
         chosen = runner.build_classifier(classifier)
         split = runner.load_split() if exclude_mode is runner.ExcludeMode.HELDOUT else None
-        cases = runner.load_benchmark(set_name)
+        benchmark, cases = _run_cases(set_name)
         git_sha, is_dirty = runner.current_git_state()
     except (
         runner.ClassifierUnavailableError,
         runner.SplitError,
+        head_to_head.DrawError,
+        head_to_head_sheet.SheetError,
         CaseFileError,
         FileNotFoundError,
         CalledProcessError,
@@ -423,7 +433,7 @@ def eval_run(
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
     options = runner.RunOptions(
-        benchmark=set_name,
+        benchmark=benchmark,
         classifier_name=classifier,
         exclude_mode=exclude_mode,
         git_sha=git_sha,
@@ -439,7 +449,7 @@ def eval_run(
             asked = (
                 None
                 if answers_from is None
-                else answers.asked_questions(connection, answers_from, set_name.value)
+                else answers.asked_questions(connection, answers_from, benchmark)
             )
             index = citation_index.load_citation_index(connection)
             scorer = metrics.metric_scorer(citation_index.citation_checker(index))
@@ -470,6 +480,36 @@ def eval_run(
     )
     if is_dirty:
         typer.echo("Warning: uncommitted changes; the recorded git_sha may not reproduce", err=True)
+
+
+def _check_run_arguments(
+    classifier: str,
+    set_name: CaseSet | None,
+    cases_from_draw: bool,
+    subset: int | None,
+    answers_from: UUID | None,
+) -> None:
+    """Exit 2 on options that don't go together, before anything is loaded or recorded."""
+    problem = None
+    if (set_name is None) == (not cases_from_draw):
+        problem = "give either --set or --cases-from-draw"
+    elif cases_from_draw and subset is not None:
+        problem = "--cases-from-draw runs every drawn case; drop --subset"
+    elif answers_from is not None and classifier not in answers.ANSWERING_CLASSIFIERS:
+        names = ", ".join(sorted(answers.ANSWERING_CLASSIFIERS))
+        problem = f"--answers-from needs a classifier that takes answers: {names}"
+    if problem is not None:
+        typer.echo(f"Error: {problem}", err=True)
+        raise typer.Exit(code=2)
+
+
+def _run_cases(set_name: CaseSet | None) -> tuple[str, tuple[BenchmarkCase, ...]]:
+    """The run's `eval_runs.benchmark` and cases: a set's, or without one exactly the head-to-head
+    draw's (V10b), labelled as now, in the draw's order."""
+    if set_name is not None:
+        return set_name.value, runner.load_benchmark(set_name)
+    drawn = head_to_head_report.current_cases(head_to_head.load_draw())
+    return head_to_head.HEAD_TO_HEAD_BENCHMARK, tuple(drawn.values())
 
 
 @eval_app.command("ragas")

@@ -1,22 +1,36 @@
 """The head-to-head report (V10a, decision 036): `REPORT_FILE`, written from the answer sheet,
 the draw and the cases' current labels.
 
-Each column (the checker's now, the engine's from V10b) is scored by `column_scores` with the
-engine's own scorers, `metrics.class_match` (risk-class accuracy) and `metrics.class_too_low`
-(false low risk), over the cases it has an answer for. The checker column is the sheet's `cases`
-(the agent's runs); the user's hand spot-checks are set beside them, class and differing answers,
-and never scored (decision 036's amendment). `render_report` takes the engine's classes
-as an optional mapping, so V10b fills that column with the same code; without it the column is
-empty.
+Each column (the checker's and the engine's) is scored by `column_scores` with the engine's own
+scorers, `metrics.class_match` (risk-class accuracy) and `metrics.class_too_low` (false low risk),
+over the cases it has an answer for, on all drawn cases and on each set's. The checker column is
+the sheet's `cases` (the agent's runs); the user's hand spot-checks are set beside them, class and
+differing answers, and never scored (decision 036's amendment). The engine column (V10b) comes from
+one stored run of exactly the drawn cases (`engine_column`: a completed held-out run of
+`HEAD_TO_HEAD_BENCHMARK`, read from `eval_runs` / `eval_case_results`), scored against the same
+current labels; without it the column is empty. A drawn case whose classifier call failed in that
+run is left out of the engine's score (counted apart, never as a miss), and the report says how
+many.
 """
 
 import re
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+from uuid import UUID
+
+import psycopg
 
 from aiact.eval.appliedai_review_report import _cell
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, load_cases
-from aiact.eval.head_to_head import DRAW_SETS, HEAD_TO_HEAD_DIR, Draw, DrawnCase, DrawStep
+from aiact.eval.head_to_head import (
+    DRAW_SETS,
+    HEAD_TO_HEAD_BENCHMARK,
+    HEAD_TO_HEAD_DIR,
+    Draw,
+    DrawnCase,
+    DrawStep,
+)
 from aiact.eval.head_to_head_sheet import (
     CHECKER_URL,
     MEANING_CLASS,
@@ -30,6 +44,8 @@ from aiact.eval.head_to_head_sheet import (
     spot_check_ids,
 )
 from aiact.eval.metrics import Rate, class_match, class_too_low, rate
+from aiact.eval.report import RunInfo, load_run_info, load_stored_cases
+from aiact.eval.runner import ExcludeMode, RunStatus
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass
 
@@ -42,8 +58,22 @@ NOT_ASKED = "(not asked)"
 BACKTICKS = re.compile(r"`+")
 
 ColumnClasses = Mapping[str, RiskClass | None]
-"""One column's class per case id (the checker's, or the engine's in V10b); a missing id is a case
-it hasn't answered, None an answer with no class."""
+"""One column's class per case id (the checker's, or the engine's); a missing id is a case it
+hasn't answered, None an answer with no class."""
+
+
+class EngineRunError(ValueError):
+    """The stored run can't fill the engine column; the message names counts, never a case id."""
+
+
+@dataclass(frozen=True)
+class EngineColumn:
+    """The engine column: its classes from one stored run, which the report names."""
+
+    run: RunInfo
+    classes: ColumnClasses
+    failed: int = 0
+    """Drawn cases whose classifier call failed in the run: left out of `classes`."""
 
 
 class ColumnScores(ContractModel):
@@ -80,6 +110,42 @@ def current_cases(draw: Draw, cases_dir: Path = CASES_DIR) -> dict[str, Benchmar
     return {case.case_id: loaded[case.case_id] for case in draw.cases}
 
 
+def engine_column(conn: psycopg.Connection, run_id: UUID, draw: Draw) -> EngineColumn:
+    """The engine's class per drawn case from stored run `run_id`, which must be a completed
+    held-out run of exactly the drawn cases (`aiact evaluate run --cases-from-draw`)."""
+    run = load_run_info(conn, run_id)
+    _check_engine_run(run)
+    stored = load_stored_cases(conn, run_id)
+    stored_ids = {row.outcome.case.id for row in stored}
+    drawn_ids = {case.case_id for case in draw.cases}
+    if stored_ids != drawn_ids:
+        raise EngineRunError(
+            f"run {run_id} holds {len(stored_ids & drawn_ids)} of the {len(drawn_ids)} drawn "
+            f"cases and {len(stored_ids - drawn_ids)} other cases; it must hold exactly the draw"
+        )
+    classes = {
+        row.outcome.case.id: row.outcome.result.risk_class
+        for row in stored
+        if row.outcome.result is not None
+    }
+    return EngineColumn(run=run, classes=classes, failed=len(stored) - len(classes))
+
+
+def _check_engine_run(run: RunInfo) -> None:
+    if run.benchmark != HEAD_TO_HEAD_BENCHMARK:
+        raise EngineRunError(
+            f"run {run.id} is a run of {run.benchmark}, not of the head-to-head draw "
+            "(`aiact evaluate run --cases-from-draw`)"
+        )
+    if run.status != RunStatus.COMPLETED.value:
+        raise EngineRunError(f"run {run.id} is {run.status or 'without a status'}, not completed")
+    if run.exclude_mode != ExcludeMode.HELDOUT.value:
+        raise EngineRunError(
+            f"run {run.id} has exclude mode {run.exclude_mode}, not {ExcludeMode.HELDOUT.value} "
+            "(the reported number)"
+        )
+
+
 # --- rendering ------------------------------------------------------------------------------------
 
 
@@ -87,15 +153,16 @@ def render_report(
     sheet: HeadToHeadSheet,
     draw: Draw,
     cases: Mapping[str, BenchmarkCase],
-    engine: ColumnClasses | None = None,
+    engine: EngineColumn | None = None,
 ) -> str:
     """The report's markdown; `engine` (V10b) fills the engine column, else it stays empty."""
     runs = {run.case_id: run for run in sheet.cases}
     checker = checker_classes(sheet)
+    engine_classes = engine.classes if engine else None
     lines = [
-        *_intro(draw, sheet),
-        *_scores(list(cases.values()), checker, engine),
-        *_case_table(draw, runs, cases, checker, engine),
+        *_intro(draw, sheet, engine),
+        *_scores(list(cases.values()), checker, engine_classes),
+        *_case_table(draw, runs, cases, checker, engine_classes),
         *_headings_table(sheet),
         *_spot_check(sheet, draw, runs, cases),
         *_limitations(draw, cases),
@@ -104,7 +171,7 @@ def render_report(
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
-def _intro(draw: Draw, sheet: HeadToHeadSheet) -> list[str]:
+def _intro(draw: Draw, sheet: HeadToHeadSheet, engine: EngineColumn | None) -> list[str]:
     return [
         "# Head-to-head: the Commission's AI Act Service Desk checker",
         "",
@@ -117,6 +184,7 @@ def _intro(draw: Draw, sheet: HeadToHeadSheet) -> list[str]:
         _answered_line(sheet),
         "Checker: the European Commission's AI Act Service Desk compliance checker "
         f"({CHECKER_URL}), in beta; its results are quoted verbatim per case, with the date run.",
+        *([_engine_line(engine)] if engine else []),
         "Scoring (decision 036): each result maps to one risk class, the strictest of its "
         'headings; "can\'t determine" gives no class and counts as a miss. Role and Annex point '
         "aren't compared. Own cases are development cases (decision 018).",
@@ -140,26 +208,53 @@ def _answered_line(sheet: HeadToHeadSheet) -> str:
     )
 
 
+def _engine_line(engine: EngineColumn) -> str:
+    run = engine.run
+    failed = (
+        f"; drawn cases whose run failed, left out of its score: {engine.failed}"
+        if engine.failed
+        else ""
+    )
+    return (
+        f"Engine: stored run `{run.id}` (classifier `{run.classifier}`, model `{run.model}`, "
+        f"exclude mode {run.exclude_mode}, git `{run.git_sha[:12]}`, started "
+        f"{run.started_at.date().isoformat()}), scored against the same current labels{failed}."
+    )
+
+
 def _scores(
     cases: Sequence[BenchmarkCase], checker: ColumnClasses, engine: ColumnClasses | None
 ) -> list[str]:
-    rows = [("Commission checker", column_scores(cases, checker))]
+    """Each column on all drawn cases, then on each set's (Commission Pile B, own)."""
+    columns = [("Commission checker", checker)]
     if engine is not None:
-        rows.append(("Engine", column_scores(cases, engine)))
+        columns.append(("Engine", engine))
+    groups = [("", cases)] + [
+        (f", {case_set.value} cases", [case for case in cases if case.set_name is case_set])
+        for case_set in DRAW_SETS
+    ]
     lines = [
         "## Scores",
         "",
         "| Column | Cases answered | Risk-class accuracy | False-low-risk rate |",
         "| --- | ---: | ---: | ---: |",
         *(
-            f"| {name} | {scores.answered} of {len(cases)} | "
-            f"{scores.risk_class_accuracy.with_counts} | {scores.false_low_risk.with_counts} |"
-            for name, scores in rows
+            _score_row(f"{name}{suffix}", group, classes)
+            for name, classes in columns
+            for suffix, group in groups
         ),
     ]
     if engine is None:
         lines.append("| Engine | not filled yet (V10b) | | |")
     return [*lines, ""]
+
+
+def _score_row(name: str, cases: Sequence[BenchmarkCase], classes: ColumnClasses) -> str:
+    scores = column_scores(cases, classes)
+    return (
+        f"| {name} | {scores.answered} of {len(cases)} | "
+        f"{scores.risk_class_accuracy.with_counts} | {scores.false_low_risk.with_counts} |"
+    )
 
 
 def _case_table(
@@ -340,6 +435,9 @@ def _limitations(draw: Draw, cases: Mapping[str, BenchmarkCase]) -> list[str]:
         "- The checker is a beta and its outcomes may change; each case gives the date it was run.",
         f"- The roles step is in the draw ({', '.join(roles)}), but a class-only score can't show "
         "it: roles aren't compared, and these cases' classes don't depend on the role.",
+        "- On borderline descriptions the checker's class turns on how the answerer reads "
+        '"is it an AI system?" and "does it interact with people?" (decision 036, runs and '
+        "spot-check outcome).",
     ]
     if dated:
         lines.append(

@@ -121,8 +121,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── head_to_head.py      the head-to-head case draw from the labels-v1 tag: seeded, by class, every
 │   │   │   │                        engine step covered (V10a, decision 036)
 │   │   │   ├── head_to_head_sheet.py  the checker answer sheet: schema, checks, template (V10a)
-│   │   │   ├── head_to_head_report.py the report and its per-column scores; V10b fills the engine column (V10a)
-│   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render`, registered by cli.py (V10a)
+│   │   │   ├── head_to_head_report.py the report and its per-column scores; the engine column from a stored
+│   │   │   │                        run of the draw (V10a, V10b)
+│   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render [--run-id]`, registered by
+│   │   │   │                        cli.py (V10a, V10b); `aiact evaluate run --cases-from-draw` makes that run
 │   │   │   ├── appliedai_review.py  an appliedai run's disagreements, the user's verdicts read back, accuracy
 │   │   │   │                        before and after the outdated and wrong labels (V9);
 │   │   │   │                        appliedai_review_report.py: the markdown; appliedai_review_command.py:

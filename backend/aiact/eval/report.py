@@ -24,11 +24,11 @@ stored in each row's scores, never judged again here, and P8a's deterministic "n
 content" check on the documents the results call for (`judged.code_checked_documents`, no model
 call). A Q&A run (`aiact evaluate ragas`) gets its settings and its judged metrics only.
 
-A Pile B (`commission_b`) run's report names no case unless the caller asks for it
-(`should_name_cases`): the scoring errors, contaminated cases, refusals and failures are counted
-only, and a line names the file that holds the full report, under `eval/reports/pile_b/`, which
-the Engine lane can't read (`run_reports`, V11). A stored row the report can't read is named by
-its position in such a run, never by its case id.
+A Pile B run's report (`commission_b`, or the head-to-head draw's, V10b) names no case unless the
+caller asks for it (`should_name_cases`): the scoring errors, contaminated cases, refusals and
+failures are counted only, and a line names the file that holds the full report, under
+`eval/reports/pile_b/`, which the Engine lane can't read (`run_reports`, V11). A stored row the
+report can't read is named by its position in such a run, never by its case id.
 """
 
 from collections.abc import Mapping, Sequence
@@ -42,6 +42,7 @@ from pydantic import Field, TypeAdapter, ValidationError
 
 from aiact.eval.cases import BenchmarkCase, CaseSet
 from aiact.eval.failures import NAMED_IN_PILE_B_FILE, render_failures
+from aiact.eval.head_to_head import HEAD_TO_HEAD_BENCHMARK
 from aiact.eval.isolation import ContaminatedList, load_contaminated
 from aiact.eval.judge import JudgeCheck
 from aiact.eval.judged import (
@@ -73,6 +74,8 @@ from aiact.eval.texts import render_texts
 from aiact.schemas.base import ContractModel
 from aiact.schemas.result import ClassificationResult
 
+PILE_B_BENCHMARKS = frozenset({CaseSet.COMMISSION_B.value, HEAD_TO_HEAD_BENCHMARK})
+"""The runs holding Pile B cases: `commission_b`, and the head-to-head draw's (V10b)."""
 SERVED_MODELS = TypeAdapter(dict[str, dict[str, int]])
 DEVELOPMENT_CASES = (
     "development cases: the engine's nodes were developed against them, so Commission Pile B "
@@ -217,7 +220,7 @@ def load_stored_cases(conn: psycopg.Connection, run_id: UUID) -> tuple[StoredCas
             label,
             predicted,
             scores,
-            row=f"row {position}" if benchmark == CaseSet.COMMISSION_B.value else None,
+            row=f"row {position}" if benchmark in PILE_B_BENCHMARKS else None,
         )
         for position, (case_id, label, predicted, scores, benchmark) in enumerate(rows, 1)
     )
@@ -301,7 +304,7 @@ def run_reports(conn: psycopg.Connection, run_id: UUID) -> RunReport:
 
 
 def is_pile_b(info: RunInfo) -> bool:
-    return info.benchmark == CaseSet.COMMISSION_B.value
+    return info.benchmark in PILE_B_BENCHMARKS
 
 
 def pile_b_file(run_id: UUID) -> Path:

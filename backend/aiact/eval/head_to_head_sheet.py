@@ -368,7 +368,7 @@ TEMPLATE_HEADER = f"""\
 #   result_headings      each sentence under the result's "Risk level assessment" section,
 #                        exactly as written there (not section titles such as "Results" or
 #                        "Your role"); the "(opens in a new tab)" link labels may be left out
-#   answers             every question the checker asked, with the answer given, verbatim:
+#   answers              every question the checker asked, with the answer given, verbatim:
 #                        - question: "..."
 #                          answer: "..."
 #   uncertain_questions  optional: the questions the description didn't settle, each copied from
