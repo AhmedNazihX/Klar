@@ -272,7 +272,7 @@ def build_qa_report(info: RunInfo, rows: Sequence[QaTally]) -> str:
     lines = [
         f"## Run {info.id}",
         "",
-        *_settings_lines(info),
+        *settings_lines(info),
         f"- Started: {info.started_at.isoformat()}",
         f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
         f"- Items: {len(rows)}, {len(judgeable)} with an answer drawn from the sources",
@@ -363,7 +363,7 @@ def render_markdown(
     header = [
         f"## Run {info.id}",
         "",
-        *_settings_lines(info),
+        *settings_lines(info),
         f"- Started: {info.started_at.isoformat()}",
         f"- Model: {info.model or 'n/a'}",
         f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
@@ -379,7 +379,7 @@ def render_markdown(
     return "\n".join(lines) + "\n"
 
 
-def _settings_lines(info: RunInfo) -> list[str]:
+def settings_lines(info: RunInfo) -> list[str]:
     """The run's recorded settings, one line each; one the run didn't record is left out."""
     benchmark = f"- Benchmark: `{info.benchmark}`"
     if info.benchmark == CaseSet.OWN.value:
