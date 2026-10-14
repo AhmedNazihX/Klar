@@ -2,13 +2,18 @@
 # Service Desk checker.
 # Checker: https://ai-act-service-desk.ec.europa.eu/en/eu-ai-act-compliance-checker
 # The cases come from head_to_head_draw.json (seed and rule there). For each case, the checker's
-# questions are answered from the case's description (eval/cases/<set>/) only, then filled in:
+# questions are answered from the case's description (eval/cases/<set>/) only. Where the
+# description doesn't settle a question, pick the reading it most directly supports and list the
+# question under uncertain_questions; never pick a "don't know"-style option. Then fill in:
 #   date                 the day it was run (YYYY-MM-DD)
-#   answered_by          agent (a blind agent, one per case) or hand (the user)
+#   answered_by          agent in cases (a blind agent, one per case), hand in spot_checks (the
+#                        user)
 #   checker_release      the question release the checker page names, for example "6.5.1"
 #   result_text          the checker's result, copied verbatim
-#   result_headings      each outcome heading the result shows, exactly as written there
-#   answers              every question the checker asked, with the answer given, verbatim:
+#   result_headings      each sentence under the result's "Risk level assessment" section,
+#                        exactly as written there (not section titles such as "Results" or
+#                        "Your role"); the "(opens in a new tab)" link labels may be left out
+#   answers             every question the checker asked, with the answer given, verbatim:
 #                        - question: "..."
 #                          answer: "..."
 #   uncertain_questions  optional: the questions the description didn't settle, each copied from

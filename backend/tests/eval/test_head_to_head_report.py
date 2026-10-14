@@ -203,14 +203,14 @@ def test_the_intro_says_who_answered_and_which_release_from_the_sheet() -> None:
     )
     text = render_report(filled, DRAW, DRAWN)
     assert (
-        "Answered (decision 036, amendment 2026-10-14): 2 runs by an agent that saw only the "
-        "case's description (one fresh agent per case), 1 by hand. The checker column scores "
-        "each case's run; the user's hand spot-checks (below) aren't scored. Checker question "
-        "release seen: 6.5.1, 6.5.2." in text
+        "Answered (decision 036, amendment 2026-10-14): 2 of 25 cases by an agent that saw only "
+        "the case's description (one fresh agent per case), scored; 1 of 5 spot-checks by hand "
+        "(below), not scored. Checker question release seen: 6.5.1, 6.5.2." in text
     )
     assert "answered by hand from its description" not in text
     empty = HeadToHeadSheet(cases=tuple(CheckerRun(case_id=c.case_id) for c in DRAW.cases))
-    assert "0 runs by an agent" in render_report(empty, DRAW, DRAWN)
+    assert "0 of 25 cases by an agent" in render_report(empty, DRAW, DRAWN)
+    assert "; 0 of 5 spot-checks by hand" in render_report(empty, DRAW, DRAWN)
     assert "Checker question release seen: none yet." in render_report(empty, DRAW, DRAWN)
 
 

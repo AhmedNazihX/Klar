@@ -11,7 +11,6 @@ empty.
 """
 
 import re
-from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
@@ -128,15 +127,16 @@ def _intro(draw: Draw, sheet: HeadToHeadSheet) -> list[str]:
 
 def _answered_line(sheet: HeadToHeadSheet) -> str:
     """Who answered the runs and which checker releases they saw, from the sheet itself."""
+    by_agent = sum(run.answered_by is AnsweredBy.AGENT for run in sheet.cases)
+    by_hand = sum(run.answered_by is AnsweredBy.HAND for run in sheet.spot_checks)
     done = [run for run in (*sheet.cases, *sheet.spot_checks) if run.is_run]
-    by = Counter(run.answered_by for run in done)
     releases = sorted({run.checker_release for run in done if run.checker_release})
     seen = ", ".join(releases) if releases else "none yet"
     return (
-        f"Answered (decision 036, amendment 2026-10-14): {by[AnsweredBy.AGENT]} runs by an agent "
-        "that saw only the case's description (one fresh agent per case), "
-        f"{by[AnsweredBy.HAND]} by hand. The checker column scores each case's run; the user's "
-        f"hand spot-checks (below) aren't scored. Checker question release seen: {seen}."
+        f"Answered (decision 036, amendment 2026-10-14): {by_agent} of {len(sheet.cases)} cases "
+        "by an agent that saw only the case's description (one fresh agent per case), scored; "
+        f"{by_hand} of {SPOT_CHECK_COUNT} spot-checks by hand (below), not scored. Checker "
+        f"question release seen: {seen}."
     )
 
 

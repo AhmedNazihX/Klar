@@ -135,7 +135,11 @@ def test_the_template_explains_each_field_and_the_meanings() -> None:
     assert "# headings:" in text
     assert "spot_checks holds the user's\n# hand runs (answered_by: hand)" in text
     assert "spot-check cases (seed 20261015" in text
-    assert "agent (a blind agent, one per case) or hand (the user)" in text
+    assert "agent in cases (a blind agent, one per case), hand in spot_checks" in text
+    assert 'each sentence under the result\'s "Risk level assessment" section' in text
+    assert 'the "(opens in a new tab)" link labels may be left out' in text
+    assert "pick the reading it most directly supports and list the\n# question" in text
+    assert 'never pick a "don\'t know"-style option' in text
     assert ", ".join(meaning.value for meaning in CheckerMeaning) in text
     assert CHECKER_URL in text
 
@@ -161,6 +165,18 @@ def test_the_spot_check_ids_depend_on_the_seed(monkeypatch: pytest.MonkeyPatch) 
     """Another seed picks other cases from this draw, so the test above pins the seed."""
     monkeypatch.setattr(head_to_head_sheet, "SPOT_CHECK_SEED", 1)
     assert spot_check_ids(DRAW) != SPOT_IDS
+
+
+def test_the_spot_check_ids_dont_depend_on_the_draw_order() -> None:
+    """The rule sorts each class's ids, so a draw listing its cases in another order picks the
+    same spot-check cases."""
+    reordered = [
+        DRAW.model_copy(update={"cases": tuple(reversed(DRAW.cases))}),
+        DRAW.model_copy(update={"cases": tuple(random.Random(3).sample(DRAW.cases, 25))}),
+    ]
+    for draw in reordered:
+        assert [c.case_id for c in draw.cases] != [c.case_id for c in DRAW.cases]
+        assert spot_check_ids(draw) == SPOT_IDS
 
 
 def test_a_draw_without_a_class_has_no_spot_check() -> None:
@@ -207,6 +223,59 @@ def test_the_strictest_heading_wins(
     entry = run_entry(result_text=" ".join(headings), result_headings=list(headings))
     sheet = checked(tmp_path, sheet_with(entry, headings=headings))
     assert sheet.checker_class(sheet.cases[0]) is expected
+
+
+ARTICLE_6 = "Your AI system is considered high-risk following Article 6."
+ARTICLE_3 = "Your system falls within the scope of Article 3(1)."
+LINKED_RESULT = (
+    "Risk level assessment\n"
+    "Your AI system is considered high-risk following Article 6 \n(opens in a new tab)\n.\n"
+    "Your system falls within the scope of Article 3 \n(opens in a new tab)\n(1).\n"
+)
+"""As an agent copies the result from the page: each link carries its "(opens in a new tab)"
+label on its own line, which the headings, copied from the visible text, leave out."""
+
+
+@pytest.mark.parametrize("article_3", [ARTICLE_3, ARTICLE_3.replace("3(1)", "3 (1)")])
+def test_a_heading_matches_a_result_carrying_the_checkers_link_labels(
+    tmp_path: Path, article_3: str
+) -> None:
+    """The headings table holds the `3(1)` form; the run's heading may have a space before (1)."""
+    headings = {ARTICLE_6: "high_risk", ARTICLE_3: "no_specific_duties"}
+    entry = run_entry(result_text=LINKED_RESULT, result_headings=[ARTICLE_6, article_3])
+    sheet = checked(tmp_path, sheet_with(entry, headings=headings))
+    assert sheet.cases[0].result_headings == (ARTICLE_6, article_3)
+    assert sheet.cases[0].result_text == LINKED_RESULT
+    assert sheet.checker_class(sheet.cases[0]) is RiskClass.HIGH_RISK
+
+
+def test_canonical_heading_drops_link_labels_and_all_whitespace() -> None:
+    assert (
+        head_to_head_sheet.canonical_heading("of Article 3 \n(opens in a new tab)\n(1).")
+        == "ofArticle3(1)."
+    )
+
+
+@pytest.mark.parametrize(
+    "paraphrase",
+    [
+        "Your AI system is high-risk under Article 6.",
+        "your AI system is considered high-risk following Article 6.",
+        "Your AI system is considered high-risk following Article 6(1).",
+    ],
+)
+def test_a_paraphrased_heading_is_still_refused(tmp_path: Path, paraphrase: str) -> None:
+    entry = run_entry(result_text=LINKED_RESULT, result_headings=[paraphrase])
+    document = sheet_with(entry, headings={paraphrase: "high_risk"})
+    with pytest.raises(SheetError, match="isn't in result_text verbatim"):
+        checked(tmp_path, document)
+
+
+def test_headings_rows_differing_only_in_a_link_label_are_refused(tmp_path: Path) -> None:
+    linked = ARTICLE_6.replace("6.", "6 (opens in a new tab).")
+    document = sheet_with(headings={ARTICLE_6: "high_risk", linked: "no_specific_duties"})
+    with pytest.raises(SheetError, match="headings differing only in whitespace or link labels"):
+        load_sheet(write_sheet(tmp_path / "sheet.yaml", document))
 
 
 def test_a_heading_copied_across_a_line_break_still_matches(tmp_path: Path) -> None:
@@ -372,6 +441,16 @@ def test_a_wrong_spot_check_is_refused(
         checked(tmp_path, sheet_with(spot_checks=spot_checks))
 
 
+def test_a_scored_case_answered_by_hand_is_refused(tmp_path: Path) -> None:
+    """The scored column is the agent's (decision 036's amendment); hand runs are spot-checks."""
+    with pytest.raises(SheetError, match=f"{FIRST}: answered_by must be agent, not hand"):
+        checked(tmp_path, sheet_with(run_entry(answered_by="hand")))
+    with pytest.raises(SheetError) as raised:
+        checked(tmp_path, sheet_with(spot_checks=[run_entry(SPOT_IDS[0])]))
+    assert "answered_by must be hand, not agent" in str(raised.value)
+    assert "must be agent" not in str(raised.value)
+
+
 def test_a_spot_check_run_needs_the_same_fields_as_a_case_run(tmp_path: Path) -> None:
     document = sheet_with(spot_checks=[hand_entry(SPOT_IDS[0], checker_release=None)])
     with pytest.raises(SheetError, match="missing checker_release"):
@@ -413,6 +492,16 @@ def test_complete_needs_every_spot_check_run(tmp_path: Path) -> None:
     assert "Valid: 25 of 25 cases run, 4 of 5 spot-checks run" in result.output
     assert "some spot-checks aren't run yet" in result.output
     assert "some drawn cases aren't run yet" not in result.output
+
+
+def test_complete_needs_every_drawn_case_run(tmp_path: Path) -> None:
+    spot_checks = [hand_entry(case_id, date=EARLY) for case_id in SPOT_IDS]
+    paths = _paths(tmp_path, sheet_with(*ALL_CASES_RUN[1:], spot_checks=spot_checks))
+    result = CliRunner().invoke(app, ["evaluate", "head-to-head", "check", *paths, "--complete"])
+    assert result.exit_code == 1
+    assert "Valid: 24 of 25 cases run, 5 of 5 spot-checks run" in result.output
+    assert "some drawn cases aren't run yet" in result.output
+    assert "some spot-checks aren't run yet" not in result.output
 
 
 def test_complete_passes_with_every_case_and_spot_check_run(tmp_path: Path) -> None:
