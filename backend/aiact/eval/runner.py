@@ -337,7 +337,8 @@ class RunStore(Protocol):
 
 @dataclass(frozen=True)
 class RunOptions:
-    benchmark: CaseSet
+    benchmark: str
+    """The `eval_runs.benchmark` name: a `CaseSet`, or `head_to_head.HEAD_TO_HEAD_BENCHMARK`."""
     classifier_name: str
     exclude_mode: ExcludeMode
     git_sha: str
@@ -438,7 +439,7 @@ def run_benchmark(
         for case in selected
     ]
     run_id = store.start_run(
-        options.git_sha, options.benchmark.value, run_config(options, classifier.info, active_split)
+        options.git_sha, str(options.benchmark), run_config(options, classifier.info, active_split)
     )
     tally = _Tally()
 

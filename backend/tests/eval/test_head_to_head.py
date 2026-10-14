@@ -1,3 +1,4 @@
+import json
 import subprocess
 from collections import Counter
 from pathlib import Path
@@ -151,6 +152,66 @@ def test_the_draw_is_seeded_and_sorted_by_set_then_id() -> None:
     assert keys == sorted(keys)
 
 
+PINNED_25 = [
+    "cb-annex-i-high-risk-safety-component-0",
+    "cb-annex-i-high-risk-safety-component-1",
+    "cb-annex-iii-4-high-risk-within-use-case-0",
+    "cb-annex-iii-4-minimal-risk-outside-use-case-4",
+    "cb-annex-iii-5-minimal-risk-art-6-3-filter-0",
+    "cb-annex-iii-5-minimal-risk-art-6-3-filter-3",
+    "own-a-limited_risk-0",
+    "own-a-limited_risk-1",
+    "own-a-limited_risk-2",
+    "own-a-limited_risk-4",
+    "own-a-limited_risk-5",
+    "own-b-out_of_scope-0",
+    "own-b-out_of_scope-1",
+    "own-b-out_of_scope-2",
+    "own-b-out_of_scope-4",
+    "own-b-out_of_scope-5",
+    "own-c-prohibited-0",
+    "own-c-prohibited-1",
+    "own-c-prohibited-2",
+    "own-c-prohibited-3",
+    "own-c-prohibited-4",
+    "own-d-high_risk-0",
+    "own-d-minimal_risk-0",
+    "own-d-minimal_risk-1",
+    "own-e-high_risk-1",
+]
+PINNED_22 = [
+    "cb-annex-i-high-risk-safety-component-0",
+    "cb-annex-iii-4-high-risk-within-use-case-0",
+    "cb-annex-iii-4-high-risk-within-use-case-3",
+    "cb-annex-iii-4-minimal-risk-outside-use-case-1",
+    "cb-annex-iii-5-minimal-risk-art-6-3-filter-0",
+    "cb-annex-iii-5-minimal-risk-art-6-3-filter-1",
+    "own-a-limited_risk-0",
+    "own-a-limited_risk-1",
+    "own-a-limited_risk-3",
+    "own-a-limited_risk-4",
+    "own-b-out_of_scope-0",
+    "own-b-out_of_scope-1",
+    "own-b-out_of_scope-2",
+    "own-b-out_of_scope-3",
+    "own-c-prohibited-0",
+    "own-c-prohibited-1",
+    "own-c-prohibited-3",
+    "own-c-prohibited-4",
+    "own-c-prohibited-5",
+    "own-d-high_risk-0",
+    "own-d-minimal_risk-0",
+    "own-e-high_risk-2",
+]
+
+
+@pytest.mark.parametrize(("size", "expected"), [(25, PINNED_25), (22, PINNED_22)])
+def test_the_seeded_picks_are_pinned(size: int, expected: list[str]) -> None:
+    """The exact picks on the fixed pool: a change to the seeded order fails here, in CI too
+    (the committed draw's own check needs the labels-v1 tag, which a shallow checkout lacks)."""
+    assert [case.case_id for case in draw_cases(POOL, seed=7, size=size)] == expected
+
+
 def test_each_drawn_case_records_its_class_and_steps() -> None:
     by_id = {case.id: case for case in POOL}
     for drawn in draw_cases(POOL, seed=7, size=25):
@@ -302,6 +363,17 @@ def test_a_broken_draw_file_is_reported(tmp_path: Path) -> None:
     path.write_text('{"seed": 1}', encoding="utf-8")
     with pytest.raises(DrawError, match="not a valid draw"):
         load_draw(path)
+
+
+def test_a_broken_draw_file_is_reported_by_its_error_count_naming_no_case(tmp_path: Path) -> None:
+    """Pydantic's own text would quote the broken case, id included."""
+    path = tmp_path / "draw.json"
+    valid = make_draw(POOL, COMMIT, seed=7, size=25).model_dump(mode="json")
+    broken = {**valid, "cases": [{"case_id": "cb-test-secret"}, *valid["cases"][1:]]}
+    path.write_text(json.dumps(broken), encoding="utf-8")
+    with pytest.raises(DrawError, match=r"not a valid draw \(\d+ errors\)$") as raised:
+        load_draw(path)
+    assert "cb-test-secret" not in str(raised.value)
 
 
 # --- the labels at a tag --------------------------------------------------------------------------

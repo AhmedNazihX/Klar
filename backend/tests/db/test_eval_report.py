@@ -131,8 +131,13 @@ def test_report_from_a_stored_run_uses_the_citation_scores_of_run_time(
     assert run_reports(db, run_id).text == report
 
 
-def test_a_stored_pile_b_runs_text_names_no_case(db: psycopg.Connection) -> None:
-    run_id = _insert_run(db, "commission_b")
+PILE_B_RUNS = pytest.mark.parametrize("benchmark", ["commission_b", "head_to_head"])
+"""The runs holding Pile B cases: the set's, and the head-to-head draw's (V10b)."""
+
+
+@PILE_B_RUNS
+def test_a_stored_pile_b_runs_text_names_no_case(db: psycopg.Connection, benchmark: str) -> None:
+    run_id = _insert_run(db, benchmark)
     missed = case("cb-test-missed", set_name=CaseSet.COMMISSION_B)  # made up: see test_isolation
     _insert_case(db, run_id, _dump(missed), _dump(result(RiskClass.OUT_OF_SCOPE)))
 
@@ -164,8 +169,11 @@ def test_invalid_stored_prediction_names_the_case(db: psycopg.Connection) -> Non
     assert "made-up system" not in str(raised.value).lower()
 
 
-def test_an_invalid_pile_b_row_is_named_by_its_position(db: psycopg.Connection) -> None:
-    run_id = _insert_run(db, "commission_b")
+@PILE_B_RUNS
+def test_an_invalid_pile_b_row_is_named_by_its_position(
+    db: psycopg.Connection, benchmark: str
+) -> None:
+    run_id = _insert_run(db, benchmark)
     first, broken = (case(f"cb-test-{n}", set_name=CaseSet.COMMISSION_B) for n in ("a", "b"))
     _insert_case(db, run_id, _dump(first), _dump(result()))
     _insert_case(db, run_id, _dump(broken), {"risk_class": "high_risk"})

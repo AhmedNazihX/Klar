@@ -121,8 +121,10 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── head_to_head.py      the head-to-head case draw from the labels-v1 tag: seeded, by class, every
 │   │   │   │                        engine step covered (V10a, decision 036)
 │   │   │   ├── head_to_head_sheet.py  the checker answer sheet: schema, checks, template (V10a)
-│   │   │   ├── head_to_head_report.py the report and its per-column scores; V10b fills the engine column (V10a)
-│   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render`, registered by cli.py (V10a)
+│   │   │   ├── head_to_head_report.py the report and its per-column scores; the engine column from a stored
+│   │   │   │                        run of the draw, and its committed copy (V10a, V10b)
+│   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render [--run-id]`, registered by
+│   │   │   │                        cli.py (V10a, V10b); `aiact evaluate run --cases-from-draw` makes that run
 │   │   │   ├── appliedai_review.py  an appliedai run's disagreements, the user's verdicts read back, accuracy
 │   │   │   │                        before and after the outdated and wrong labels (V9);
 │   │   │   │                        appliedai_review_report.py: the markdown; appliedai_review_command.py:
@@ -263,7 +265,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                (tests/test_isolation.py, V11). run-<run_id>.md: a commission_b run's full
 │   │                                report, written by `aiact evaluate report`; run-2026-10-12.md: V8's moved lines;
 │   │                                head_to_head_draw.json (the draw), head_to_head.yaml (the user's checker
-│   │                                runs), head_to_head.md (generated from them), head_to_head/ (screenshots) (V10a)
+│   │                                runs), head_to_head.md (generated from them), head_to_head/ (screenshots) (V10a),
+│   │                                head_to_head_engine.json (the engine column `render --run-id` read, so a
+│   │                                plain `render` and the up-to-date test work offline) (V10b)
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
 │   └── private/                     local-only files (gitignored, never tracked; may be absent)
 │

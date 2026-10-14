@@ -1,16 +1,20 @@
 """The `aiact evaluate head-to-head` commands (V10a, decision 036), kept out of `aiact/cli.py`,
 which registers `app`: `draw` fixes the cases and writes the answer sheet, `check` validates the
-sheet the user fills, `render` writes the report from it."""
+sheet the user fills, `render` writes the report from it, with `--run-id` the engine column from a
+stored run of the drawn cases (V10b; `aiact evaluate run --cases-from-draw` makes that run), saved
+to the engine file that a later `render` without `--run-id` reads."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from typing import Annotated
+from uuid import UUID
 
+import psycopg
 import typer
 
-from aiact.eval import head_to_head, head_to_head_report, head_to_head_sheet
+from aiact.eval import head_to_head, head_to_head_report, head_to_head_sheet, records, report
 from aiact.eval.cases import CaseFileError
 
 app = typer.Typer(no_args_is_help=True)
@@ -33,6 +37,10 @@ def _errors_exit() -> Iterator[None]:
     except (
         head_to_head.DrawError,
         head_to_head_sheet.SheetError,
+        head_to_head_report.EngineRunError,
+        report.RunNotFoundError,
+        report.RunRecordError,
+        records.DatabaseNotConfiguredError,
         CaseFileError,
         FileNotFoundError,
     ) as error:
@@ -104,15 +112,49 @@ def render(
     output: Annotated[
         Path, typer.Option(help="Where the report goes.")
     ] = head_to_head_report.REPORT_FILE,
+    run_id: Annotated[
+        UUID | None,
+        typer.Option(
+            help="A stored engine run of exactly the drawn cases (`aiact evaluate run "
+            "--cases-from-draw`), completed, held-out: fills the engine column."
+        ),
+    ] = None,
+    engine_file: Annotated[
+        Path,
+        typer.Option(
+            help="The engine column's committed copy: written with --run-id, read without it."
+        ),
+    ] = head_to_head_report.ENGINE_FILE,
 ) -> None:
-    """Validate the answer sheet and write the report from it (the engine column stays empty
-    until V10b)."""
+    """Validate the answer sheet and write the report from it; with --run-id the engine column
+    comes from that stored run (read from DATABASE_URL) and is saved to --engine-file, else it
+    comes from --engine-file when that exists, else it stays empty."""
     with _errors_exit():
         drawn, filled = _checked(draw_file, sheet)
         cases = head_to_head_report.current_cases(drawn)
-        text = head_to_head_report.render_report(filled, drawn, cases)
+        if run_id is not None:
+            engine = _engine_column(run_id, drawn)
+        elif engine_file.is_file():
+            engine = head_to_head_report.load_engine_file(engine_file, drawn)
+        else:
+            engine = None
+        text = head_to_head_report.render_report(filled, drawn, cases, engine)
+        if run_id is not None and engine is not None:
+            head_to_head_report.write_engine_file(engine, drawn, engine_file)
+            typer.echo(f"Written: {engine_file}")
     output.write_text(text, encoding="utf-8")
     typer.echo(f"Written: {output}")
+
+
+def _engine_column(run_id: UUID, drawn: head_to_head.Draw) -> head_to_head_report.EngineColumn:
+    """The engine column from the stored run; a database error names its type only (a
+    connection error's text can name the server)."""
+    try:
+        with records.connect() as connection:
+            return head_to_head_report.engine_column(connection, run_id, drawn)
+    except psycopg.Error as error:
+        typer.echo(f"Error: database error ({type(error).__name__}); check DATABASE_URL", err=True)
+        raise typer.Exit(code=1) from error
 
 
 def _checked(
