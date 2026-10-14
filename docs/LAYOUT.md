@@ -237,6 +237,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   ├── academic/                <risk_class>.yaml (generated), SOURCE.md (CC BY 4.0) (B12)
 │   │   ├── academic_overrides.yaml  spot-check label overrides the academic import applies (B12)
 │   │   └── annex_match/             (X0)
+│   ├── appliedai/                   SOURCE.md (CC BY 4.0, credit), source/ (the deck PDF and the 106-system
+│   │                                table as JSON and CSV), appliedai.jsonl (the extraction `APPLIEDAI_FILE` loads) (B11)
 │   ├── isolation/                   embeddings.json: vectors of the benchmark texts for the isolation check,
 │   │                                never in the corpus tables; `aiact evaluate isolation-embed` (B13);
 │   │                                contaminated.json: Pile B examples retold in the corpus, with the
@@ -249,7 +251,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │                                only: Pile B's labels and the second model's reasons (B9). The Engine
 │   │                                lane denies this folder; no cb-* id goes in the files above it
 │   ├── LABEL_CHANGES.md             log of label changes (B12 starts it; the freeze check is B10a)
-│   └── private/                     appliedai.jsonl (B11; gitignored, never tracked; may be absent)
+│   └── private/                     local-only files (gitignored, never tracked; may be absent)
 │
 ├── supabase/                        Supabase CLI project
 │   ├── config.toml                  (F4)
@@ -397,5 +399,5 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 | Tests mirror the package (`tests/corpus/test_eurlex.py` for `aiact/corpus/eurlex.py`); model calls use `tests/recordings/` | Findable tests; no live calls in CI |
 | Migrations only via `supabase migration new`; never edit a merged migration | Parallel stories can't collide on names |
 | Frontend tests sit next to the file they test (`RiskPill.test.tsx`); layout tests that need a real browser are `*.browser.test.tsx`; `frontend/src/api/` is generated only | One place per component; the client always matches the API schema |
-| Gitignored: `.env`, `data/raw/`, `eval/private/`, `.claude/worktrees/`, `.claude/settings.local.json`, `frontend/node_modules/`, `frontend/dist/`, the e2e run's `dist-e2e/`, `playwright-report/`, `test-results/` | Secrets, large downloads, unlicensed data, agent scratch, build output |
+| Gitignored: `.env`, `data/raw/`, `eval/private/`, `.claude/worktrees/`, `.claude/settings.local.json`, `frontend/node_modules/`, `frontend/dist/`, the e2e run's `dist-e2e/`, `playwright-report/`, `test-results/` | Secrets, large downloads, local-only data, agent scratch, build output |
 | A new top-level folder or package area needs an entry here in the same story | Keeps this file the source of truth |

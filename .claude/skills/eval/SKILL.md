@@ -129,8 +129,7 @@ Rules for the file:
   `gap` and `held-out-hits`). Add no number that isn't in them: no averages across runs, no gap
   of your own, no rounding, no estimates.
 - Every run mentioned is named by its run_id.
-- No case descriptions (the report command never prints them; don't add any, especially from
-  `appliedai`, whose texts stay in `eval/private/`).
+- No case descriptions (the report command never prints them; don't add any).
 - A `dummy` run is labelled a dry run in its purpose line.
 
 ## 6. Tell the user

@@ -189,8 +189,7 @@ def case_texts(
     cases_dir: Path = CASES_DIR, appliedai_file: Path | None = APPLIEDAI_FILE
 ) -> tuple[BenchmarkText, ...]:
     """Every case description of the YAML sets that exist and every Q&A question, plus the
-    appliedAI extraction when `appliedai_file` is given and present (it is gitignored and may be
-    absent)."""
+    appliedAI extraction when `appliedai_file` is given and present."""
     texts = [
         BenchmarkText(case.id, checked_description(case.set_name, case.description))
         for case in yaml_cases(cases_dir)
@@ -205,8 +204,8 @@ def embedded_texts(
     split_file: Path = SPLIT_FILE, examples_file: Path = EXAMPLES_FILE, cases_dir: Path = CASES_DIR
 ) -> tuple[BenchmarkText, ...]:
     """The texts whose vectors `EMBEDDINGS_FILE` holds: Pile B, the committed case sets and the
-    Q&A questions. The
-    appliedAI extraction is left out (its licence is unclear, so nothing derived is committed)."""
+    Q&A questions. The appliedAI extraction is left out: it is a second benchmark, reported
+    separately (INIT > Test sets), and its texts are checked against the corpus directly."""
     pile_b = load_split(split_file).pile_b
     examples = pile_b_texts(load_example_texts(examples_file), pile_b)
     return examples + case_texts(cases_dir, appliedai_file=None)

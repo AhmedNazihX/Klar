@@ -3,7 +3,7 @@
 A case is one system description with its labelled answer. Cases live under
 `eval/cases/<set>/**/*.yaml`; a YAML file holds one case (a mapping) or several (a list), so a
 soft-wording pair or a consistency triple can share a file. The appliedAI extraction is JSONL in
-`eval/private/` (gitignored, licence unclear) and keeps the experts' own coarse label, which
+`eval/appliedai/` (CC BY 4.0, decision 002) and keeps the experts' own coarse label, which
 `score_appliedai` maps onto the engine's `RiskClass` and `Status` at scoring time.
 
 A rewritten Commission example (B4) carries its row's `accepted_bases`, `label_status` and
@@ -38,7 +38,7 @@ from aiact.settings import BACKEND_DIR
 
 EVAL_DIR = BACKEND_DIR.parent / "eval"
 CASES_DIR = EVAL_DIR / "cases"
-APPLIEDAI_FILE = EVAL_DIR / "private" / "appliedai.jsonl"
+APPLIEDAI_FILE = EVAL_DIR / "appliedai" / "appliedai.jsonl"
 QA_DIR_NAME = "qa"
 """The Q&A items' folder under `eval/cases/` (B7); not a `CaseSet`, as items aren't cases."""
 CASE_FILE_SUFFIX = ".yaml"
@@ -354,7 +354,7 @@ def load_qa_items(cases_dir: Path = CASES_DIR) -> tuple[QAItem, ...]:
 def load_jsonl(path: Path, case_set: CaseSet = CaseSet.APPLIEDAI) -> tuple[BenchmarkCase, ...]:
     """Validate a JSONL file with one `case_set` case per non-blank line, such as `APPLIEDAI_FILE`.
 
-    `eval/private/` is gitignored and may be absent; a missing file raises `FileNotFoundError`.
+    A missing file raises `FileNotFoundError`.
     """
     cases: list[BenchmarkCase] = []
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):

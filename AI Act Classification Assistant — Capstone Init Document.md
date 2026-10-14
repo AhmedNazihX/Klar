@@ -200,7 +200,7 @@ The evaluation supports the product. It proves the classification can be trusted
 | --- | --- | --- | --- |
 | Commission draft high-risk guidelines (May 2026), held-out half | **Headline benchmark** | The regulator's practical examples of systems that are and are not high-risk, rewritten as company descriptions and removed from the retrieval corpus | Draft; examples are short and extracted by hand; high-risk step only; only half the examples are available for scoring |
 | Own cases | **Headline benchmark** | Cases for Article 50, out-of-scope software, the new December 2026 prohibitions, Article 25 role switches, Annex I flags, and English and German descriptions | Labels are the student's own (see label rules) |
-| [appliedAI Risk Classification Database](https://www.appliedai-institute.de/en/resources/risk-classification-database/) | Second benchmark, reported separately | About 106 real enterprise AI systems with expert labels (high, low, prohibited, unclear) | Labelled in 2023 against the 2021 proposal (no Art. 6(3) filter; refers to Annex II, now Annex I); only a PDF (Sep 2024) found; described as a "free, open dataset" but no named licence; mostly industrial and German-focused |
+| [appliedAI Risk Classification Database](https://www.appliedai-institute.de/en/resources/risk-classification-database/) | Second benchmark, reported separately | About 106 real enterprise AI systems with expert labels (high, low, prohibited, unclear) | Labelled in 2023 against the 2021 proposal (no Art. 6(3) filter; refers to Annex II, now Annex I); CC BY 4.0, the 106-system table read from appliedAI's Notion page (decision 002); mostly industrial and German-focused |
 | [AI Act Evaluation Benchmark](https://github.com/davidath/ai-act-evaluation-benchmark) (arXiv 2603.09435) | Extra check, reported separately | Ready-made scenarios with risk-level labels; CC BY 4.0 | Synthetic, LLM-written cases are cleaner than real descriptions; labels spot-checked before use |
 | Soft-wording pairs (10–20) | Robustness test | Known high-risk systems described plainly and in softened language ("helps HR organise applications") | Own cases |
 | Q&A set (20–30 questions) | Q&A feature | Questions with the provisions a correct answer must cite | Own cases |
@@ -333,7 +333,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 
 | Risk | Likelihood | Mitigation |
 | --- | --- | --- |
-| appliedAI data is only in PDF form, with no named licence | Medium | It is a second benchmark only, and the headline benchmark doesn't depend on it. Extract the cases by hand for private evaluation, and publish only case IDs and results, not the descriptions, unless reuse is confirmed |
+| appliedAI data is only in PDF form, with no named licence | Resolved (decision 002) | The table was found on appliedAI's Notion page under CC BY 4.0. Its sources and extraction are committed under `eval/appliedai/` with the required credit |
 | 2023 labels conflict with current law | High | Disagreement review; report accuracy before and after excluding outdated labels |
 | High-risk guidelines finalised mid-project | Medium | The corpus stores versions; re-run the evaluation if the examples change |
 | Headline benchmark too small or too narrow | Medium | Cover every step with own cases; report counts per step; use the appliedAI and academic sets as extra checks |
@@ -353,7 +353,7 @@ The main ethical risk is a wrong classification that a company trusts. Calling a
 **Project questions**
 
 - What is the submission deadline?
-- appliedAI: open the PDF and confirm the fields per entry, the languages, and any licence statement. It's described as a "free, open dataset"; no machine-readable version or named licence was found.
+- ~~appliedAI: open the PDF and confirm the fields per entry, the languages, and any licence statement.~~ Answered in decision 002 (2026-10-14): CC BY 4.0; English and German texts per system.
 - German texts: confirm that German versions of the Article 50 guidelines, the Code of Practice and the consolidated text exist. Until then they're quoted in English and labelled. The draft high-risk guidelines appear to be English-only.
 - Check again before the build freezes: whether the high-risk guidelines have been finalised (not yet as of 24 Sep 2026) and whether the simplified technical documentation form has been published (not yet found).
 - ~~Confirm the "69% need help" figure and sample size in Bitkom's February 2026 AI report.~~ Answered (decision 007, 2026-10-01): the figure comes from Bitkom's 2024 survey of 602 companies, not the February 2026 report.
