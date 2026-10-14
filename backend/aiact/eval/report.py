@@ -363,10 +363,7 @@ def render_markdown(
     header = [
         f"## Run {info.id}",
         "",
-        *_settings_lines(info),
-        f"- Started: {info.started_at.isoformat()}",
-        f"- Model: {info.model or 'n/a'}",
-        f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
+        *run_lines(info),
         f"- Cases: {metrics.cases} ({metrics.failed} failed)",
         "",
         "| Metric | Value | Count |",
@@ -377,6 +374,16 @@ def render_markdown(
     if scoring_errors:
         lines += ["", f"Scoring failed, left out of the metrics: {', '.join(scoring_errors)}"]
     return "\n".join(lines) + "\n"
+
+
+def run_lines(info: RunInfo) -> list[str]:
+    """A run's settings, start, model and cost, one line each, as a report's header shows them."""
+    return [
+        *_settings_lines(info),
+        f"- Started: {info.started_at.isoformat()}",
+        f"- Model: {info.model or 'n/a'}",
+        f"- Cost: ${info.cost_usd:.4f}, {info.tokens} tokens",
+    ]
 
 
 def _settings_lines(info: RunInfo) -> list[str]:

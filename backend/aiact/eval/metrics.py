@@ -138,6 +138,11 @@ class Rate(ContractModel):
         """The rate as a report shows it: a percentage, or n/a when nothing was counted."""
         return "n/a" if self.value is None else f"{self.value:.1%}"
 
+    @property
+    def with_counts(self) -> str:
+        """The percentage with its counts, for example `50.0% (3/6)`."""
+        return f"{self.percent} ({self.hits}/{self.total})"
+
 
 class PrecisionRecall(ContractModel):
     """How well one uncertain status is predicted against the labels that carry it."""
@@ -436,19 +441,22 @@ def citation_existence(outcomes: Iterable[Outcome], exists: CitationExists | Non
     return rate(outcomes, lambda outcome: citations_exist(outcome, exists))
 
 
+def needs_appliedai_review(outcome: Outcome) -> bool:
+    """Whether an appliedAI case goes to the disagreement review (INIT > Disagreement review):
+    a failed case, or one `score_appliedai` sends there. Callers leave not-assessed cases out
+    first, as `summarize` does."""
+    label, result = outcome.case.label, outcome.result
+    if not isinstance(label, AppliedAILabel):
+        return False
+    return (
+        result is None
+        or score_appliedai(label, result.risk_class, result.status).needs_disagreement_review
+    )
+
+
 def appliedai_review_count(outcomes: Iterable[Outcome]) -> int:
     """appliedAI cases that go to the disagreement review (INIT > Disagreement review)."""
-    count = 0
-    for outcome in outcomes:
-        label, result = outcome.case.label, outcome.result
-        if not isinstance(label, AppliedAILabel):
-            continue
-        if (
-            result is None
-            or score_appliedai(label, result.risk_class, result.status).needs_disagreement_review
-        ):
-            count += 1
-    return count
+    return sum(needs_appliedai_review(outcome) for outcome in outcomes)
 
 
 def academic_review_count(outcomes: Iterable[Outcome]) -> int:

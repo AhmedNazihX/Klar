@@ -111,8 +111,7 @@ def render_markdown(
     ]
     for name, (held, every) in rates.items():
         lines.append(
-            f"| {name} | {held.percent} ({held.hits}/{held.total}) | "
-            f"{every.percent} ({every.hits}/{every.total}) | {gap_points(held, every)} |"
+            f"| {name} | {held.with_counts} | {every.with_counts} | {gap_points(held, every)} |"
         )
     lines += ["", "Known limits of this comparison:", *(f"- {limit}" for limit in LIMITS)]
     return "\n".join(lines) + "\n"

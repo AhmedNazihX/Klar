@@ -114,7 +114,7 @@ def render_refusals(summary: RefusalSummary) -> list[str]:
         f"- Second model's refusal rate: "
         f"{_share(len(summary.both_refused), len(summary.engine_refused))}",
         f"- Risk-class accuracy without the cases the second model answered: "
-        f"{_rate(summary.accuracy_without_second_answered)}",
+        f"{summary.accuracy_without_second_answered.with_counts}",
         "",
         "Calls by the model that served them: "
         + (", ".join(f"`{m}` {n}" for m, n in summary.calls_by_model.items()) or "none recorded"),
@@ -124,7 +124,3 @@ def render_refusals(summary: RefusalSummary) -> list[str]:
 
 def _listed(case_ids: Sequence[str]) -> str:
     return f": {', '.join(case_ids)}" if case_ids else ""
-
-
-def _rate(rate: Rate) -> str:
-    return f"{rate.percent} ({rate.hits}/{rate.total})"
