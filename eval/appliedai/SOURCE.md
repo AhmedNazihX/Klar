@@ -20,6 +20,28 @@ The files in this folder come from the **Risk Classification Database** of the
 The institute's current website lists 641 systems: these 106 plus 535 classified by the University of
 Kaiserslautern (Hauer et al., 2023). The 535 are not used here; the website shows no case IDs or Annex fields.
 
+## Changes made: `appliedai.jsonl`
+
+`appliedai.jsonl` (106 lines, the file `APPLIEDAI_FILE` loads) was made once from the JSON on 2026-10-14
+(B11), with these changes and no others:
+
+- One case per system, sorted by appliedAI's `ID`; the case id is `aai-NNN`, NNN that ID (1–119, with gaps).
+- `description` is `Details, DE`, the original German (the user's choice; the English is machine translated).
+  Runs of spaces and line breaks become one space, blank lines stay paragraph breaks; the wording is unchanged.
+- `label` is the experts' own label, mapped only in spelling: `high-risk` → `high`, `low-risk` → `low`,
+  `It is unclear` → `unclear`, `prohibited` → `prohibited`. `score_appliedai` maps it at scoring time.
+- `notes` is the experts' `Comment` with its spaces tidied the same way; 30 systems have none (an empty or
+  non-breaking-space cell).
+- `tags`:
+  - `source:appliedai:id:<ID>`;
+  - `annex_i` where the source says "Annex II" (today's Annex I; reported separately), `annex_iii` where it
+    says "Annex III";
+  - `annex_iii:<item>` from `Item in Annex III` (aai-093, the prohibited case, has item 1 but no Annex field);
+  - `prohibited_unclear` where `AI prohibited` is "It is unclear";
+  - `function:<slug>`, appliedAI's own `Enterprise Function, EN` (for example `function:human_resource_management`).
+- Left out: the titles, `Details, EN`, `Enterprise Function, DE`, `Subitem in Annex III`, `Sources` and
+  `Files & media`. They stay in the JSON.
+
 ## Limits the source states
 
 The systems were classified in 2023 against the Commission's 2021 proposal: there is no Art. 6(3) filter,
