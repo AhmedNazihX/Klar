@@ -10,16 +10,19 @@ one stored run of exactly the drawn cases (`engine_column`: a completed held-out
 `HEAD_TO_HEAD_BENCHMARK`, read from `eval_runs` / `eval_case_results`), scored against the same
 current labels; without it the column is empty. A drawn case whose classifier call failed in that
 run is left out of the engine's score (counted apart, never as a miss), and the report says how
-many.
+many. `render --run-id` also writes the column it read to `ENGINE_FILE`, so the report can be
+rendered again offline (and its up-to-date test can run) without the database.
 """
 
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
 import psycopg
+from pydantic import ValidationError
 
 from aiact.eval.appliedai_review_report import _cell
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, load_cases
@@ -50,6 +53,7 @@ from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass
 
 REPORT_FILE = HEAD_TO_HEAD_DIR / "head_to_head.md"
+ENGINE_FILE = HEAD_TO_HEAD_DIR / "head_to_head_engine.json"
 PENDING = ""
 """A cell of a case not run yet (or an engine column not filled yet)."""
 NO_CLASS = "none (can't determine)"
@@ -143,6 +147,76 @@ def _check_engine_run(run: RunInfo) -> None:
         raise EngineRunError(
             f"run {run.id} has exclude mode {run.exclude_mode}, not {ExcludeMode.HELDOUT.value} "
             "(the reported number)"
+        )
+
+
+class EngineFile(ContractModel):
+    """`ENGINE_FILE`: the engine column as `render --run-id` read it, with the run facts the
+    report prints; `classes` has a class (or null) per drawn case answered, `failed` the drawn
+    cases whose classifier call failed."""
+
+    run_id: UUID
+    classifier: str | None
+    model: str | None
+    exclude_mode: str | None
+    git_sha: str
+    started_at: datetime
+    classes: dict[str, RiskClass | None]
+    failed: tuple[str, ...] = ()
+
+
+def write_engine_file(engine: EngineColumn, draw: Draw, path: Path = ENGINE_FILE) -> None:
+    """Write the engine column, its cases in draw order."""
+    order = [case.case_id for case in draw.cases]
+    run = engine.run
+    data = EngineFile(
+        run_id=run.id,
+        classifier=run.classifier,
+        model=run.model,
+        exclude_mode=run.exclude_mode,
+        git_sha=run.git_sha,
+        started_at=run.started_at,
+        classes={
+            case_id: engine.classes[case_id] for case_id in order if case_id in engine.classes
+        },
+        failed=tuple(case_id for case_id in order if case_id not in engine.classes),
+    )
+    _check_engine_ids(data, draw)
+    path.write_text(data.model_dump_json(indent=2) + "\n", encoding="utf-8")
+
+
+def load_engine_file(path: Path, draw: Draw) -> EngineColumn:
+    """The engine column from `path`; refused unless it fits the schema and holds exactly the
+    drawn cases (the messages give counts, never a case id)."""
+    try:
+        data = EngineFile.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as exc:
+        # The count only: pydantic's text quotes the input, Pile B case ids included.
+        raise EngineRunError(
+            f"{path}: not a valid engine column ({exc.error_count()} errors)"
+        ) from None
+    _check_engine_ids(data, draw)
+    run = RunInfo(
+        id=data.run_id,
+        benchmark=HEAD_TO_HEAD_BENCHMARK,
+        git_sha=data.git_sha,
+        started_at=data.started_at,
+        model=data.model,
+        classifier=data.classifier,
+        exclude_mode=data.exclude_mode,
+        status=RunStatus.COMPLETED.value,
+    )
+    return EngineColumn(run=run, classes=data.classes, failed=len(data.failed))
+
+
+def _check_engine_ids(data: EngineFile, draw: Draw) -> None:
+    drawn = {case.case_id for case in draw.cases}
+    held = [*data.classes, *data.failed]
+    if len(held) != len(set(held)) or set(held) != drawn:
+        raise EngineRunError(
+            f"the engine column holds {len(set(held) & drawn)} of the {len(drawn)} drawn cases, "
+            f"{len(set(held) - drawn)} other cases and {len(held) - len(set(held))} repeats; it "
+            "must hold exactly the draw"
         )
 
 

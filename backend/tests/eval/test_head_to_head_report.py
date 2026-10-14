@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, date, datetime
 from pathlib import Path
 from uuid import UUID
@@ -11,11 +12,15 @@ from aiact.eval import head_to_head_report, records
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
 from aiact.eval.head_to_head import DRAW_FILE, DrawStep, load_draw, make_draw, write_draw
 from aiact.eval.head_to_head_report import (
+    ENGINE_FILE,
     REPORT_FILE,
     EngineColumn,
+    EngineRunError,
     column_scores,
     current_cases,
+    load_engine_file,
     render_report,
+    write_engine_file,
 )
 from aiact.eval.head_to_head_sheet import (
     SHEET_FILE,
@@ -392,7 +397,11 @@ def write_sheet_files(tmp_path: Path) -> list[str]:
         "headings: {}\ncases:\n" + "".join(f"  - case_id: {c.case_id}\n" for c in DRAW.cases),
         encoding="utf-8",
     )
-    return ["--draw-file", str(draw_path), "--sheet", str(sheet_path)]
+    engine_path = tmp_path / "e.json"
+    return [
+        *("--draw-file", str(draw_path), "--sheet", str(sheet_path)),
+        *("--engine-file", str(engine_path)),
+    ]
 
 
 SECRET_URL = "postgresql://postgres:hunter2@db.example:5432/postgres"
@@ -439,6 +448,99 @@ def test_a_run_needs_exactly_one_case_source_and_the_whole_draw(
     assert f"Error: {message}" in result.stderr
 
 
+# --- the engine column's committed copy -----------------------------------------------------------
+
+
+def test_the_engine_file_round_trips_with_failed_cases(tmp_path: Path) -> None:
+    classes = {c.case_id: R.HIGH_RISK for c in DRAW.cases if c.case_id != PROHIBITED}
+    engine = EngineColumn(run=ENGINE_RUN, classes={**classes, HIGH: None}, failed=1)
+    path = tmp_path / "e.json"
+    write_engine_file(engine, DRAW, path)
+    loaded = load_engine_file(path, DRAW)
+    assert loaded == engine
+    assert render_report(FILLED, DRAW, DRAWN, loaded) == render_report(FILLED, DRAW, DRAWN, engine)
+
+
+def test_render_without_a_run_id_keeps_the_engine_column_from_the_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(head_to_head_report, "current_cases", lambda draw: DRAWN)
+    engine = EngineColumn(run=ENGINE_RUN, classes={c.case_id: R.HIGH_RISK for c in DRAW.cases})
+    write_engine_file(engine, DRAW, tmp_path / "e.json")
+    arguments, output = write_sheet_files(tmp_path), tmp_path / "r.md"
+    result = CliRunner().invoke(
+        app, ["evaluate", "head-to-head", "render", *arguments, "--output", str(output)]
+    )
+    assert result.exit_code == 0, result.output
+    text = output.read_text(encoding="utf-8")
+    assert "Engine: stored run `00000000-0000-4000-8000-000000000001`" in text
+    assert "| Engine | 25 of 25 |" in text
+    assert text == render_report(load_sheet(tmp_path / "s.yaml"), DRAW, DRAWN, engine)
+
+
+def _engine_json(classes: dict[str, str], failed: list[str] | None = None) -> str:
+    return json.dumps(
+        {
+            "run_id": str(ENGINE_RUN.id),
+            "classifier": "engine",
+            "model": "openai/gpt-6-luna",
+            "exclude_mode": "heldout",
+            "git_sha": ENGINE_RUN.git_sha,
+            "started_at": "2026-10-15T09:30:00Z",
+            "classes": classes,
+            "failed": failed or [],
+        }
+    )
+
+
+DRAWN_IDS = [c.case_id for c in DRAW.cases]
+
+
+@pytest.mark.parametrize(
+    ("classes", "failed", "message"),
+    [
+        (DRAWN_IDS[1:], [], "holds 24 of the 25 drawn cases, 0 other cases and 0 repeats"),
+        ([*DRAWN_IDS, "cb-other"], [], "holds 25 of the 25 drawn cases, 1 other cases and 0"),
+        (DRAWN_IDS, DRAWN_IDS[:1], "holds 25 of the 25 drawn cases, 0 other cases and 1 repeats"),
+    ],
+)
+def test_an_engine_file_that_isnt_exactly_the_draw_is_refused(
+    tmp_path: Path, classes: list[str], failed: list[str], message: str
+) -> None:
+    path = tmp_path / "e.json"
+    path.write_text(_engine_json(dict.fromkeys(classes, "high_risk"), failed), encoding="utf-8")
+    with pytest.raises(EngineRunError) as raised:
+        load_engine_file(path, DRAW)
+    assert message in str(raised.value)
+    assert not any(case_id in str(raised.value) for case_id in DRAWN_IDS)
+
+
+def test_an_engine_file_off_the_schema_is_refused_without_its_content(tmp_path: Path) -> None:
+    path = tmp_path / "e.json"
+    path.write_text(_engine_json(dict.fromkeys(DRAWN_IDS, "very_risky")), encoding="utf-8")
+    with pytest.raises(EngineRunError) as raised:
+        load_engine_file(path, DRAW)
+    assert "not a valid engine column (25 errors)" in str(raised.value)
+    assert "very_risky" not in str(raised.value)
+    assert not any(case_id in str(raised.value) for case_id in DRAWN_IDS)
+
+
+def test_render_refuses_an_engine_file_that_isnt_the_draw(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(head_to_head_report, "current_cases", lambda draw: DRAWN)
+    arguments, output = write_sheet_files(tmp_path), tmp_path / "r.md"
+    (tmp_path / "e.json").write_text(
+        _engine_json(dict.fromkeys(DRAWN_IDS[1:], "high_risk")), encoding="utf-8"
+    )
+    result = CliRunner().invoke(
+        app, ["evaluate", "head-to-head", "render", *arguments, "--output", str(output)]
+    )
+    assert result.exit_code == 1
+    assert "holds 24 of the 25 drawn cases" in result.stderr
+    assert not output.exists()
+
+
 # --- the committed files --------------------------------------------------------------------------
 
 
@@ -449,5 +551,6 @@ def test_the_committed_sheet_fits_the_draw_and_the_report_is_up_to_date() -> Non
     draw = load_draw(DRAW_FILE)
     filled = load_sheet(SHEET_FILE)
     check_sheet(filled, draw, date.today())
-    expected = render_report(filled, draw, current_cases(draw))
+    engine = load_engine_file(ENGINE_FILE, draw) if ENGINE_FILE.is_file() else None
+    expected = render_report(filled, draw, current_cases(draw), engine)
     assert REPORT_FILE.read_text(encoding="utf-8") == expected

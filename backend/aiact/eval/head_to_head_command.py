@@ -1,7 +1,8 @@
 """The `aiact evaluate head-to-head` commands (V10a, decision 036), kept out of `aiact/cli.py`,
 which registers `app`: `draw` fixes the cases and writes the answer sheet, `check` validates the
 sheet the user fills, `render` writes the report from it, with `--run-id` the engine column from a
-stored run of the drawn cases (V10b; `aiact evaluate run --cases-from-draw` makes that run)."""
+stored run of the drawn cases (V10b; `aiact evaluate run --cases-from-draw` makes that run), saved
+to the engine file that a later `render` without `--run-id` reads."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -118,14 +119,29 @@ def render(
             "--cases-from-draw`), completed, held-out: fills the engine column."
         ),
     ] = None,
+    engine_file: Annotated[
+        Path,
+        typer.Option(
+            help="The engine column's committed copy: written with --run-id, read without it."
+        ),
+    ] = head_to_head_report.ENGINE_FILE,
 ) -> None:
     """Validate the answer sheet and write the report from it; with --run-id the engine column
-    comes from that stored run (read from DATABASE_URL), else it stays empty."""
+    comes from that stored run (read from DATABASE_URL) and is saved to --engine-file, else it
+    comes from --engine-file when that exists, else it stays empty."""
     with _errors_exit():
         drawn, filled = _checked(draw_file, sheet)
         cases = head_to_head_report.current_cases(drawn)
-        engine = None if run_id is None else _engine_column(run_id, drawn)
+        if run_id is not None:
+            engine = _engine_column(run_id, drawn)
+        elif engine_file.is_file():
+            engine = head_to_head_report.load_engine_file(engine_file, drawn)
+        else:
+            engine = None
         text = head_to_head_report.render_report(filled, drawn, cases, engine)
+        if run_id is not None and engine is not None:
+            head_to_head_report.write_engine_file(engine, drawn, engine_file)
+            typer.echo(f"Written: {engine_file}")
     output.write_text(text, encoding="utf-8")
     typer.echo(f"Written: {output}")
 

@@ -118,6 +118,9 @@ def test_render_with_the_run_id_fills_the_engine_column_from_that_run(
     assert text == render_report(load_sheet(tmp_path / "s.yaml"), DRAW, DRAWN, column)
     assert "| Engine | 25 of 25 | 20.0% (5/25) |" in text
     assert f"Engine: stored run `{run_id}` (classifier `dummy`, model `None`" in text
+    saved = head_to_head_report.load_engine_file(tmp_path / "e.json", DRAW)
+    assert (saved.classes, saved.failed, saved.run.id) == (column.classes, 0, run_id)
+    assert render_report(load_sheet(tmp_path / "s.yaml"), DRAW, DRAWN, saved) == text
 
 
 @pytest.mark.parametrize(
