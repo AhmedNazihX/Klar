@@ -42,8 +42,10 @@ DRAFT_SETS = [
     ("limited", "en"),
     ("limited", "de"),
     ("limited", "en_answered"),
+    ("limited", "de_answered"),
 ]
-"""Every draft set the fixture holds (the provider's German drafts aren't in it)."""
+"""Every draft set the fixture holds (the provider's German drafts aren't in it; the German
+Art. 50(3) disclosure with its choice made is, P31)."""
 SIZE_CLASS = {"deployer": None, "provider": SizeClass.SME, "limited": None}
 
 

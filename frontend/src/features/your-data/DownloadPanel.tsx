@@ -50,6 +50,7 @@ export function DownloadPanel(): JSX.Element {
       language,
       format: 'pdf',
       company: overview.data?.profile?.companyName ?? null,
+      size_class: overview.data?.profile?.sizeClass ?? null,
     })
   }
 

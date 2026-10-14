@@ -52,6 +52,20 @@ function categoryNote(
   }
 }
 
+/** "From …", or with what the section holds in front: "Art. 6(4) from 2 December 2027". The date
+ *  stays on one line ("2. Dezember 2027" at 390 px). */
+function fromTitle(isoDate: string, language: Language, what: string | null): ReactNode {
+  return (
+    <Trans
+      i18nKey={what ? 'obligations.section.fromWhat' : 'obligations.section.from'}
+      values={what ? { what } : undefined}
+      components={{
+        date: <span className="whitespace-nowrap">{longDate(isoDate, language)}</span>,
+      }}
+    />
+  )
+}
+
 function sectionHeading(
   t: TFunction,
   section: DateSection,
@@ -71,17 +85,18 @@ function sectionHeading(
         tag: t('obligations.section.inForce'),
         note: categoryNote(t, section.category, language),
       }
-    case 'from':
+    case 'from': {
+      const what = categoryNote(t, section.category, language)
+      // Beside a route section of the same date (always titled "From …"), the title names what
+      // the section holds, so the two never read "From 2 December 2027" twice; the line beside
+      // it then says no more. A twin whose date has come reads "In force since …" anyway.
+      const named = section.hasRouteTwin && what ? what : null
       return {
-        title: (
-          <Trans
-            i18nKey="obligations.section.from"
-            components={{ date: <span>{longDate(section.date, language)}</span> }}
-          />
-        ),
+        title: fromTitle(section.date, language, named),
         tag: whenTag(t, section.date, today),
-        note: categoryNote(t, section.category, language),
+        note: named ? undefined : what,
       }
+    }
     case 'route':
       // The route's dates follow the law version switch (decision 026 item 11).
       return {
@@ -254,7 +269,7 @@ export function NoDutiesSection({ tools }: { tools: readonly CheckedTool[] }): J
             <Link
               to="/app/inventory/$toolId"
               params={{ toolId: tool.toolId }}
-              className="flex items-center gap-2.5 rounded-item px-3.5 py-2 text-body-small font-medium text-ink no-underline glass-thin hover:underline"
+              className="flex min-h-11 items-center gap-2.5 rounded-item px-3.5 py-2 text-body-small font-medium text-ink no-underline glass-thin hover:underline md:min-h-0"
             >
               {toolName(t, tool.name)}
               <RiskPill kind={riskClassOf(tool.result)} />

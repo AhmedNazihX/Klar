@@ -27,6 +27,7 @@ from aiact.export import Block, Heading, Note, Paper, Paragraph, Table
 from aiact.obligations.list import ORIGINAL_CHAPTER_III_DATES
 from aiact.report import texts
 from aiact.report.common import (
+    SizeValue,
     after_duties,
     class_name,
     day,
@@ -87,12 +88,17 @@ def checklist_report(
     law_version: LawVersion,
     prepared_on: date,
     company: str | None = None,
+    size_class: SizeValue | None = None,
 ) -> Paper:
     """The checklist in `language`, dated under `law_version` (the text the screen showed): the
     overall progress, then each classified tool with its progress and its duties' ticked state.
-    A tool without a class has no duties to list."""
+    A tool without a class has no duties to list. Under the amended text, an SME's or a small
+    mid-cap's duties carry their relief notes (`size_class`), as on the screen."""
+    shown_size = size_class if law_version is LawVersion.AMENDED else None
     listed = tuple(
-        (tool, _ticked(tool, language, law_version)) for tool in tools if tool.risk_class
+        (tool, _ticked(tool, language, law_version, shown_size))
+        for tool in tools
+        if tool.risk_class
     )
     overall = _progress(tuple(duty for _, duties in listed for duty in duties))
     prepared = texts.PREPARED[language].format(date=day(prepared_on, language))
@@ -126,9 +132,12 @@ def _law_line(law_version: LawVersion, language: Language) -> str:
 
 
 def _ticked(
-    tool: ChecklistTool, language: Language, law_version: LawVersion
+    tool: ChecklistTool,
+    language: Language,
+    law_version: LawVersion,
+    size_class: SizeValue | None,
 ) -> tuple[_Ticked, ...]:
-    found = ((listed_duty(tool, duty, language), duty.is_done) for duty in tool.duties)
+    found = ((listed_duty(tool, duty, language, size_class), duty.is_done) for duty in tool.duties)
     return tuple(
         _Ticked(
             duty._replace(timing=_dated(duty.timing, law_version)),

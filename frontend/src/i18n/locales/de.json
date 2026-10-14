@@ -320,6 +320,7 @@
     "drafting": "Die Dokumente werden entworfen …",
     "draftingOne": "Das Dokument wird entworfen …",
     "draftFailed": "Klar konnte die Dokumente für dieses Tool nicht entwerfen.",
+    "resultUnreadable": "Klar kann das gespeicherte Ergebnis dieses Tools nicht lesen und deshalb keine Dokumente dafür entwerfen. Führen Sie die Prüfungen für das Tool erneut durch.",
     "documentFailed": "Klar konnte dieses Dokument nicht entwerfen.",
     "tooLarge": "Die Antworten zu diesem Dokument sind zusammen zu lang. Bitte kürzen Sie einige Antworten.",
     "staleDraft": "Der angezeigte Entwurf enthält Ihre neuesten Antworten noch nicht.",
@@ -577,6 +578,7 @@
     "namePlaceholder": "Zum Beispiel: Bewerbungsvorauswahl",
     "nameTooLong": "Halten Sie den Namen unter 200 Zeichen.",
     "descriptionLabel": "In Ihren eigenen Worten",
+    "answersDropped": "Einige Ihrer Antworten passten nicht in die 20.000 Zeichen der Beschreibung und wurden weggelassen.",
     "descriptionRequired": "Beschreiben Sie das Tool zuerst in ein, zwei Sätzen.",
     "descriptionTooLong": "Halten Sie die Beschreibung unter 20.000 Zeichen.",
     "tipsLabel": "Hilfreich sind Angaben zu:",
@@ -682,7 +684,8 @@
       "subtitle": "Nicht jede Prüfung konnte bewertet werden.",
       "blocked": "Der Inhaltsfilter des Modellanbieters hat diese Prüfungen blockiert:",
       "row": "Vom Inhaltsfilter des Modellanbieters blockiert: nicht geprüft.",
-      "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis."
+      "body": "Ihre Beschreibung bleibt erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb gibt es kein Ergebnis.",
+      "rerunBody": "Ihre Antworten bleiben erhalten. Klar rät nie eine Einstufung für eine Prüfung, die es nicht bewerten konnte, deshalb ergibt der neue Durchlauf kein Ergebnis."
     },
     "accuracy": "Diese Einschätzung ist nur so genau wie Ihre Beschreibung.",
     "stopped": {
@@ -706,7 +709,8 @@
       "network": "Der Dienst hat nicht geantwortet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       "incomplete": "Die Verbindung brach ab, bevor die Prüfungen fertig waren.",
       "needsDescription": "Klar muss wissen, was das Tool entscheidet und wen es betrifft. Ergänzen Sie das in Ihrer Beschreibung und starten Sie die Prüfungen erneut.",
-      "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen."
+      "providerRefused": "Der Inhaltsfilter des Modellanbieters hat eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden. Es wird keine Risikoklasse angegeben: Ein Mensch muss die Beschreibung prüfen.",
+      "providerRefusedRerun": "Der Inhaltsfilter des Modellanbieters hat im neuen Durchlauf eine Prüfung blockiert, daher konnte sie nicht automatisch geprüft werden: Ein Mensch muss die Beschreibung und Ihre Antworten prüfen."
     },
     "rerun": {
       "title": "Ihr bisheriges Ergebnis gilt weiter",
@@ -714,6 +718,9 @@
     }
   },
   "result": {
+    "duty": {
+      "relief": "Erleichterung für Ihr Unternehmen: {{relief}}"
+    },
     "notFound": {
       "body": "Dieses Tool ist nicht in Ihrem Inventar. Vielleicht wurde es gelöscht oder in einem anderen Browser geprüft.",
       "action": "Tool einstufen"
@@ -821,6 +828,7 @@
     },
     "steps": {
       "heading": "So kam Klar zu diesem Ergebnis",
+      "pausedHeading": "Stand der Prüfungen",
       "expandAll": "Alle Schritte mit Zitaten aufklappen",
       "facts": "Fakten",
       "role": "Rolle",
@@ -829,7 +837,7 @@
       "factsLine_other": "{{count}} Fakten gefunden, {{assumed}} angenommen",
       "yourDescription": "Ihre Beschreibung",
       "notChecked": "Nicht geprüft",
-      "paused": "Vorerst angenommen: eine Angabe fehlt",
+      "paused": "Wartet auf Ihre Antwort",
       "ambiguous": "Rechtlich unklar: Es gilt die strengere Lesart",
       "inScope": "Anwendbar",
       "outOfScope": "Außerhalb des Anwendungsbereichs",
@@ -852,7 +860,8 @@
       "showProvision_one": "Vorschrift zeigen",
       "showProvision_other": "Vorschriften zeigen",
       "noFacts": "Keine einzelne Angabe; siehe die Entscheidung.",
-      "runHeading": "Durchlauf {{number}}: wie Klar zum Ergebnis kam"
+      "runHeading": "Durchlauf {{number}}: wie Klar zum Ergebnis kam",
+      "pausedRunHeading": "Durchlauf {{number}}: Stand der Prüfungen"
     },
     "reviewer": {
       "exportJson": "Als JSON exportieren"
@@ -1032,7 +1041,8 @@
       "body": "des gesamten weltweiten Jahresumsatzes eines Unternehmens im vorangegangenen Geschäftsjahr, je nachdem, welcher Betrag höher ist. Für KMU, einschließlich Start-ups, gilt der niedrigere Betrag."
     },
     "why": {
-      "heading": "Warum die Prüfung endete"
+      "heading": "Warum die Prüfung endete",
+      "laterPoint": "{{point}} gilt erst ab dem {{start}} (Art. 113 Buchst. a), daher verbietet es dieses System am {{asOf}} noch nicht."
     },
     "quote": {
       "loading": "Der Text von {{provision}} wird geladen …",
@@ -1162,12 +1172,14 @@
     "assumedClass": "{{riskClass}}, angenommen",
     "noValue": "–",
     "notChecked": "Noch nicht geprüft",
+    "notCheckedRefused": "Nicht geprüft",
     "note": {
       "changed": "Die blau markierten Werte hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
       "unchanged": "Der digitale Omnibus, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026, hat an dieser Tabelle nichts geändert.",
       "classSame": "Die Klasse ist gleich geblieben.",
       "dateChanged": "Das blau markierte Datum hat der digitale Omnibus geändert, die Verordnung (EU) 2026/1744, in Kraft seit dem 27. Juli 2026.",
-      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft."
+      "notChecked": "Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft.",
+      "notCheckedRefused": "Klasse und Rolle nach der ursprünglichen Fassung konnte Klar nicht prüfen."
     },
     "steps": {
       "heading": "Geänderte Prüfschritte",
@@ -1181,7 +1193,8 @@
       "start": "Nach ursprünglicher Fassung prüfen",
       "running": "Prüfung nach ursprünglicher Fassung läuft …",
       "retry": "Erneut versuchen",
-      "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}"
+      "stopped": "Die Prüfung nach der ursprünglichen Fassung wurde angehalten. {{reason}}",
+      "refused": "Der Inhaltsfilter des Modellanbieters hat die Prüfung nach der ursprünglichen Fassung von 2024 blockiert, deshalb kann Klar Einstufung und Rolle danach nicht vergleichen. Ihr Ergebnis nach der geänderten Fassung gilt weiter."
     },
     "dutiesNotModelled": "Pflichten nach der ursprünglichen Fassung sind nicht modelliert: Klars Pflichtenlisten folgen nur der geänderten Fassung."
   },
@@ -1202,6 +1215,7 @@
       "since": "In Kraft seit dem {{date}}",
       "inForce": "In Kraft",
       "from": "Ab dem <date/>",
+      "fromWhat": "{{what}} ab dem <date/>",
       "inMonths_one": "In {{count}} Monat",
       "inMonths_other": "In {{count}} Monaten",
       "alreadyApplies": "Gilt bereits",
@@ -1335,6 +1349,7 @@
     },
     "sources": {
       "heading": "Grundlage der Antworten",
+      "textsUsed": "Verwendete Texte",
       "loading": "Die Texte werden geladen …",
       "failed": "Die Liste der Texte kann gerade nicht angezeigt werden.",
       "kind": {

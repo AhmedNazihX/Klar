@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { Citation, ClassificationResult } from '@/api'
 import { RECORDED_PROHIBITED } from '@/test/prohibited-fixtures'
 
-import { bannedSince, banPoints, isDecidedBan } from './ban'
+import { bannedSince, banPoints, isDecidedBan, laterPoints } from './ban'
 
 function cite(provisionId: string): Citation {
   return {
@@ -98,5 +98,32 @@ describe('bannedSince', () => {
     [[], '2025-02-02'],
   ])('dates the ban on %j from %s', (points, date) => {
     expect(bannedSince(points)).toBe(date)
+  })
+})
+
+describe('laterPoints', () => {
+  it('lists the cited points that apply only later, each once, with the day they start', () => {
+    const result = citing('art:5:1:f', 'art:5:1:bb', 'art:5:1:ba', 'art:5:1:bb')
+    expect(laterPoints(result)).toEqual([
+      { point: 'art:5:1:bb', appliesFrom: '2026-12-02' },
+      { point: 'art:5:1:ba', appliesFrom: '2026-12-02' },
+    ])
+  })
+
+  it.each([
+    ['2026-12-01', [{ point: 'art:5:1:ba', appliesFrom: '2026-12-02' }]],
+    ['2026-12-02', []],
+  ])('on %s lists %j', (asOf, later) => {
+    expect(laterPoints(citingOn(asOf, 'art:5:1:f', 'art:5:1:ba'))).toEqual(later)
+  })
+
+  it('lists nothing for a ban on points that already apply, sub-points and guidance', () => {
+    const result = citing(
+      'art:5:1:f',
+      'art:5:1:c:i',
+      'art:113:a',
+      'guide:guide-prohibited:para:254',
+    )
+    expect(laterPoints(result)).toEqual([])
   })
 })

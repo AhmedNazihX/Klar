@@ -4,9 +4,9 @@ stack). `create_app` builds it with its settings and, from the outside in:
 - CORS for `CORS_ORIGINS` only, without credentials, exposing `Retry-After`;
 - `BodySizeLimit`: a body over `API_MAX_BODY_BYTES` is a 413 before it is read;
 - the routes, with their rate limits, the classification slots and the export workers (stopped
-  at shutdown), and handlers that turn an
-  unreachable database into a 503 without its error text, and a request that fails validation
-  into a 422 that quotes none of it (`errors.py`).
+  at shutdown), and handlers that turn an unreachable database (or an unreadable parsed Omnibus)
+  into a 503 without its error text, and a request that fails validation into a 422 that quotes
+  none of it (`errors.py`).
 `API_DOCS=false` hides /docs, /redoc and /openapi.json. `aiact api serve` runs the app;
 `aiact api openapi` exports its schema for the frontend's generated client.
 """
@@ -29,6 +29,7 @@ from aiact.api.body_limit import BodySizeLimit
 from aiact.api.dependencies import ApiContext, context_for
 from aiact.api.errors import invalid_request
 from aiact.db import DatabaseNotConfiguredError
+from aiact.omnibus import OmnibusUnavailableError
 from aiact.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(RequestValidationError, invalid_request)
     app.add_exception_handler(DatabaseNotConfiguredError, _corpus_unavailable)
     app.add_exception_handler(psycopg.OperationalError, _corpus_unavailable)
+    app.add_exception_handler(OmnibusUnavailableError, _corpus_unavailable)
     return app
 
 
@@ -98,9 +100,17 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 async def _corpus_unavailable(_request: Request, exc: Exception) -> JSONResponse:
-    """503 for a database that is unset or unreachable; only the error's type is logged (its
-    text may name the server)."""
-    logger.error("corpus lookup failed: %s", type(exc).__name__)
+    """503 for a database that is unset or unreachable, or a parsed Omnibus that can't be read;
+    only the error's type is logged, with the failure's type an unreadable Omnibus carries (its
+    text may name the server or the file's path)."""
+    logger.error("corpus lookup failed: %s", _failure(exc))
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content={"detail": CORPUS_UNAVAILABLE}
     )
+
+
+def _failure(exc: Exception) -> str:
+    """The error's type, and for an unreadable Omnibus the failure's type it carries."""
+    if isinstance(exc, OmnibusUnavailableError):
+        return f"{type(exc).__name__} ({exc.failure})"
+    return type(exc).__name__

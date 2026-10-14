@@ -1,6 +1,6 @@
 // The main flow in German (decision 026, story P11): the app's own words switch with the language,
 // and a German description is classified in German.
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import {
   RUNS,
@@ -60,4 +60,50 @@ test('a German description is classified in German', async ({ page }) => {
   // The steps quote the German text, in German quotation marks.
   await page.getByRole('button', { name: /Alle Schritte/ }).click()
   await expect(page.getByText(/„[^“]+“/).first()).toBeVisible()
+  // A quote inside the quote (Art. 3 Nr. 1 defines „KI-System“) takes the nested marks (P31).
+  for (const toggle of await page.getByRole('button', { name: /^Vorschrift(en)? zeigen$/ }).all()) {
+    await toggle.click()
+  }
+  await expect(page.getByText(/^„‚KI-System‘ ein maschinengestütztes System/).first()).toBeVisible()
+})
+
+const BANNED = RUNS.prohibited_de
+const BANNED_TOOL = 'Stimmungskamera'
+
+/** Classifies the German ban from the Classify screen, in German, and opens its result. */
+async function classifyBan(page: Page): Promise<void> {
+  await saveProfile(page)
+  await page
+    .getByRole('group', { name: 'Language' })
+    .getByRole('button', { name: 'Deutsch' })
+    .click()
+  await page.getByRole('textbox', { name: 'Wie nennen Sie das Tool?' }).fill(BANNED_TOOL)
+  await page.getByRole('textbox', { name: 'In Ihren eigenen Worten' }).fill(BANNED.description)
+  await page.getByRole('button', { name: 'Prüfungen starten' }).click()
+
+  const stopped = page.getByRole('alert').filter({ hasText: NO_RECORDING })
+  await expect(page.getByRole('heading', { level: 1, name: BANNED_TOOL }).or(stopped)).toBeVisible()
+  await endIfRecordingPending('prohibited_de', stopped)
+  await expectResult(page, BANNED_TOOL)
+}
+
+test('a German ban is decided, and named in plain words in both languages', async ({ page }) => {
+  await classifyBan(page)
+
+  const result = page.getByRole('region', { name: 'Ergebnis', exact: true })
+  await expect(result).toContainText('Verboten')
+  await expect(result).toContainText('Festgestellt')
+  await expect(result).toContainText(
+    'Emotionserkennung am Arbeitsplatz oder in Bildungseinrichtungen (Art. 5 Abs. 1 Buchst. f)',
+  )
+
+  await page
+    .getByRole('group', { name: 'Sprache' })
+    .getByRole('button', { name: 'English' })
+    .click()
+  const english = page.getByRole('region', { name: 'Result', exact: true })
+  await expect(english).toContainText('Decided')
+  await expect(english).toContainText(
+    'recognising emotions in the workplace or in education (Art. 5(1)(f))',
+  )
 })

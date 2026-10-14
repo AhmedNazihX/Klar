@@ -34,6 +34,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │                            LONG_DATE_PATTERNS, reading them back (P28, moved from drafting)
 │   │   ├── provision_names.py       how a result names an article provision or Annex point (EN, DE), shared by
 │   │   │                            the engine's texts and drafting (P8a, moved out of E4–E6's texts)
+│   │   ├── omnibus.py               the parsed Omnibus's records as Q&A and the vendor letter read them, an
+│   │   │                            unreadable file as OmnibusUnavailableError (the app's 503) (P31)
 │   │   ├── schemas/                 the result contract: RiskClass, Status, ClassificationResult… (F3);
 │   │   │                            the screens' question fields (hint, options, if_yes, structured
 │   │   │                            readings, settled_by) and law_text.py: the CELEX label (E12)
@@ -305,9 +307,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │   ├── icons/               the system's 12 icons, copied as SVG files, never redrawn (P14)
 │       │   └── ui/                  shadcn primitives, lower-case, added with the shadcn CLI (P4)
 │       ├── features/<feature>/      feature components + their tests, e.g. landing/ (P16: LandingPage and its sections, timeline.ts, classify-example.ts), welcome/ (P18), classify/ (P5; ResultScreen.phone.browser.test.tsx the result at 390 px, P26; the provider layout
-│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23; the ambiguous
+│       │                            ProviderPanels, ProviderDuties, ProviderNotes, provider-layout.ts and DutyItem, shared with obligations/, P23, relief.ts its SME/SMC relief notes and use-duty-relief.ts the hook that looks them up for a duty list, P31; the ambiguous
 │       │                            layout AmbiguousSummary, AmbiguousVerdict, ReadingCards, SettleIt, TakeItToALawyer, P22), inventory/ (P6), your-data/ (P12), obligations/ (P24),
-│       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads),
+│       │                            ask/ (P7: AskScreen, QaConversation, ResultQuestions, qa-history.ts: session-only threads; SourceDocuments, the texts list Ask and the reviewer view share, P31),
 │       │                            site-pages/ (P17: MethodPage, PrivacyPage, ImpressumPage, ContactPage, their shared SitePageParts,
 │       │                            contact-mail.ts: the Contact page's mailto link and its still-empty address;
 │       │                            SitePages.phone.browser.test.tsx the pages at 360 and 390 px),
@@ -328,6 +330,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │       │                            use-provision.ts (a provision's text from the corpus), use-vendor-letter.ts (P28's letter) (P21)
 │       │                            use-qa-thread.ts (a Q&A thread over POST /qa), use-result-questions.ts (a result run's thread), use-corpus-documents.ts (GET /documents) (P7)
 │       │                            use-media-query.ts (a CSS media query kept current; under use-prefers-reduced-motion.ts and use-is-phone.ts, the phone layout) (P26)
+│       │                            use-relief-notes.ts (the obligations table's relief notes by duty key, GET /obligations) (P31)
 │       ├── lib/                     env (validated VITE_*), supabase client, auth, query client,
 │       │                            api-client-config, utils (P4); company-profile (profile, size class, import, P18);
 │       │                            inventory (tools and their runs in Supabase), stored-result (a stored result checked
@@ -345,6 +348,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    browser-setup.ts (the browser project), shell-routes.ts (every screen route, by frame) (P15),
 │                                    user-data-handlers.ts (MSW handlers for the user's Supabase data, P18),
 │                                    timeouts.ts (FIRST_RENDER_MS, testing-library's wait in both setups, F10),
+│                                    touch-targets.ts (the 44 px rule for the phone tests; components/touch-targets.browser.test.tsx measures the app screens, P31),
 │                                    your-data-store.ts (an in-memory user-data store behind the counts, export, import and delete, P12),
 │                                    reconnect.ts (the network dropping and coming back, as TanStack Query sees it, P12),
 │                                    classify-fixtures.ts + fixtures/worked-example.events.json (the recorded
@@ -354,6 +358,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │                                    documents-fixtures.ts + fixtures/documents.drafts.json (lists and drafts dumped
 │                                    from the backend's drafter, and the documents handlers, P9)
 │                                    qa-fixtures.ts (POST /qa answers and GET /documents, P7)
+│                                    relief-fixtures.ts (GET /obligations with the table's relief notes, P31)
 │                                    placeholders.ts (bracketed unknowns outside a marked placeholder, P17)
 │                                    prohibited-fixtures.ts + fixtures/prohibited.json (the recorded prohibited result,
 │                                    its vendor letters and the provisions it quotes, dumped and drift-checked by

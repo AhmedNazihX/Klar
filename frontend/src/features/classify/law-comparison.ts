@@ -87,18 +87,20 @@ function swappedDutiesFrom(amended: ClassificationResult, language: Language): s
 /**
  * The rows of "Original Act vs amended": class, role and the date duties apply from, plus the
  * Annex point when either result has one (the route can move, e.g. machinery from Annex I B.21 to
- * A.1). Until the original text is checked, class and role show as not checked.
+ * A.1). Until the original text is checked, class and role show as not checked yet; once the
+ * model provider refused that check (`isRefused`), as not checked.
  */
 export function comparisonRows(
   t: TFunction,
   amended: ClassificationResult,
   original: ClassificationResult | undefined,
   language: Language,
+  isRefused = false,
 ): ComparisonRow[] {
   const none = t('diff.noValue')
   const dutiesFrom = amendedDutiesFrom(amended, language, none)
   if (!original) {
-    const notChecked = t('diff.notChecked')
+    const notChecked = t(isRefused ? 'diff.notCheckedRefused' : 'diff.notChecked')
     const swapped = swappedDutiesFrom(amended, language)
     return [
       { id: 'class', original: notChecked, amended: classLabel(t, amended), isKnown: false },

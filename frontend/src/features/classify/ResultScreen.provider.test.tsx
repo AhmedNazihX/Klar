@@ -10,7 +10,7 @@ import { http, HttpResponse } from 'msw'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
-import type { ClassificationResult } from '@/api'
+import type { ClassificationResult, Obligation } from '@/api'
 import { userDataOverviewKey } from '@/hooks/use-user-data-overview'
 import type * as SupabaseModule from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
@@ -24,6 +24,7 @@ import {
   ownBrandCiting,
   PROVIDER_ALSO_DEPLOYER,
 } from '@/test/provider-fixtures'
+import { obligationsTableHandler, TABLE_RELIEF } from '@/test/relief-fixtures'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
@@ -84,6 +85,7 @@ beforeEach(() => {
         tools.map((tool) => ({ id: RUN_ID, run_no: 1, result: tool['result'], inputs: null })),
       ),
     ),
+    obligationsTableHandler(),
     http.get(DUTY_PROGRESS_URL, () => HttpResponse.json(ticks)),
     http.post(DUTY_PROGRESS_URL, async ({ request }) => {
       const tick = (await request.json()) as Tick
@@ -471,6 +473,97 @@ describe('A legally ambiguous provider result (user decision 2026-10-10, option 
       }
     },
   )
+})
+
+describe('Provider layout: relief notes under the duties (P31, D6)', () => {
+  const QMS_RELIEF =
+    'Relief for your company: The quality management system may be proportionate to the size of the organisation for SMEs, including start-ups, and SMCs (Art. 17(2)). SMEs without partner or linked enterprises may comply with certain elements in a simplified manner (Art. 63(1)).'
+  const QMS_RELIEF_DE =
+    'Erleichterung für Ihr Unternehmen: Für KMU, einschließlich Start-up-Unternehmen, und kleine Midcap-Unternehmen kann das Qualitätsmanagementsystem in einem angemessenen Verhältnis zur Größe der Organisation stehen (Art. 17 Abs. 2). KMU ohne Partnerunternehmen oder verbundene Unternehmen können bestimmte Elemente in vereinfachter Weise einhalten (Art. 63 Abs. 1).'
+  const ANY_RELIEF = {
+    en: /^Relief for your company: /,
+    de: /^Erleichterung für Ihr Unternehmen: /,
+  }
+
+  /** The obligations table's lookups (`role/risk_class`). */
+  let asked: string[] = []
+  beforeEach(() => {
+    asked = []
+    server.use(obligationsTableHandler(TABLE_RELIEF, asked))
+  })
+
+  /** `OWN_BRAND_PROVIDER` with each stored duty's relief fields as `stored` sets them: the
+   *  screen reads the table's notes, not these. */
+  function storedWith(stored: Partial<Obligation>): ClassificationResult {
+    // Undefined fields leave the stored JSON, as on a result stored before them.
+    const obligations = (OWN_BRAND_PROVIDER.obligations ?? []).map((duty) => ({
+      ...duty,
+      relief_note: undefined,
+      relief_note_de: undefined,
+      ...stored,
+    }))
+    return { ...OWN_BRAND_PROVIDER, obligations }
+  }
+
+  it.each([
+    ['sme', 'en', QMS_RELIEF],
+    ['smc', 'en', QMS_RELIEF],
+    ['sme', 'de', QMS_RELIEF_DE],
+    ['smc', 'de', QMS_RELIEF_DE],
+  ] as const)(
+    'shows the table relief under its duty for a company of size %s (%s), on a result stored without one',
+    async (sizeClass, language, relief) => {
+      await openProvider(storedWith({}), { sizeClass, language })
+      expect(await screen.findByText(relief)).toBeInTheDocument()
+      // The two duties the table gives a relief: the quality management system and Annex IV.
+      expect(screen.getAllByText(ANY_RELIEF[language])).toHaveLength(2)
+      expect(asked).toContain('provider/high_risk')
+    },
+  )
+
+  it.each([
+    ['en', QMS_RELIEF],
+    ['de', QMS_RELIEF_DE],
+  ] as const)(
+    "shows the table's note, not an older one the result stored without German (%s)",
+    async (language, relief) => {
+      await openProvider(storedWith({ relief_note: 'An old note.' }), {
+        sizeClass: 'sme',
+        language,
+      })
+      expect(await screen.findByText(relief)).toBeInTheDocument()
+      expect(screen.queryByText(/An old note\./)).toBeNull()
+    },
+  )
+
+  it('shows no note in German where the table has only the English one', async () => {
+    const qms = TABLE_RELIEF['hr-provider-qms']
+    server.use(
+      obligationsTableHandler(
+        { ...TABLE_RELIEF, 'hr-provider-qms': { relief_note: qms?.relief_note } },
+        asked,
+      ),
+    )
+    await openProvider(storedWith({}), { sizeClass: 'sme', language: 'de' })
+    // Annex IV's German note shows; the quality management system gets none, not the English.
+    expect(await screen.findAllByText(ANY_RELIEF.de)).toHaveLength(1)
+    expect(screen.queryByText(/proportionate to the size of the organisation/)).toBeNull()
+  })
+
+  it.each([['none'], [null], [undefined]] as const)(
+    'shows no relief for size class %s (undefined: no profile), and looks none up',
+    async (sizeClass) => {
+      await openProvider(OWN_BRAND_PROVIDER, { sizeClass })
+      expect(screen.queryByText(ANY_RELIEF.en)).toBeNull()
+      expect(asked).toEqual([])
+    },
+  )
+
+  it('shows no relief under the original text: the notes name small mid-caps', async () => {
+    await openProvider(OWN_BRAND_PROVIDER, { sizeClass: 'sme', law: 'original' })
+    expect(screen.queryByText(ANY_RELIEF.en)).toBeNull()
+    expect(asked).toEqual([])
+  })
 })
 
 describe('Provider layout: what makes it lighter', () => {

@@ -13,6 +13,18 @@
     "worked_example_de": {
       "description": "Wir sind ein Logistikunternehmen mit 40 Beschäftigten. Wir nutzen ein Tool, das eingehende Bewerbungen liest, bewertet und der Personalabteilung eine Rangliste zeigt. Wir haben es bei einem Anbieter gekauft und nicht verändert.",
       "language": "de"
+    },
+    "worked_example_not_for_authorities": {
+      "description": "We're a 40-person logistics company. We use a tool that reads incoming job applications, scores them, and shows HR a ranked shortlist. We bought it from a vendor and didn't change it.",
+      "language": "en",
+      "answers": {
+        "eu_link": "Is the tool placed on the market or used in the EU, or are its outputs used there? Yes.",
+        "for_public_authority": "Is the system meant for use by public authorities? No."
+      }
+    },
+    "prohibited_de": {
+      "description": "Wir sind ein Versandhändler mit 300 Beschäftigten. In unserem Lager filmen Kameras die Gesichter der Mitarbeitenden, und eine eingekaufte KI-Software leitet daraus ab, ob sie gestresst, frustriert oder zufrieden sind. Die Schichtleitung sieht diese Werte für jede Person und nutzt sie in der Leistungsbeurteilung.",
+      "language": "de"
     }
   }
 }

@@ -8,6 +8,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import {
   documentFailure,
+  UnreadableResultError,
   useDocumentDraft,
   useDocumentLists,
   type DocumentTool,
@@ -80,8 +81,11 @@ function ToolsState({ onRetry }: { onRetry?: () => void }): JSX.Element {
 function Breadcrumb({ toolName }: { toolName: string }): JSX.Element {
   const { t } = useTranslation()
   return (
-    <nav aria-label={t('documents.breadcrumb')} className="flex gap-2 text-label">
-      <Link to="/app/documents" className="text-slate no-underline hover:underline">
+    <nav aria-label={t('documents.breadcrumb')} className="flex items-center gap-2 text-label">
+      <Link
+        to="/app/documents"
+        className="inline-flex min-h-11 items-center text-slate no-underline hover:underline md:min-h-0"
+      >
         {t('nav.documents')}
       </Link>
       <span aria-hidden="true" className="text-slate">
@@ -267,6 +271,7 @@ function ToolDocuments({
       answers: answers?.data ?? {},
       isLoading: Boolean(list?.isPending || answers?.isPending),
       isError: Boolean(list?.isError || answers?.isError),
+      isUnreadableResult: list?.error instanceof UnreadableResultError,
       onRetry: () => {
         void (answers?.isError ? answers.refetch() : list?.refetch())
       },

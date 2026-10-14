@@ -20,6 +20,7 @@ import {
 } from '@/test/classify-fixtures'
 import { ambiguousResult, prohibitedResult, toolRow } from '@/test/inventory-fixtures'
 import { server } from '@/test/msw-server'
+import { obligationsTableHandler } from '@/test/relief-fixtures'
 import { SUPABASE_URL } from '@/test/supabase-fixtures'
 import { renderRoute } from '@/test/test-utils'
 import { inventoryRow, userDataHandlers } from '@/test/user-data-handlers'
@@ -46,6 +47,8 @@ const NOT_CHECKED = "Klar keeps the list; it doesn't check the work for you."
 type Tick = { system_id: string; obligation_key: string }
 
 let tools: Record<string, unknown>[] = []
+/** The company profile's size class (P31's relief notes). */
+let sizeClass: 'sme' | 'smc' | 'none' | null = null
 let ticks: Tick[] = []
 let writes: string[] = []
 let checklists: unknown[] = []
@@ -88,13 +91,14 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(TODAY)
   tools = []
+  sizeClass = null
   ticks = []
   writes = []
   checklists = []
   downloads = []
   server.use(
     ...userDataHandlers(
-      () => [inventoryRow({ company_name: 'Nordwerk Logistik GmbH' })],
+      () => [inventoryRow({ company_name: 'Nordwerk Logistik GmbH', size_class: sizeClass })],
       () => tools.length,
       () => tools,
     ),
@@ -375,18 +379,44 @@ describe('Obligations, what each section holds', () => {
       }),
     ]
     await openObligations()
-    const [route, plain] = screen.getAllByRole('region', { name: /^From 2 December 2027/ })
+    // One "From 2 December 2027"; the other names what it holds in its title.
+    const [route, ...others] = screen.getAllByRole('region', { name: /^From 2 December 2027/ })
+    expect(others).toEqual([])
     expect(route).toHaveAccessibleDescription('High-risk, Annex III')
-    expect(plain).toHaveAccessibleDescription('Art. 6(4)')
+    const plain = section('Art. 6(4) from 2 December 2027')
+    expect(plain).not.toHaveAccessibleDescription()
     expect(plain).toHaveTextContent('Customer chat assistant')
   })
 
   it.each([
-    ['en', /^From 2 December 2027/, 'Other duties', 'No specific duties'],
-    ['de', /^Ab dem 2\. Dezember 2027/, 'Weitere Pflichten', 'Keine besonderen Pflichten'],
+    ['en', 'From 2 December 2027', 'Art. 6(4)'],
+    ['de', 'Ab dem 2. Dezember 2027', 'Art. 6 Abs. 4'],
+  ] as const)(
+    '(%s) keeps the plain title of a dated section no route section shares, its article beside it',
+    async (language, title, article) => {
+      const chat = limitedRisk()
+      const [literacy] = chat.obligations ?? []
+      if (!literacy) throw new Error('The fixture has duties.')
+      const assessment = {
+        ...literacy,
+        key: 'art-6-4',
+        article: 'art:6:4',
+        applies_from: '2027-12-02',
+      }
+      tools = [toolRow('Customer chat assistant', { ...chat, obligations: [assessment] })]
+      await openObligations('/app/obligations', language)
+      const lone = section(title)
+      expect(lone).toHaveAccessibleDescription(article)
+      expect(lone).toHaveTextContent('Customer chat assistant')
+    },
+  )
+
+  it.each([
+    ['en', 'Other duties from 2 December 2027', 'No specific duties'],
+    ['de', 'Weitere Pflichten ab dem 2. Dezember 2027', 'Keine besonderen Pflichten'],
   ] as const)(
     '(%s) calls a same-date section of several articles "other duties"; By tool shows a tool without any',
-    async (language, sameDay, other, none) => {
+    async (language, other, none) => {
       const chat = limitedRisk()
       const [literacy] = chat.obligations ?? []
       if (!literacy) throw new Error('The fixture has duties.')
@@ -403,8 +433,7 @@ describe('Obligations, what each section holds', () => {
         toolRow('Invoice matching', outOfScope()),
       ]
       const { user } = await openObligations('/app/obligations', language)
-      const [, plain] = screen.getAllByRole('region', { name: sameDay })
-      expect(plain).toHaveAccessibleDescription(other)
+      expect(section(other)).toHaveTextContent('Customer chat assistant')
 
       await user.click(
         screen.getByRole('button', { name: language === 'en' ? 'By tool' : 'Nach Tool' }),
@@ -551,6 +580,70 @@ describe('Obligations, dates', () => {
     ).toHaveAttribute('role', 'note')
     // Annex III's original date has come: the next date is Art. 111(2)'s, the same under both.
     expect(section('Next date')).toHaveTextContent('2 August 2030')
+  })
+})
+
+describe('Obligations, relief notes under a duty (P31, D6)', () => {
+  const RELIEF = 'Keep it short for a small company (Art. 4).'
+  const RELIEF_DE = 'Für ein kleines Unternehmen kurz halten (Art. 4).'
+
+  /** The obligations table's lookups (`role/risk_class`). */
+  let asked: string[] = []
+  beforeEach(() => {
+    asked = []
+    // The table gives the AI literacy duty a relief note in both languages.
+    server.use(
+      obligationsTableHandler(
+        { 'ai-literacy': { relief_note: RELIEF, relief_note_de: RELIEF_DE } },
+        asked,
+      ),
+    )
+  })
+
+  /** A limited-risk deployer's tool, stored without relief notes: the screen reads the
+   *  table's. */
+  function relievedTool(): Record<string, unknown> {
+    return toolRow('Customer chat assistant', limitedRisk())
+  }
+
+  it.each([
+    ['sme', 'en', `Relief for your company: ${RELIEF}`],
+    ['smc', 'de', `Erleichterung für Ihr Unternehmen: ${RELIEF_DE}`],
+  ] as const)(
+    'shows the relief under the duty for a company of size %s (%s)',
+    async (size, language, line) => {
+      sizeClass = size
+      tools = [relievedTool()]
+      await openObligations('/app/obligations', language)
+      expect(await screen.findByText(line)).toBeInTheDocument()
+      expect(asked).toContain('deployer/limited_risk')
+    },
+  )
+
+  it.each([['none'], [null]] as const)('shows no relief for size class %s', async (size) => {
+    sizeClass = size
+    tools = [relievedTool()]
+    await openObligations()
+    await screen.findByText('Nordwerk Logistik GmbH')
+    expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+  })
+
+  it('shows no relief under the original text', async () => {
+    sizeClass = 'sme'
+    tools = [relievedTool()]
+    await openObligations('/app/obligations?law=original')
+    await screen.findByText('Nordwerk Logistik GmbH')
+    expect(screen.queryByText(/^Relief for your company: /)).toBeNull()
+  })
+
+  it('sends the size class with the checklist', async () => {
+    sizeClass = 'smc'
+    tools = [relievedTool()]
+    const { user } = await openObligations()
+    await screen.findByText('Nordwerk Logistik GmbH')
+    await user.click(screen.getByRole('button', { name: 'Download Word' }))
+    await vi.waitFor(() => expect(checklists).toHaveLength(1))
+    expect(checklists[0]).toMatchObject({ size_class: 'smc' })
   })
 })
 

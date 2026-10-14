@@ -38,12 +38,15 @@ from aiact.export import (
 from aiact.provision_names import article_provision_name, provision_name
 from aiact.report import texts
 from aiact.report.common import (
+    SizeValue,
     applies_when,
     class_name,
     day,
     duties_from,
     footer,
+    is_relieved,
     left_out_note,
+    with_relief,
 )
 from aiact.report.duties import formal_duties, timing
 from aiact.schemas import (
@@ -105,9 +108,11 @@ def result_report(
     prepared_on: date,
     tool_name: str | None = None,
     company: str | None = None,
+    size_class: SizeValue | None = None,
 ) -> Paper:
     """`result` as the report for a lawyer, in `language`; raises NoClassError for a result
-    with no class, or with a check not assessed (`assessed_class`)."""
+    with no class, or with a check not assessed (`assessed_class`). The company profile's
+    `size_class` adds the duties' relief notes for an SME or a small mid-cap (`is_relieved`)."""
     risk_class = result.assessed_class
     if risk_class is None:
         raise NoClassError(
@@ -132,7 +137,9 @@ def result_report(
             *_facts(result, language),
             *_steps(result, language),
             PageBreak(),
-            *_duties(result, duties, left_out, language),
+            *_duties(
+                result, duties, left_out, language, is_relieved(size_class, result.law_version)
+            ),
             *_legal_review(result, language),
             SignOff(
                 heading=texts.REVIEWER[language],
@@ -239,7 +246,9 @@ def _steps(result: ClassificationResult, language: Language) -> tuple[Block, ...
         if name in by_name
     )
     header = tuple(column[language] for column in texts.STEP_HEADER)
-    return (Heading(texts.STEPS[language]), Table(header, rows, STEP_WIDTHS))
+    paused = result.status is Status.NEEDS_MORE_INFORMATION
+    heading = (texts.PAUSED_STEPS if paused else texts.STEPS)[language]
+    return (Heading(heading), Table(header, rows, STEP_WIDTHS))
 
 
 def _outcome(step: StepResult, result: ClassificationResult, language: Language) -> str:
@@ -305,8 +314,10 @@ def _duties(
     duties: tuple[Obligation, ...],
     left_out: int,
     language: Language,
+    relieved: bool,
 ) -> tuple[Block, ...]:
-    """The duties in their formal wording (the table's), with their provision. When most of
+    """The duties in their formal wording (the table's), each with its relief note when
+    `relieved`, with their provision. When most of
     them apply, from one date, or only after a significant change, goes in the heading, as the
     artboard shows it; a duty that applies otherwise says so after its provision. Then how many
     posted duties the table lacks, when any; "no specific duties" only when the result lists
@@ -320,7 +331,7 @@ def _duties(
     when = texts.WHEN[language]
     rows = tuple(
         (
-            _duty_text(duty, language),
+            _duty_text(duty, language, relieved),
             _article(duty, language)
             if (duty.applies_from, duty.legacy) == usual
             else when.format(
@@ -346,16 +357,19 @@ def _duties_heading(result: ClassificationResult, language: Language) -> str:
     return texts.DUTIES_OF[language].format(role=role)
 
 
-def _duty_text(duty: Obligation, language: Language) -> str:
+def _duty_text(duty: Obligation, language: Language, relieved: bool) -> str:
     """The duty's formal wording in the report's language, and its condition when it has one:
     in German when the duty carries the German condition, else the English one, so a condition
-    is never dropped (the screen does the same: result-text.ts `dutyCondition`)."""
+    is never dropped (the screen does the same: result-text.ts `dutyCondition`). Then its relief
+    note, when `relieved`."""
     text = duty.duty_de if language is Language.DE else duty.duty
     german = duty.applies_if_de if language is Language.DE else None
     condition = german or duty.applies_if
-    if condition is None:
+    if condition is not None:
+        text = texts.APPLIES_IF[language].format(duty=text, condition=condition)
+    if not relieved:
         return text
-    return texts.APPLIES_IF[language].format(duty=text, condition=condition)
+    return with_relief(text, duty.relief_note, duty.relief_note_de, language)
 
 
 def _article(duty: Obligation, language: Language) -> str:

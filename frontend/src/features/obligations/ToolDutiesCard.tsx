@@ -9,6 +9,7 @@ import { RiskPill } from '@/components/RiskPill'
 import { StatusPill } from '@/components/StatusPill'
 import { DutyItem } from '@/features/classify/DutyItem'
 import { dutyNote, statusPill, toolName } from '@/features/classify/result-text'
+import { useDutyRelief } from '@/features/classify/use-duty-relief'
 import { longDate } from '@/features/classify/dates'
 import { isoDay, type CheckedTool } from '@/features/inventory/tool-facts'
 import { useLanguage } from '@/hooks/use-language'
@@ -32,7 +33,7 @@ function CardHeader({ tool, progress }: { tool: CheckedTool; progress: Progress 
       <Link
         to="/app/inventory/$toolId"
         params={{ toolId: tool.toolId }}
-        className="min-w-0 text-body font-semibold break-words text-ink no-underline hover:underline"
+        className="inline-flex min-h-11 min-w-0 items-center text-body font-semibold break-words text-ink no-underline hover:underline md:min-h-0"
       >
         {toolName(t, tool.name)}
       </Link>
@@ -105,6 +106,7 @@ function DutyList({
 }): JSX.Element {
   const { t } = useTranslation()
   const language = useLanguage()
+  const reliefOf = useDutyRelief(tool.result)
   const [isOpen, setIsOpen] = useState(false)
   const shown = isOpen ? duties : duties.slice(0, DUTY_PREVIEW)
   return (
@@ -114,6 +116,7 @@ function DutyList({
           <DutyItem
             key={duty.key ?? `${duty.article}:${duty.duty}`}
             duty={duty}
+            relief={reliefOf(duty)}
             toolId={tool.toolId}
             note={noteOf(t, tool, duty, language, today)}
             docLabel={t('obligations.card.draftReady')}
@@ -127,7 +130,7 @@ function DutyList({
           type="button"
           aria-expanded={isOpen}
           onClick={() => setIsOpen(!isOpen)}
-          className="self-start border-0 bg-transparent p-0 text-label text-lens-blue hover:underline focus-visible:outline-2 focus-visible:outline-lens-blue"
+          className="min-h-11 self-start border-0 bg-transparent p-0 text-label text-lens-blue hover:underline focus-visible:outline-2 focus-visible:outline-lens-blue md:min-h-0"
         >
           {isOpen ? t('obligations.card.showFewer') : showAllLabel(t, duties)}
         </button>
@@ -147,7 +150,7 @@ function ProviderSummary({ tool, total }: { tool: CheckedTool; total: number }):
       <Link
         to="/app/inventory/$toolId"
         params={{ toolId: tool.toolId }}
-        className="self-start text-label text-lens-blue no-underline hover:underline"
+        className="inline-flex min-h-11 items-center self-start text-label text-lens-blue no-underline hover:underline md:min-h-0"
       >
         {t('obligations.card.openProvider')}
       </Link>

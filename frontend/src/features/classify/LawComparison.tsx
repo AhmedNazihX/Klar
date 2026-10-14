@@ -43,15 +43,17 @@ function diffRow(t: TFunction, row: ComparisonRow): VersionDiffRow {
 
 /** What the table says about the Omnibus, one sentence each. Before the original text is checked
  *  only the date is known: whether the Omnibus moved it, then that class and role aren't checked
- *  yet. After: whether anything changed, then that the class didn't when something else did. */
+ *  yet, or couldn't be once the model provider refused the check (`isRefused`). After: whether
+ *  anything changed, then that the class didn't when something else did. */
 function diffNote(
   t: TFunction,
   rows: readonly ComparisonRow[],
   original: ClassificationResult | undefined,
+  isRefused: boolean,
 ): string {
   const hasChange = rows.some((row) => row.isKnown && row.original !== row.amended)
   if (!original) {
-    const notChecked = t('diff.note.notChecked')
+    const notChecked = t(isRefused ? 'diff.note.notCheckedRefused' : 'diff.note.notChecked')
     return hasChange ? `${t('diff.note.dateChanged')} ${notChecked}` : notChecked
   }
   const classRow = rows.find((row) => row.id === 'class')
@@ -99,9 +101,18 @@ function ChangedSteps({ steps }: { steps: readonly ChangedStep[] }): JSX.Element
 }
 
 /** Before the original text is checked: the button that runs it (a paid run, so only on a click),
- *  or why the last try stopped. */
+ *  or why the last try stopped. A run the model provider's filter refused isn't offered again: the
+ *  same text would most likely be refused again (decision 030), as on the Classify screen. Its
+ *  alert alone says so, and that the amended result stands; nothing offers to run it again. */
 function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
   const { t } = useTranslation()
+  if (original.failure?.kind === 'provider_refused') {
+    return (
+      <p role="alert" className="m-0 text-body-small text-ink">
+        {t('diff.check.refused')}
+      </p>
+    )
+  }
   return (
     <div className="flex flex-col items-start gap-2.5">
       <p className="m-0 text-body-small text-ink-2">{t('diff.check.hint')}</p>
@@ -110,14 +121,21 @@ function CheckOriginal({ original }: { original: OriginalRun }): JSX.Element {
           {t('diff.check.stopped', { reason: failureReason(t, original.failure) })}
         </p>
       )}
-      <Button variant="ghost" size="sm" onClick={original.start} disabled={original.isRunning}>
-        {original.isRunning
-          ? t('diff.check.running')
-          : original.failure
-            ? t('diff.check.retry')
-            : t('diff.check.start')}
-      </Button>
+      <RunOriginalButton original={original} />
     </div>
+  )
+}
+
+function RunOriginalButton({ original }: { original: OriginalRun }): JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <Button variant="ghost" size="sm" onClick={original.start} disabled={original.isRunning}>
+      {original.isRunning
+        ? t('diff.check.running')
+        : original.failure
+          ? t('diff.check.retry')
+          : t('diff.check.start')}
+    </Button>
   )
 }
 
@@ -153,7 +171,8 @@ export function LawComparison({
     headingRef.current?.focus()
     onFocused?.()
   }, [shouldTakeFocus, onFocused])
-  const rows = comparisonRows(t, run.result, original.result, language)
+  const isRefused = original.failure?.kind === 'provider_refused'
+  const rows = comparisonRows(t, run.result, original.result, language, isRefused)
   return (
     <GlassPanel
       as="section"
@@ -170,7 +189,7 @@ export function LawComparison({
       </h2>
       <VersionDiff
         rows={rows.map((row) => diffRow(t, row))}
-        note={diffNote(t, rows, original.result)}
+        note={diffNote(t, rows, original.result, isRefused)}
       />
       <div aria-live="polite" className="flex flex-col gap-3.5">
         {original.result ? (

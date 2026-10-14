@@ -12,6 +12,20 @@ describe('longDateIn', () => {
     expect(longDateIn(text)).toBe(date)
   })
 
+  it.each([
+    // A number that only ends in a day, or a year that runs on, isn't a date.
+    ['Point 119 May 2026', null],
+    ['On 19 May 20261', null],
+    // A day the month doesn't have isn't one either; a later real date still counts.
+    ['Due 31 June 2026, then 1 July 2026', '2026-07-01'],
+    ['45 May 2026', null],
+    ['0 May 2026', null],
+    ['29. Februar 2028', '2028-02-29'],
+    ['29 February 2027', null],
+  ])('reads %s strictly as %s', (text, date) => {
+    expect(longDateIn(text)).toBe(date)
+  })
+
   it.each([['Final Commission guidelines'], ['Article 6 of 2024'], ['12 Things 2026']])(
     'finds no date in %s',
     (text) => {

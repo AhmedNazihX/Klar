@@ -56,8 +56,9 @@ from aiact.drafting import (
 )
 from aiact.drafting.documents import DocumentNotCalledForError
 from aiact.drafting.models import QuestionKey
-from aiact.engine.citations import CitationSource, CorpusCitations, load_omnibus_changes
+from aiact.engine.citations import CitationSource, CorpusCitations
 from aiact.engine.nodes.common import provision_citation
+from aiact.omnibus import omnibus_changes
 from aiact.schemas import Citation, ClassificationResult, Language, LawVersion
 from aiact.schemas.base import ContractModel
 
@@ -133,7 +134,8 @@ class CorpusQuotes:
 
     open_source: SourceOpener
     data_dir: Path
-    """Where the parsed Omnibus is, for its marker (`load_omnibus_changes`, read once)."""
+    """Where the parsed Omnibus is, for its marker (`omnibus_changes`, read once); one that can't
+    be read is the app's 503 (`OmnibusUnavailableError`)."""
 
     def __call__(
         self,
@@ -142,7 +144,7 @@ class CorpusQuotes:
         law_version: LawVersion,
         as_of: date | None,
     ) -> tuple[Citation, ...]:
-        omnibus = load_omnibus_changes(self.data_dir)
+        omnibus = omnibus_changes(self.data_dir)
         with self.open_source() as source:
             found = [source.provision(pid, language, law_version, as_of) for pid in provision_ids]
         return tuple(

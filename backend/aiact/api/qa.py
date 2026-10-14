@@ -37,14 +37,10 @@ from aiact.api.errors import UNPROCESSABLE
 from aiact.engine.clients import engine_embeddings
 from aiact.llm import EmbeddingError, LLMConfigError
 from aiact.llm.structured import ChatRoute
+from aiact.omnibus import OmnibusUnavailableError
 from aiact.qa import QaAnswer, Searcher, answer_question
 from aiact.qa.answer import ModelCallError, ResultQuotes
-from aiact.qa.clients import (
-    OmnibusUnavailableError,
-    corpus_quotes,
-    corpus_searcher,
-    qa_route,
-)
+from aiact.qa.clients import corpus_quotes, corpus_searcher, qa_route
 from aiact.schemas import Language, LawVersion
 from aiact.schemas.base import ContractModel
 

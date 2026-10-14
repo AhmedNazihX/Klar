@@ -141,7 +141,13 @@ export type DraftTool = { toolId: string; name: string | null }
 
 /** The description being worked on, and the tool it is for: null for a new tool; the tool after
  *  "Classify this tool", so the run is saved on that tool. */
-export type ClassifyDraft = { values: DescriptionFormValues; tool: DraftTool | null }
+export type ClassifyDraft = {
+  values: DescriptionFormValues
+  tool: DraftTool | null
+  /** "Edit description" left answers out to keep the text within the form's limit: the form
+   *  says so under the description. */
+  hasDroppedAnswers?: boolean
+}
 
 const EMPTY_DRAFT: ClassifyDraft = { values: { name: '', description: '' }, tool: null }
 let savedDraft: ClassifyDraft = EMPTY_DRAFT
@@ -152,8 +158,12 @@ export function readDraft(): ClassifyDraft {
   return savedDraft
 }
 
-export function saveDraft(values: DescriptionFormValues, tool: DraftTool | null = null): void {
-  savedDraft = { values: { ...values }, tool }
+export function saveDraft(
+  values: DescriptionFormValues,
+  tool: DraftTool | null = null,
+  hasDroppedAnswers = false,
+): void {
+  savedDraft = { values: { ...values }, tool, hasDroppedAnswers: hasDroppedAnswers || undefined }
 }
 
 export function clearDraft(): void {

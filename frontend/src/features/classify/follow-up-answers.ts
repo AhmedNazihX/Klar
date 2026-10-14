@@ -5,6 +5,7 @@ import { EU_MEMBER_STATES } from '@/features/welcome/countries'
 import type { CompanyProfile } from '@/lib/company-profile'
 import type { Answers } from '@/lib/tool-runs'
 
+import { DESCRIPTION_MAX } from './description-form'
 import { pausedStep, restingFacts } from './result-text'
 
 // The follow-up loop's answers (story P5b, decision 019): what the user picked or wrote for each
@@ -50,11 +51,31 @@ export function answerableQuestions(result: ClassificationResult): FollowUpQuest
   return [...byId.values()]
 }
 
+/** The description with answers appended, and whether any answer was left out to fit. */
+export type DescriptionWithAnswers = { text: string; hasDroppedAnswers: boolean }
+
 /** The description with the answers a run used, one per line, for "Edit description": the user
- *  sees and keeps what they answered when they rewrite it (decision 019 appends them too). */
-export function withAnswers(description: string, answers: Answers | undefined): string {
+ *  sees and keeps what they answered when they rewrite it (decision 019 appends them too). Within
+ *  the form's limit (`DESCRIPTION_MAX`): a description near it with its answers can run past it
+ *  (up to 40 answers of 1,000 characters each), and the form would refuse the text it opens with.
+ *  Whole answers only, in order, until the next one wouldn't fit; the caller says when any was
+ *  left out. A description over the limit alone (never one the form sent) is cut to it. */
+export function withAnswers(
+  description: string,
+  answers: Answers | undefined,
+): DescriptionWithAnswers {
   const lines = Object.values(answers ?? {})
-  return lines.length === 0 ? description : [description, '', ...lines].join('\n')
+  const head = description.slice(0, DESCRIPTION_MAX)
+  const kept: string[] = []
+  // The blank line between the description and the answers, then a line break before each.
+  let length = head.length + 1
+  for (const line of lines) {
+    if (length + 1 + line.length > DESCRIPTION_MAX) break
+    kept.push(line)
+    length += 1 + line.length
+  }
+  const text = kept.length === 0 ? head : [head, '', ...kept].join('\n')
+  return { text, hasDroppedAnswers: kept.length < lines.length }
 }
 
 /** One answer as the engine reads it, or null when the draft says nothing (Not sure, blank

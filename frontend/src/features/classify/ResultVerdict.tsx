@@ -3,13 +3,14 @@ import type { JSX, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ClassificationResult, LegacyStatus, RiskClass, Role } from '@/api'
+import { LawDate } from '@/components/LawDate'
 import { ResultSummary } from '@/components/ResultSummary'
 import { StatusPill } from '@/components/StatusPill'
 import { useLanguage } from '@/hooks/use-language'
 import type { Language } from '@/i18n'
 
 import { checkNumber } from './classify-progress'
-import { longDate, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
+import { longDate, ORIGINAL_LEGACY_CUT_OFF, PUBLIC_AUTHORITY_DEADLINE, routeOfPoint } from './dates'
 import { isProviderLayout, providerReason } from './provider-layout'
 import { amendedRouteDate, basisSentence, pausedStep, statusPill } from './result-text'
 import { legalReviewLine, useDutiesFrom } from './verdict-lines'
@@ -95,11 +96,33 @@ function pausedVerdict(
   }
 }
 
+type LegacySentence = { key: string; text: ReactNode }
+
+/** A sentence with the Art. 111(2) cut-off date in it, under each text: the route's Chapter III
+ *  date as amended, a fixed 2 August 2026 in the original Art. 111(2) (the Omnibus tied it to
+ *  Art. 113's route dates). It follows the law switch like the route's dates. */
+function cutOffSentence(
+  sentence: (date: string) => string,
+  routeDate: string,
+  language: Language,
+): ReactNode {
+  return (
+    <LawDate
+      amended={sentence(longDate(routeDate, language))}
+      original={sentence(longDate(ORIGINAL_LEGACY_CUT_OFF, language))}
+    />
+  )
+}
+
 /** The Art. 111(2) sentences for the markings the duties carry, plus the per-copy caveat for a
  *  role that supplies the system (decision 026 item 24). The route's date comes from the duties
  *  the engine dated; when Art. 111(2) moved every one of them to 2030 (a provider or deployer of
  *  a system for public authorities), the result has no route date and the sentences go without. */
-function legacySentences(t: TFunction, result: ClassificationResult, language: Language): string[] {
+function legacySentences(
+  t: TFunction,
+  result: ClassificationResult,
+  language: Language,
+): LegacySentence[] {
   const statuses = new Set(
     (result.obligations ?? [])
       .map((obligation) => obligation.legacy)
@@ -107,19 +130,25 @@ function legacySentences(t: TFunction, result: ClassificationResult, language: L
   )
   if (statuses.size === 0) return []
   const routeDate = amendedRouteDate(result, routeOfPoint(result.annex_point) ?? 'annex_iii')
-  const date = routeDate && longDate(routeDate, language)
   const deadline = longDate(PUBLIC_AUTHORITY_DEADLINE, language)
   // Without a route date no duty is merely unchanged-marked: they are all public-authority ones.
-  const marked = date
-    ? [...statuses].map((status) => t(`result.legacy.${status}`, { date, deadline }))
-    : [t('result.legacy.publicAuthorityUndated', { deadline })]
+  const marked: LegacySentence[] = routeDate
+    ? [...statuses].map((status) => ({
+        key: status,
+        text: cutOffSentence(
+          (date) => t(`result.legacy.${status}`, { date, deadline }),
+          routeDate,
+          language,
+        ),
+      }))
+    : [{ key: 'undated', text: t('result.legacy.publicAuthorityUndated', { deadline }) }]
   const roles = [result.role, result.also_role]
   const supplies = roles.some((role) => role && SUPPLIER_ROLES.includes(role))
   if (!supplies) return marked
-  const perCopy = date
-    ? t('result.legacy.perProduct', { date })
+  const perCopy = routeDate
+    ? cutOffSentence((date) => t('result.legacy.perProduct', { date }), routeDate, language)
     : t('result.legacy.perProductUndated')
-  return [...marked, perCopy]
+  return [...marked, { key: 'perCopy', text: perCopy }]
 }
 
 /** The Art. 111(2) notice under "duties apply from" (decision 026 item 24); nothing when no duty
@@ -132,8 +161,8 @@ export function LegacyNotice({ result }: { result: ClassificationResult }): JSX.
   return (
     <div role="note" className="flex flex-col gap-1.5 rounded-card-small px-4 py-3 glass-thin">
       {legacy.map((sentence) => (
-        <p key={sentence} className="m-0 text-label font-normal text-ink-2">
-          {sentence}
+        <p key={sentence.key} className="m-0 text-label font-normal text-ink-2">
+          {sentence.text}
         </p>
       ))}
     </div>

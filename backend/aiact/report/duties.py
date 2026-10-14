@@ -78,8 +78,8 @@ def formal_duties(
     law_version: LawVersion,
 ) -> tuple[Obligation, ...]:
     """The posted duties a table entry matches, each with that entry's texts (`duty`,
-    `duty_de`, `applies_if`, `applies_if_de`, the labels) and `is_informational`; the others
-    are left out."""
+    `duty_de`, `applies_if`, `applies_if_de`, the labels, the relief notes) and
+    `is_informational`; the others are left out."""
     found = (
         (
             duty,
@@ -106,6 +106,8 @@ def _with_texts(duty: Obligation, entry: ObligationEntry) -> Obligation:
             "applies_if": entry.applies_if,
             "applies_if_de": entry.applies_if_de,
             "is_informational": entry.is_informational,
+            "relief_note": entry.relief_note,
+            "relief_note_de": entry.relief_note_de,
         }
     )
 

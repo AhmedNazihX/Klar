@@ -23,6 +23,11 @@ export function routeDates(
 /** The date Art. 111(2) gives legacy high-risk systems meant for public authorities. */
 export const PUBLIC_AUTHORITY_DEADLINE = '2030-08-02'
 
+/** The original Art. 111(2)'s cut-off for every high-risk system: placed on the market or put
+ *  into service before 2 August 2026. The amended text uses the route's Chapter III date
+ *  instead ("the date of application of Chapter III referred to in Article 113"). */
+export const ORIGINAL_LEGACY_CUT_OFF = '2026-08-02'
+
 const DAY_MS = 86_400_000
 const DAYS_PER_MONTH = 30.44
 
@@ -53,8 +58,15 @@ const MONTH_NAMES = Object.fromEntries(
   }),
 ) as Record<Language, string[]>
 
-/** A long date as either language writes it: "19 May 2026", "19. Mai 2026". */
-const LONG_DATE = /(\d{1,2})\.? (\p{L}+) (\d{4})/gu
+/** A long date as either language writes it: "19 May 2026", "19. Mai 2026". Whole numbers only:
+ *  no digit just before the day or just after the year. */
+const LONG_DATE = /(?<!\d)(\d{1,2})\.? (\p{L}+) (\d{4})(?!\d)/gu
+
+/** An ISO date if the day exists in that month and year ("31 June" doesn't); null if not. */
+function isoDateOf(year: string, month: number, day: string): string | null {
+  const iso = `${year}-${String(month).padStart(2, '0')}-${day.padStart(2, '0')}`
+  return parseIsoDate(iso).getUTCDate() === Number(day) ? iso : null
+}
 
 /** The first long date in `text`, written in English or German, as an ISO date; null when it
  *  names none. */
@@ -62,7 +74,8 @@ export function longDateIn(text: string): string | null {
   for (const [, day = '', name = '', year = ''] of text.matchAll(LONG_DATE)) {
     for (const language of SUPPORTED_LANGUAGES) {
       const month = MONTH_NAMES[language].indexOf(name) + 1
-      if (month > 0) return `${year}-${String(month).padStart(2, '0')}-${day.padStart(2, '0')}`
+      const iso = month > 0 ? isoDateOf(year, month, day) : null
+      if (iso) return iso
     }
   }
   return null

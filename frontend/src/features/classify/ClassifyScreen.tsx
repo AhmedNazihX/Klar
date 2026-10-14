@@ -26,11 +26,7 @@ import {
   type DraftTool,
 } from './classification-store'
 import { DescriptionForm } from './DescriptionForm'
-import {
-  DESCRIPTION_MAX,
-  DescriptionFormSchema,
-  type DescriptionFormValues,
-} from './description-form'
+import { DescriptionFormSchema, type DescriptionFormValues } from './description-form'
 import { DescriptionPrompts } from './DescriptionPrompts'
 import { answersOf, withAnswers, type AnswerDraft, type AnswerDrafts } from './follow-up-answers'
 import { ProgressPanel } from './ProgressPanel'
@@ -49,7 +45,13 @@ function DraftToolNote({
   return (
     <p className="m-0 mb-3 flex flex-wrap items-center gap-x-2 text-body-small text-slate">
       {t('classify.draftTool.note', { name: toolName(t, tool.name) })}
-      <Button variant="link" size="sm" className="h-auto px-0" onClick={onNewTool}>
+      {/* 44 px tall on a phone (touch target), its text's height on a desktop. */}
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto min-h-11 px-0 md:min-h-0"
+        onClick={onNewTool}
+      >
         {t('classify.draftTool.newTool')}
       </Button>
     </p>
@@ -87,7 +89,7 @@ export function ClassifyScreen(): JSX.Element {
   const save = useSaveClassifiedTool()
   // The draft is read on mount only: useForm takes its values as defaults and owns them after;
   // its tool (after "Classify this tool") is where the run is saved, until the user lets it go.
-  const [{ values: draftValues, tool: initialTool }] = useState(readDraft)
+  const [{ values: draftValues, tool: initialTool, hasDroppedAnswers }] = useState(readDraft)
   const [draftTool, setDraftTool] = useState(initialTool)
   const form = useForm<DescriptionFormValues>({
     resolver: zodResolver(DescriptionFormSchema),
@@ -141,12 +143,12 @@ export function ClassifyScreen(): JSX.Element {
     const body: ClassifyRequest = { description: values.description, language }
     run.mutate(hasAnswers ? { ...body, answers } : body, {
       // The tool keeps the answers in its description: the run that asked for them is never saved.
-      // Cut to the systems table's limit: the answers' tail goes, never the description itself.
+      // Within the systems table's limit: whole answers go, never the description itself.
       onSuccess: (result) =>
         void keep(
           {
             ...values,
-            description: withAnswers(values.description, answers).slice(0, DESCRIPTION_MAX),
+            description: withAnswers(values.description, answers).text,
           },
           result,
         ),
@@ -186,6 +188,7 @@ export function ClassifyScreen(): JSX.Element {
             isRunning={run.isPending || save.isPending}
             onSubmit={submitForm}
             hasRunAction={asked === null}
+            hasDroppedAnswers={hasDroppedAnswers}
           />
           {asked && (
             <div className="mt-5">

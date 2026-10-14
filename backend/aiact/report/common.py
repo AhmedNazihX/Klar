@@ -26,9 +26,10 @@ from aiact.report.texts import (
     NOT_CLASSIFIED,
     NOTHING,
     ONLY_AFTER_CHANGE,
+    RELIEF,
     STOP_USING,
 )
-from aiact.schemas import DISCLAIMER, Language, LegacyStatus, RiskClass, Status
+from aiact.schemas import DISCLAIMER, Language, LawVersion, LegacyStatus, RiskClass, Status
 
 LEGACY_ARTICLE = "art:111:2"
 """Where a legacy duty's own timing comes from."""
@@ -37,6 +38,25 @@ MAX_NAME_CHARS = 200
 `inventories.company_name`)."""
 
 Name = Annotated[str, StringConstraints(min_length=1, max_length=MAX_NAME_CHARS)]
+
+type SizeValue = str
+"""The company profile's size class as the API passes it (`aiact.drafting.models.SizeClass`'s
+value: sme, smc or none); the reports stand without the drafter (`tests/report/test_imports.py`)."""
+RELIEVED_SIZES: frozenset[SizeValue] = frozenset({"sme", "smc"})
+"""The company profile's size classes the relief notes are for (P31, user 2026-10-13)."""
+
+
+def is_relieved(size_class: SizeValue | None, law_version: LawVersion | None) -> bool:
+    """Whether a report shows the duties' relief notes: for an SME or a small mid-cap, under the
+    amended text only (the notes name small mid-caps, which only the Omnibus added)."""
+    return size_class in RELIEVED_SIZES and law_version is LawVersion.AMENDED
+
+
+def with_relief(text: str, relief: str | None, relief_de: str | None, language: Language) -> str:
+    """A duty's text with its relief note in the report's language (the English one when the
+    German is missing, so a note is never dropped); the text alone without a note."""
+    note = (relief_de if language is Language.DE else None) or relief
+    return text if note is None else RELIEF[language].format(duty=text, relief=note)
 
 
 def footer(language: Language) -> str:

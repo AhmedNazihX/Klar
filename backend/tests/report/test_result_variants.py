@@ -217,7 +217,9 @@ def test_the_german_wording_of_open_and_empty_cases() -> None:
     assert "Offene Rechtsfrage (3 Hochrisiko):" in ambiguous
     assert "Hochrisiko (angenommen) Rechtlich unklar" in ambiguous
     paused = _text(needs_information_result(), DE)
-    assert "3 Hochrisiko Vorerst angenommen: eine Angabe fehlt" in paused
+    assert "Stand der Prüfungen" in paused
+    assert "Wie das Ergebnis zustande kam" not in paused
+    assert "3 Hochrisiko Wartet auf Ihre Antwort" in paused
     assert "Fehlende Angabe (3 Hochrisiko): Is the tool used in the EU?" in paused
     assert "Weitere Angaben nötig" in paused
     settled = rebuild(worked_example_result(), deciding_facts=worked_example_result().facts[:3])

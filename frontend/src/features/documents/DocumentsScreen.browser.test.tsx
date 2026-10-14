@@ -120,7 +120,10 @@ function seededClient(shown: Page, language: Language): QueryClient {
 async function open(shown: Page, viewport: Viewport, language: Language): Promise<HTMLElement> {
   await page.viewport(viewport.width, viewport.height)
   await i18n.changeLanguage(language)
-  renderRoute(`/app/documents/${shown.template}?tool=${shown.toolId}`, seededClient(shown, language))
+  renderRoute(
+    `/app/documents/${shown.template}?tool=${shown.toolId}`,
+    seededClient(shown, language),
+  )
   const article = await screen.findByRole('article', {
     name: language === 'de' ? 'Dokumentvorschau' : 'Document preview',
   })
@@ -185,6 +188,88 @@ describe('the Documents screen on a phone, in German', () => {
     },
   )
 
+  it('gives the focus back to the toggle when a picked document closes the list', async () => {
+    const shown = emotionDisclosure()
+    await open(shown, PHONE, 'de')
+    const toggle = screen.getByRole('button', {
+      name: `Dokumente (${String(shown.documents.length)})`,
+    })
+    await userEvent.click(toggle)
+    const list = screen.getByRole('navigation', { name: 'Dokumente' })
+    await userEvent.click(within(list).getByRole('link', { current: 'page' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(document.activeElement).toBe(toggle)
+  })
+
+  it('gives the focus to the new toggle when a picked document mounts the screen anew', async () => {
+    // From the first document's route to a document's own: the screen mounts anew, so the
+    // toggle that had the focus is gone. (Between two documents' routes the screen stays, and
+    // so does its toggle.)
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    renderRoute(`/app/documents?tool=${DRIVERS}`, seededClient(shown, 'de'))
+    const label = `Dokumente (${String(shown.documents.length)})`
+    const first = await screen.findByRole('button', { name: label })
+    await userEvent.click(first)
+    const list = screen.getByRole('navigation', { name: 'Dokumente' })
+    const other = within(list)
+      .getAllByRole('link')
+      .find((link) => link.getAttribute('aria-current') !== 'page')
+    if (!other) throw new Error('The list has one document only.')
+    const href = other.getAttribute('href') ?? ''
+    await userEvent.click(other)
+    // The picked document is the current page now (its link, whichever element it is).
+    await expect
+      .poll(() => document.querySelector(`a[aria-current="page"][href="${href}"]`))
+      .not.toBeNull()
+    // The toggle on screen now: a new element, the screen having mounted anew.
+    const now = screen.getByRole('button', { name: label })
+    expect(now).not.toBe(first)
+    await expect.poll(() => document.activeElement).toBe(now)
+    expect(now).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('leaves the focus where it is when a new toggle mounts without it', async () => {
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    const { router } = renderRoute(`/app/documents?tool=${DRIVERS}`, seededClient(shown, 'de'))
+    const label = `Dokumente (${String(shown.documents.length)})`
+    const first = await screen.findByRole('button', { name: label })
+    // Focus on a control outside the screen, which stays when the screen mounts anew.
+    const outside = document.createElement('button')
+    outside.textContent = 'Outside'
+    document.body.append(outside)
+    try {
+      outside.focus()
+      await router.navigate({ href: `/app/documents/${shown.template}?tool=${DRIVERS}` })
+      await expect.poll(() => screen.getByRole('button', { name: label })).not.toBe(first)
+      expect(document.activeElement).toBe(outside)
+    } finally {
+      outside.remove()
+    }
+  })
+
+  it('drops the hand-off when the screen goes with no toggle in its place', async () => {
+    // The toggle has the focus as the screen goes, and nothing takes it in that commit: a
+    // toggle mounted later, by another visit, must not take the focus.
+    const shown = qualityManagement()
+    await page.viewport(PHONE.width, PHONE.height)
+    await i18n.changeLanguage('de')
+    const path = `/app/documents/${shown.template}?tool=${DRIVERS}`
+    const label = `Dokumente (${String(shown.documents.length)})`
+    const { unmount } = renderRoute(path, seededClient(shown, 'de'))
+    const gone = await screen.findByRole('button', { name: label })
+    gone.focus()
+    unmount()
+    // The next visit comes after that commit's microtasks.
+    await Promise.resolve()
+    renderRoute(path, seededClient(shown, 'de'))
+    const next = await screen.findByRole('button', { name: label })
+    expect(document.activeElement).not.toBe(next)
+  })
+
   it("closes a skeleton's section list too, and opens it on request", async () => {
     await open(qualityManagement(), PHONE, 'de')
     const toggle = screen.getByRole('button', { name: 'Abschnitte nach Art. 17 (15)' })
@@ -209,7 +294,7 @@ describe('the Documents screen on a desktop', () => {
     expect(await firstTabbedInto([list, article, interview])).toBe(list)
   })
 
-  it('has a skeleton\'s numbered sections on the left and first, and the documents list after (DocSkeleton)', async () => {
+  it("has a skeleton's numbered sections on the left and first, and the documents list after (DocSkeleton)", async () => {
     const article = await open(
       {
         toolId: DRIVERS,

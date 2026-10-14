@@ -7,6 +7,8 @@ the route on the database."""
 
 import logging
 from collections.abc import Iterator
+from contextlib import nullcontext
+from pathlib import Path
 
 import httpx
 import psycopg
@@ -22,6 +24,7 @@ from aiact.api.documents import (
     NO_LETTER,
     UNKNOWN_POINT,
     UNKNOWN_QUESTION,
+    CorpusQuotes,
     VendorLetter,
     VendorLetterRequest,
     law_quotes,
@@ -38,6 +41,7 @@ from tests.drafting.vendor_builders import (
     prohibited_result,
     prohibited_step,
 )
+from tests.engine.built_corpus import built_corpus
 from tests.schemas.builders import stored_before_decision_030
 from tests.schemas.worked_example import cite, worked_example_result
 
@@ -249,3 +253,39 @@ async def test_the_corpus_is_read_only_for_a_message_and_a_down_database_is_a_50
     message = await client.post(PATH, json=_body(prohibited_result()))
     assert message.status_code == 503
     assert message.json() == {"detail": CORPUS_UNAVAILABLE}
+
+
+@pytest.mark.parametrize(
+    ("contents", "failure"),
+    [
+        (None, "FileNotFoundError"),
+        (b"not json\n", "ValidationError"),
+        (b"\xff\xfe not utf-8\n", "UnicodeDecodeError"),
+    ],
+)
+async def test_an_unreadable_omnibus_is_a_503_that_logs_its_failure_type_only(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    contents: bytes | None,
+    failure: str,
+) -> None:
+    """The parsed Omnibus marks the quotes it changed: a missing, broken or non-UTF-8 file is
+    the corpus being unavailable (a 503, as Q&A answers it), not a 500 with a traceback (P13).
+    The one log line names the error's and the failure's type, never the file's path."""
+    if contents is not None:
+        parsed = tmp_path / "parsed"
+        parsed.mkdir()
+        (parsed / "omnibus.en.jsonl").write_bytes(contents)
+    app.dependency_overrides[law_quotes] = lambda: CorpusQuotes(
+        lambda: nullcontext(built_corpus()), tmp_path
+    )
+    with caplog.at_level(logging.ERROR):
+        message = await client.post(PATH, json=_body(prohibited_result()))
+    assert message.status_code == 503
+    assert message.json() == {"detail": CORPUS_UNAVAILABLE}
+    assert [record.getMessage() for record in caplog.records] == [
+        f"corpus lookup failed: OmnibusUnavailableError ({failure})"
+    ]
+    assert str(tmp_path) not in caplog.text

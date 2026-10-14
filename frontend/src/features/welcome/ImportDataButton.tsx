@@ -42,7 +42,7 @@ export function ImportDataButton({
           FOCUS_RING,
           isGhost
             ? buttonVariants({ variant: 'ghost' })
-            : 'cursor-pointer rounded-md text-body-small font-medium text-lens-blue hover:underline',
+            : 'inline-flex min-h-11 cursor-pointer items-center rounded-md text-body-small font-medium text-lens-blue hover:underline md:min-h-0',
         )}
       >
         <input

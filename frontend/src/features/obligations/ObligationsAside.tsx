@@ -114,6 +114,7 @@ function ChecklistPanel({
       law_version: law,
       format,
       company: overview.data?.profile?.companyName ?? null,
+      size_class: overview.data?.profile?.sizeClass ?? null,
     })
   }
   return (

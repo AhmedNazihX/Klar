@@ -21,18 +21,12 @@ from pathlib import Path
 
 import psycopg
 from langchain_core.language_models import BaseChatModel
-from pydantic import ValidationError
 
-from aiact.corpus.build import LoadError
-from aiact.engine.citations import (
-    CorpusCitations,
-    OmnibusChanges,
-    load_omnibus_changes,
-    resolve,
-)
+from aiact.engine.citations import CorpusCitations, resolve
 from aiact.engine.nodes.common import Lookup, provision_citation
 from aiact.llm import engine_chat_model, refusal_chat_model
 from aiact.llm.structured import ChatRoute
+from aiact.omnibus import omnibus_changes
 from aiact.qa.answer import QA_TOP_K, ResultQuotes, Searcher
 from aiact.retrieval.search import QueryEmbedder, SearchResults, search_ai_act
 from aiact.schemas import Citation, Language, LawVersion
@@ -105,7 +99,7 @@ def corpus_quotes(connect: ConnectionFactory, data_dir: Path) -> ResultQuotes:
     language on the date, held-out examples hidden), each rebuilt from the row found with the
     Omnibus marker; one that doesn't resolve is dropped. No connection opens for a result citing
     nothing. The `Lookup`'s language and law version go unread: `resolve` takes the citation's.
-    Raises `OmnibusUnavailableError` when the parsed Omnibus can't be read."""
+    Raises `aiact.omnibus.OmnibusUnavailableError` when the parsed Omnibus can't be read."""
 
     def quotes(
         citations: Sequence[Citation], law_version: LawVersion, as_of: date | None
@@ -118,7 +112,7 @@ def corpus_quotes(connect: ConnectionFactory, data_dir: Path) -> ResultQuotes:
             as_of=as_of,
             exclude_source_example_ids=(),
         )
-        omnibus = _omnibus_changes(data_dir)
+        omnibus = omnibus_changes(data_dir)
         with connect() as connection:
             source = CorpusCitations(connection)
             found = [resolve(citation, lookup, source) for citation in citations]
@@ -131,18 +125,3 @@ def corpus_quotes(connect: ConnectionFactory, data_dir: Path) -> ResultQuotes:
         )
 
     return quotes
-
-
-class OmnibusUnavailableError(RuntimeError):
-    """The parsed Omnibus, which marks the citations it changed, can't be read. It carries the
-    failure's type only."""
-
-
-def _omnibus_changes(data_dir: Path) -> OmnibusChanges:
-    """The Omnibus's amendment records, read once per `data_dir` (`load_omnibus_changes` caches
-    them, as for the engine); a file that can't be read or loaded is retried on the next
-    question."""
-    try:
-        return load_omnibus_changes(data_dir)
-    except (OSError, LoadError, ValidationError) as exc:
-        raise OmnibusUnavailableError(type(exc).__name__) from None

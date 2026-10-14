@@ -128,6 +128,14 @@ export const DOCUMENTS_DE: DocumentInfo[] = [
   },
 ]
 
+/** `GET /documents`: `DOCUMENTS`, or `DOCUMENTS_DE` for `?language=de`. */
+export function corpusDocumentsHandler() {
+  return http.get(DOCUMENTS_URL, ({ request }) => {
+    const isGerman = new URL(request.url).searchParams.get('language') === 'de'
+    return HttpResponse.json({ documents: isGerman ? DOCUMENTS_DE : DOCUMENTS, disclaimer: 'x' })
+  })
+}
+
 /** `POST /qa` answering each question with `reply` (an answer, or an HTTP status), noting each
  *  request's body in `sent`; and `GET /documents` with `DOCUMENTS`. */
 export function qaHandlers(sent: QuestionRequest[], reply: () => QaAnswer | number) {
@@ -140,9 +148,6 @@ export function qaHandlers(sent: QuestionRequest[], reply: () => QaAnswer | numb
       }
       return HttpResponse.json(answer)
     }),
-    http.get(DOCUMENTS_URL, ({ request }) => {
-      const isGerman = new URL(request.url).searchParams.get('language') === 'de'
-      return HttpResponse.json({ documents: isGerman ? DOCUMENTS_DE : DOCUMENTS, disclaimer: 'x' })
-    }),
+    corpusDocumentsHandler(),
   ]
 }

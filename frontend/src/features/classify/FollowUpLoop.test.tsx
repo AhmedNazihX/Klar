@@ -30,7 +30,7 @@ import { openQuestionCount } from '@/features/inventory/tool-facts'
 import { server } from '@/test/msw-server'
 import { createTestQueryClient, renderRoute } from '@/test/test-utils'
 
-import { putRun, type ClassificationRun } from './classification-store'
+import { clearDraft, putRun, type ClassificationRun } from './classification-store'
 import { uniqueFacts } from './result-text'
 
 const TOOL_ID = 'applicant-screening'
@@ -73,7 +73,7 @@ async function openResult(
 
 function stepRow(name: RegExp): HTMLElement {
   const section = screen.getByRole('region', {
-    name: /how Klar got here|wie Klar zum Ergebnis kam/i,
+    name: /how Klar got here|wie Klar zum Ergebnis kam|where the checks stand|Stand der Prüfungen/i,
   })
   return within(section).getByRole('button', { name })
 }
@@ -117,6 +117,62 @@ describe('Answering the question that decides a result', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Run 2: how Klar got here' }),
     ).toBeVisible()
+  })
+
+  it.each([
+    ['en', 'No', 'Add answer and run again', 'Run 2: where the checks stand'],
+    ['de', 'Nein', 'Antwort hinzufügen und erneut prüfen', 'Durchlauf 2: Stand der Prüfungen'],
+  ] as const)(
+    'names the run and where the checks stand when the re-run still waits (%s)',
+    async (language, no, runAgainName, heading) => {
+      rerunReturns(annexIIINeedsInfo())
+      const { user } = await openResult(annexIIINeedsInfo(), { language })
+      const [question] = screen.getAllByRole('region', { name: /\?$/ })
+      if (!question) throw new Error('The paused result asks no question.')
+      await user.click(within(question).getByRole('button', { name: no }))
+      await user.click(within(question).getByRole('button', { name: runAgainName }))
+      expect(await screen.findByRole('heading', { level: 2, name: heading })).toBeVisible()
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      'Edit description',
+      'In your own words',
+      "Some of your answers didn't fit within the description's 20,000 characters, so they were left out.",
+    ],
+    [
+      'de',
+      'Beschreibung bearbeiten',
+      'In Ihren eigenen Worten',
+      'Einige Ihrer Antworten passten nicht in die 20.000 Zeichen der Beschreibung und wurden weggelassen.',
+    ],
+  ] as const)(
+    'opens Edit description with the answers that fit, and says when one was left out (%s)',
+    async (language, edit, label, note) => {
+      const description = 'd'.repeat(19_990)
+      const { user } = await openResult(minimalRisk(), {
+        language,
+        run: { description, answers: { a: 'Yes.', b: 'An answer too long for the room left.' } },
+      })
+      await user.click(screen.getByRole('button', { name: edit }))
+      const field = await screen.findByRole('textbox', { name: label })
+      expect(field).toHaveValue(`${description}\n\nYes.`)
+      expect(field).toHaveAccessibleDescription(expect.stringContaining(note) as string)
+      clearDraft()
+    },
+  )
+
+  it('opens Edit description without a note when every answer fits', async () => {
+    const { user } = await openResult(minimalRisk(), {
+      run: { description: 'We rank applicants.', answers: { a: 'Yes.' } },
+    })
+    await user.click(screen.getByRole('button', { name: 'Edit description' }))
+    const field = await screen.findByRole('textbox', { name: 'In your own words' })
+    expect(field).toHaveValue('We rank applicants.\n\nYes.')
+    expect(screen.queryByText(/didn't fit within/)).not.toBeInTheDocument()
+    clearDraft()
   })
 
   it('lists what changed in the inventory, obligations and needs-you lists', async () => {

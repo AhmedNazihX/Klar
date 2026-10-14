@@ -12,17 +12,21 @@ import type {
  *  readings cite. */
 export type OpenPoint = { step: StepName; question: OpenQuestion; provisions: string[] }
 
+/** The open point's provisions: those its readings cite, or, when they cite none, those its step
+ *  cites, so a point still has something a question can bear on. */
 export function openPoint(result: ClassificationResult): OpenPoint | null {
   if (result.status !== 'legally_ambiguous') return null
   for (const step of result.steps) {
     const question = step.open_question
     if (step.status === 'legally_ambiguous' && question) {
+      const readingCites = question.readings.flatMap((reading) =>
+        reading.citation ? [reading.citation.provision_id] : [],
+      )
+      const stepCites = (step.citations ?? []).map((citation) => citation.provision_id)
       return {
         step: step.step,
         question,
-        provisions: question.readings.flatMap((reading) =>
-          reading.citation ? [reading.citation.provision_id] : [],
-        ),
+        provisions: readingCites.length > 0 ? readingCites : stepCites,
       }
     }
   }
@@ -35,9 +39,21 @@ function isWithin(provisionId: string, cited: string): boolean {
   return provisionId === cited || provisionId.startsWith(`${cited}:`)
 }
 
+/** How deep a provision ID goes: `art:6` is an article (2), `art:6:1` a paragraph (3). */
+const PARAGRAPH_DEPTH = 3
+
+/** Whether a question about `provisionId` bears on the `cited` provision: it is the cited one, a
+ *  part of it, or the paragraph (or Annex area) the cited point belongs to: a question about
+ *  Art. 6(1) bears on a point open on Art. 6(1)(a). A whole article or annex is too broad. */
+function bearsOn(provisionId: string, cited: string): boolean {
+  if (isWithin(provisionId, cited)) return true
+  return isWithin(cited, provisionId) && provisionId.split(':').length >= PARAGRAPH_DEPTH
+}
+
 /** The follow-up questions split by whether their answer bears on the open point: a question
- *  about (or quoting) a provision the readings cite, or a part of one, settles it; the others
- *  (another route's or provision's facts, the role, Art. 111(2)) keep their own place. */
+ *  about (or quoting) a provision the point rests on, a part of one or the paragraph it belongs
+ *  to, settles it; the others (another route's or provision's facts, the role, Art. 111(2)) keep
+ *  their own place. */
 export function questionsOnPoint(
   questions: readonly FollowUpQuestion[],
   point: OpenPoint,
@@ -45,7 +61,7 @@ export function questionsOnPoint(
   const isOnPoint = (question: FollowUpQuestion): boolean =>
     [question.about, ...(question.citations ?? []).map((citation) => citation.provision_id)].some(
       (provisionId) =>
-        provisionId != null && point.provisions.some((cited) => isWithin(provisionId, cited)),
+        provisionId != null && point.provisions.some((cited) => bearsOn(provisionId, cited)),
     )
   return {
     onPoint: questions.filter(isOnPoint),

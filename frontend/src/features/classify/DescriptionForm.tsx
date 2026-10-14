@@ -41,6 +41,9 @@ export type DescriptionFormProps = {
   /** False while Klar asks for more of the description (artboard `ClassifyVague`): the prompts
    *  below carry Run the checks instead. */
   hasRunAction?: boolean
+  /** The text "Edit description" opened with left answers out to fit the limit: a note under the
+   *  description says so. */
+  hasDroppedAnswers?: boolean
 }
 
 /**
@@ -53,6 +56,7 @@ export function DescriptionForm({
   isRunning,
   onSubmit,
   hasRunAction = true,
+  hasDroppedAnswers = false,
 }: DescriptionFormProps): JSX.Element {
   const { t } = useTranslation()
   const nameId = useId()
@@ -60,7 +64,13 @@ export function DescriptionForm({
   const nameErrorId = useId()
   const descriptionErrorId = useId()
   const tipsId = useId()
+  const droppedId = useId()
   const { errors } = form.formState
+  const descriptionNotes = [
+    tipsId,
+    ...(hasDroppedAnswers ? [droppedId] : []),
+    ...(errors.description ? [descriptionErrorId] : []),
+  ].join(' ')
 
   return (
     <GlassPanel as="section" className="flex min-w-0 flex-col gap-4 p-6">
@@ -89,10 +99,15 @@ export function DescriptionForm({
             id={descriptionId}
             rows={6}
             aria-invalid={errors.description ? true : undefined}
-            aria-describedby={errors.description ? `${tipsId} ${descriptionErrorId}` : tipsId}
+            aria-describedby={descriptionNotes}
             className={cn(FIELD_CLASS, 'min-h-[150px] resize-y py-4 text-[17px]')}
             {...form.register('description')}
           />
+          {hasDroppedAnswers && (
+            <p id={droppedId} className="m-0 text-caption font-normal text-ink-2">
+              {t('classify.answersDropped')}
+            </p>
+          )}
           <FieldError id={descriptionErrorId} message={errors.description?.message} />
           <PersonalDataNotice control={form.control} />
         </div>

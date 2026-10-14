@@ -49,6 +49,8 @@ const FAILURES: Readonly<Record<number, DocumentFailure>> = {
   504: 'timed-out',
 }
 
+const HTTP_UNPROCESSABLE = 422
+
 export class DocumentRequestError extends Error {
   readonly failure: DocumentFailure
 
@@ -56,6 +58,16 @@ export class DocumentRequestError extends Error {
     super(`document request failed: ${String(status)}`)
     this.name = 'DocumentRequestError'
     this.failure = (status !== null && FAILURES[status]) || 'failed'
+  }
+}
+
+/** The list request's 422: the API refused the posted result as not a valid classification
+ *  result (a result stored by an older Klar, say). Asking again can't help; running the checks
+ *  again can. Only the list says so: a draft's 422 is another refusal. */
+export class UnreadableResultError extends DocumentRequestError {
+  constructor() {
+    super(HTTP_UNPROCESSABLE)
+    this.name = 'UnreadableResultError'
   }
 }
 
@@ -73,6 +85,7 @@ export function documentListOptions(tool: DocumentTool, language: Language) {
       const { data, response } = await listResultDocuments({
         body: { result: tool.result, language },
       })
+      if (response?.status === HTTP_UNPROCESSABLE) throw new UnreadableResultError()
       if (!response?.ok || !data) throw new DocumentRequestError(response?.status ?? null)
       return data.documents
     },

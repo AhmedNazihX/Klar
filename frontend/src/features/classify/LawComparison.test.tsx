@@ -15,6 +15,7 @@ import {
   decidedHighRisk,
   legacyForPublicAuthorities,
   minimalRisk,
+  providerRefused,
   sseBody,
   WORKED_EXAMPLE,
   WORKED_EXAMPLE_DESCRIPTION,
@@ -584,6 +585,47 @@ describe('Original Act vs amended, the remaining lines', () => {
       const panel = comparison(language)
       expect(diffRows(panel)[0]?.[2]).toBe(assumed)
       expect(panel).toHaveTextContent(hint)
+    },
+  )
+
+  it.each([
+    [
+      'en',
+      'Check under the original text',
+      "The model provider's content filter blocked the check under the original 2024 text, so Klar can't compare the class and role under it. Your result under the amended text still stands.",
+      'Klar can run the checks again',
+      "Klar couldn't check the class and role under the original text.",
+      'Not checked',
+      "Klar hasn't checked the class and role under the original text yet.",
+    ],
+    [
+      'de',
+      'Nach ursprünglicher Fassung prüfen',
+      'Der Inhaltsfilter des Modellanbieters hat die Prüfung nach der ursprünglichen Fassung von 2024 blockiert, deshalb kann Klar Einstufung und Rolle danach nicht vergleichen. Ihr Ergebnis nach der geänderten Fassung gilt weiter.',
+      'Klar kann die Prüfungen',
+      'Klasse und Rolle nach der ursprünglichen Fassung konnte Klar nicht prüfen.',
+      'Nicht geprüft',
+      'Klasse und Rolle nach der ursprünglichen Fassung hat Klar noch nicht geprüft.',
+    ],
+  ] as const)(
+    'offers no new run once the provider refused the original-text check (%s)',
+    async (language, start, refused, hint, note, cell, notYet) => {
+      const bodies = classifyReturning(providerRefused())
+      const { user } = await openResult({ result: decidedHighRisk(), view: 'reviewer', language })
+      await user.click(within(comparison(language)).getByRole('button', { name: start }))
+      const alert = await within(comparison(language)).findByRole('alert')
+      expect(alert).toHaveTextContent(refused)
+      // Nothing says the checks can run again under the original text, or will check it yet.
+      expect(comparison(language)).not.toHaveTextContent(hint)
+      expect(comparison(language)).toHaveTextContent(note)
+      expect(comparison(language)).not.toHaveTextContent(notYet)
+      expect(
+        diffRows(comparison(language))
+          .map((row) => row[1])
+          .slice(0, 2),
+      ).toEqual([cell, cell])
+      expect(within(comparison(language)).queryByRole('button')).toBeNull()
+      expect(bodies).toHaveLength(1)
     },
   )
 

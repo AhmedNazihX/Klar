@@ -320,6 +320,7 @@
     "drafting": "Drafting the documents…",
     "draftingOne": "Drafting the document…",
     "draftFailed": "Klar couldn't draft this tool's documents.",
+    "resultUnreadable": "Klar can't read this tool's saved result, so it can't draft its documents. Run the tool's checks again.",
     "documentFailed": "Klar couldn't draft this document.",
     "tooLarge": "This document's answers are too long to send together. Please shorten some answers.",
     "staleDraft": "The draft shown doesn't hold your latest answers yet.",
@@ -577,6 +578,7 @@
     "namePlaceholder": "For example: Applicant screening",
     "nameTooLong": "Keep the name under 200 characters.",
     "descriptionLabel": "In your own words",
+    "answersDropped": "Some of your answers didn't fit within the description's 20,000 characters, so they were left out.",
     "descriptionRequired": "Describe the tool in a sentence or two first.",
     "descriptionTooLong": "Keep the description under 20,000 characters.",
     "tipsLabel": "Helpful to mention:",
@@ -682,7 +684,8 @@
       "subtitle": "Not every check could be assessed.",
       "blocked": "The model provider's content filter blocked these checks:",
       "row": "Blocked by the model provider's content filter: not assessed.",
-      "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result."
+      "body": "Your description is kept. Klar never guesses a class for a check it couldn't assess, so there's no result.",
+      "rerunBody": "Your answers are kept. Klar never guesses a class for a check it couldn't assess, so the new run gives no result."
     },
     "accuracy": "This assessment is only as accurate as the description you give.",
     "stopped": {
@@ -706,7 +709,8 @@
       "network": "The service didn't respond. Check your connection and try again.",
       "incomplete": "The connection ended before the checks finished.",
       "needsDescription": "Klar needs to know what the tool decides and who it affects. Add that to your description and run it again.",
-      "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description."
+      "providerRefused": "The model provider's content filter blocked a check, so it couldn't be assessed automatically. No risk class is given: a person must review the description.",
+      "providerRefusedRerun": "The model provider's content filter blocked a check in the new run, so it couldn't be assessed automatically: a person must review the description and your answers."
     },
     "rerun": {
       "title": "Your earlier result still stands",
@@ -714,6 +718,9 @@
     }
   },
   "result": {
+    "duty": {
+      "relief": "Relief for your company: {{relief}}"
+    },
     "notFound": {
       "body": "This tool isn't in your inventory. It may have been deleted, or it was checked in another browser.",
       "action": "Classify a tool"
@@ -821,6 +828,7 @@
     },
     "steps": {
       "heading": "How Klar got here",
+      "pausedHeading": "Where the checks stand",
       "expandAll": "Expand every step with quotes",
       "facts": "Facts",
       "role": "Role",
@@ -829,7 +837,7 @@
       "factsLine_other": "{{count}} facts found, {{assumed}} assumed",
       "yourDescription": "Your description",
       "notChecked": "Not checked",
-      "paused": "Assumed for now: one fact is missing",
+      "paused": "Waiting for your answer",
       "ambiguous": "Legally ambiguous: the stricter reading applies",
       "inScope": "In scope",
       "outOfScope": "Out of scope",
@@ -852,7 +860,8 @@
       "showProvision_one": "Show the provision",
       "showProvision_other": "Show the provisions",
       "noFacts": "No single fact; see the decision.",
-      "runHeading": "Run {{number}}: how Klar got here"
+      "runHeading": "Run {{number}}: how Klar got here",
+      "pausedRunHeading": "Run {{number}}: where the checks stand"
     },
     "reviewer": {
       "exportJson": "Export as JSON"
@@ -1032,7 +1041,8 @@
       "body": "of a company’s total worldwide annual turnover for the preceding financial year, whichever is higher. For SMEs, including start-ups, whichever is lower."
     },
     "why": {
-      "heading": "Why the checks stopped"
+      "heading": "Why the checks stopped",
+      "laterPoint": "{{point}} applies only from {{start}} (Art. 113(a)), so on {{asOf}} it does not yet prohibit this system."
     },
     "quote": {
       "loading": "Loading the text of {{provision}}…",
@@ -1162,12 +1172,14 @@
     "assumedClass": "{{riskClass}}, assumed",
     "noValue": "–",
     "notChecked": "Not checked yet",
+    "notCheckedRefused": "Not checked",
     "note": {
       "changed": "The values in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
       "unchanged": "Nothing in this table changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
       "classSame": "The class didn't.",
       "dateChanged": "The date in blue changed with the Digital Omnibus, Regulation (EU) 2026/1744, in force since 27 July 2026.",
-      "notChecked": "Klar hasn't checked the class and role under the original text yet."
+      "notChecked": "Klar hasn't checked the class and role under the original text yet.",
+      "notCheckedRefused": "Klar couldn't check the class and role under the original text."
     },
     "steps": {
       "heading": "Steps that changed",
@@ -1181,7 +1193,8 @@
       "start": "Check under the original text",
       "running": "Checking under the original text…",
       "retry": "Try again",
-      "stopped": "The check under the original text stopped. {{reason}}"
+      "stopped": "The check under the original text stopped. {{reason}}",
+      "refused": "The model provider's content filter blocked the check under the original 2024 text, so Klar can't compare the class and role under it. Your result under the amended text still stands."
     },
     "dutiesNotModelled": "Duties under the original text aren't modelled: Klar's duty lists follow the amended text only."
   },
@@ -1202,6 +1215,7 @@
       "since": "In force since {{date}}",
       "inForce": "In force",
       "from": "From <date/>",
+      "fromWhat": "{{what}} from <date/>",
       "inMonths_one": "In {{count}} month",
       "inMonths_other": "In {{count}} months",
       "alreadyApplies": "Already applies",
@@ -1335,6 +1349,7 @@
     },
     "sources": {
       "heading": "Answers draw on",
+      "textsUsed": "Texts used",
       "loading": "Loading the texts …",
       "failed": "The list of texts can’t be shown right now.",
       "kind": {

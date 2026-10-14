@@ -140,6 +140,10 @@ export type ChecklistRequest = {
      * The company's name from its profile; null without one.
      */
     company?: string | null;
+    /**
+     * The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile.
+     */
+    size_class?: SizeClass | null;
 };
 
 /**
@@ -811,6 +815,10 @@ export type InventoryReportRequest = {
      * The company's name from its profile; null without one.
      */
     company?: string | null;
+    /**
+     * The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile.
+     */
+    size_class?: SizeClass | null;
 };
 
 /**
@@ -1308,6 +1316,10 @@ export type ResultReportRequest = {
      * The company's name from its profile; null without one.
      */
     company?: string | null;
+    /**
+     * The company profile's size class; an SME's or a small mid-cap's report shows the duties' relief notes under the amended text. Null without a profile.
+     */
+    size_class?: SizeClass | null;
 };
 
 /**

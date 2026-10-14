@@ -1,4 +1,4 @@
-import { useId, useState, type JSX, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useState, type JSX, type ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -8,7 +8,19 @@ const OPEN_FROM = {
   xl: { toggle: 'xl:hidden', closed: 'hidden xl:flex' },
 } as const
 
-/** What the list inside gets: its id (the toggle controls it), its display class, and `close`. */
+/** The list whose toggle takes the focus as it mounts. Picking a link can change the route (from
+ *  /app/documents to a document), which mounts the screen anew: the toggle that had the focus is
+ *  gone with the old screen, and the focus would fall to the page's start. The old toggle names
+ *  its list here as it goes, and the new one takes the focus in the same commit (React runs a
+ *  removed component's layout cleanups before the new ones' layout effects); a name no new
+ *  toggle takes is dropped once that commit is done, so a toggle mounted later never takes the
+ *  focus. */
+let focusOnMount: string | null = null
+
+/** What the list inside gets: its id (the toggle controls it), its display class, and `close`,
+ *  which closes it and gives the focus back to the toggle: a link picked in the list disappears
+ *  with it, and the focus would otherwise fall to the page's start. Where the list always shows,
+ *  the toggle is hidden, so the focus stays where it is. */
 export type ClosedListProps = { id: string; className: string; close: () => void }
 
 /**
@@ -17,20 +29,44 @@ export type ClosedListProps = { id: string; className: string; close: () => void
  * shows. The list stays where it is in the reading order: only its display changes.
  */
 export function ClosedOnSmallScreens({
+  name,
   label,
   openFrom,
   children,
 }: {
+  /** Which list this is, the same across screens ("documents", "sections"). */
+  name: string
   label: string
   openFrom: keyof typeof OPEN_FROM
   children: (list: ClosedListProps) => ReactNode
 }): JSX.Element {
   const id = useId()
+  const toggleId = useId()
   const [isOpen, setIsOpen] = useState(false)
   const classes = OPEN_FROM[openFrom]
+  // Focus is outside React; the toggle is found by its id. Before the old toggle leaves the page (a
+  // layout effect's cleanup runs while it is still there), it hands the focus on to the toggle of
+  // the same list on the new one, which takes it in its own layout effect, in that same commit: a
+  // passive effect could run after the microtask has dropped the name.
+  useLayoutEffect(() => {
+    const toggle = document.getElementById(toggleId)
+    return () => {
+      if (toggle === null || document.activeElement !== toggle) return
+      focusOnMount = name
+      queueMicrotask(() => {
+        focusOnMount = null
+      })
+    }
+  }, [name, toggleId])
+  useLayoutEffect(() => {
+    if (focusOnMount !== name) return
+    focusOnMount = null
+    document.getElementById(toggleId)?.focus()
+  }, [name, toggleId])
   return (
     <>
       <button
+        id={toggleId}
         type="button"
         aria-expanded={isOpen}
         aria-controls={id}
@@ -63,6 +99,7 @@ export function ClosedOnSmallScreens({
         className: isOpen ? 'flex' : classes.closed,
         close: () => {
           setIsOpen(false)
+          document.getElementById(toggleId)?.focus()
         },
       })}
     </>

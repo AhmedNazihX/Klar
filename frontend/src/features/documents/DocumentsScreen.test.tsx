@@ -150,6 +150,57 @@ describe('Documents list', () => {
     ])
   })
 
+  it.each([
+    ['en', 'Documents', /^Documents \(\d+\)$/],
+    ['de', 'Dokumente', /^Dokumente \(\d+\)$/],
+  ] as const)(
+    'names the list toggle without a count until every list is in (%s)',
+    async (language, loading, counted) => {
+      let release = (): void => undefined
+      const gate = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      // Held, then passed on to the fixture's own list handler.
+      server.use(http.post(LIST_URL, async () => gate))
+      await openDocuments('/app/documents', { language })
+      const toggle = await screen.findByRole('button', { name: loading })
+      expect(toggle).not.toHaveTextContent(/\(0\)/)
+      release()
+      await vi.waitFor(() => {
+        expect(toggle).toHaveAccessibleName(counted)
+      })
+    },
+  )
+
+  it('shows no count while one tool’s list is in and another’s still loads', async () => {
+    let release = (): void => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let isDeployerListed = false
+    // The provider's list is held; the deployer's passes on to the fixture's handler at once.
+    server.use(
+      http.post(LIST_URL, async ({ request }) => {
+        const body = (await request.clone().json()) as { result: { role: string } }
+        if (body.result.role === 'provider') await gate
+        else isDeployerListed = true
+      }),
+    )
+    await openDocuments('/app/documents', { tools: [APPLICANT_SCREENING, DRIVER_SCORING] })
+    await vi.waitFor(() => {
+      expect(isDeployerListed).toBe(true)
+    })
+    // The deployer's documents are listed; the provider's group still loads.
+    const listed = await screen.findByRole('region', { name: 'For Applicant screening' })
+    await within(listed).findByRole('link', { name: /Human oversight record/ })
+    const toggle = screen.getByRole('button', { name: 'Documents' })
+    expect(toggle).toHaveAccessibleName('Documents')
+    release()
+    await vi.waitFor(() => {
+      expect(toggle).toHaveAccessibleName(/^Documents \(\d+\)$/)
+    })
+  })
+
   it('says there is nothing to draft before a tool is classified', async () => {
     await openDocuments('/app/documents', { tools: [] })
     expect(
@@ -289,7 +340,7 @@ describe('The Art. 50(3) disclosure', () => {
       tools: [MOOD_METER],
     })
     const article = await preview()
-    expect(within(article).getByRole('region', { name: 'The notice' })).toHaveTextContent(
+    expect(within(article).getByRole('region', { name: 'The disclosure' })).toHaveTextContent(
       'To fill in. Answer it in the guided interview.',
     )
     const interview = screen.getByRole('region', { name: 'Guided interview' })
@@ -301,14 +352,12 @@ describe('The Art. 50(3) disclosure', () => {
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
     ).toEqual([
-      'It recognises emotions',
+      'It recognises emotions or intentions from biometric data',
       'It sorts people into categories from biometric data',
       'Both',
     ])
     // The choice's hint names no document: this one is a disclosure, not a notice.
-    expect(choice).toHaveAccessibleDescription(
-      'Klar writes its own set wording for what you pick.',
-    )
+    expect(choice).toHaveAccessibleDescription('Klar writes its own set wording for what you pick.')
     await user.click(within(choice).getByRole('radio', { name: 'Both' }))
     await user.click(within(interview).getByRole('button', { name: 'Save answer' }))
     await vi.waitFor(() => {
@@ -349,11 +398,14 @@ describe('The Art. 50(3) disclosure', () => {
         'page',
       )
       expect(within(nav).queryByText(/ oder | or /)).not.toBeInTheDocument()
-      if (language === 'en') {
-        // The fixture's drafts with an answer are English: the draft's title is the drafter's.
-        const article = await preview()
-        expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(title)
-      }
+      // The draft's own title, as the drafter writes it in the screen's language.
+      const article = await preview(language === 'de' ? 'Dokumentvorschau' : 'Document preview')
+      expect(within(article).getByRole('heading', { level: 1 })).toHaveTextContent(title)
+      expect(article).toHaveTextContent(
+        language === 'de'
+          ? 'Hier ist ein KI-System zur Emotionserkennung und biometrischen'
+          : 'An AI system for emotion recognition and biometric categorisation',
+      )
     },
   )
 
@@ -372,7 +424,7 @@ describe('The Art. 50(3) disclosure', () => {
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
     ).toEqual([
-      'Es erkennt Emotionen',
+      'Es erkennt Emotionen oder Absichten anhand biometrischer Daten',
       'Es ordnet Personen anhand biometrischer Daten Kategorien zu',
       'Beides',
     ])
@@ -754,6 +806,50 @@ describe('Accessibility', () => {
     })
     await preview()
     expect((await axe(choice.container, AXE_OPTIONS)).violations).toEqual([])
+  })
+})
+
+describe('A stored result the API can’t read', () => {
+  it.each([
+    [
+      'en',
+      'For Applicant screening',
+      "Klar can't read this tool's saved result, so it can't draft its documents. Run the tool's checks again.",
+    ],
+    [
+      'de',
+      'Für Applicant screening',
+      'Klar kann das gespeicherte Ergebnis dieses Tools nicht lesen und deshalb keine Dokumente dafür entwerfen. Führen Sie die Prüfungen für das Tool erneut durch.',
+    ],
+  ] as const)(
+    'says so beside the tool and offers no retry (%s)',
+    async (language, region, line) => {
+      let calls = 0
+      server.use(
+        http.post(LIST_URL, () => {
+          calls += 1
+          return HttpResponse.json({ detail: 'invalid' }, { status: 422 })
+        }),
+      )
+      await openDocuments('/app/documents', { language })
+      const group = await screen.findByRole('region', { name: region })
+      expect(await within(group).findByRole('alert')).toHaveTextContent(line)
+      expect(within(group).queryByRole('button')).toBeNull()
+      expect(calls).toBe(1)
+    },
+  )
+
+  it('says nothing of the kind when only a draft is refused with a 422', async () => {
+    server.use(
+      http.post(DRAFT_URL, () => HttpResponse.json({ detail: 'invalid' }, { status: 422 })),
+    )
+    await openDocuments(`/app/documents/art_26_7_workers?tool=${APPLICANTS}`)
+    const main = await screen.findByRole('main')
+    expect(await within(main).findByRole('alert')).toHaveTextContent(
+      "Klar couldn't draft this document.",
+    )
+    expect(screen.queryByText(/can't read this tool's saved result/)).toBeNull()
+    expect(within(main).getByRole('button', { name: 'Try again' })).toBeEnabled()
   })
 })
 

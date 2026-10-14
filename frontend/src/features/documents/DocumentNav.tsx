@@ -22,6 +22,8 @@ export type NavGroup = {
   answers: AnswersByTemplate
   isLoading: boolean
   isError: boolean
+  /** The API can't read the tool's stored result (a 422): no retry, only a new run helps. */
+  isUnreadableResult: boolean
   onRetry: () => void
 }
 
@@ -58,6 +60,13 @@ function GroupBody({
   onOpen: () => void
 }): JSX.Element {
   const { t } = useTranslation()
+  if (group.isError && group.isUnreadableResult) {
+    return (
+      <p role="alert" className="m-0 px-3 py-2 text-caption text-ink">
+        {t('documents.resultUnreadable')}
+      </p>
+    )
+  }
   if (group.isError) {
     return (
       <div role="alert" className="flex flex-col items-start gap-1 px-3 py-2 text-caption">
@@ -125,13 +134,16 @@ export function DocumentNav({
 }): JSX.Element {
   const { t } = useTranslation()
   const count = groups.reduce((total, group) => total + (group.documents?.length ?? 0), 0)
+  // No count until every tool's list is in: "Documents (0)" would read as none.
+  const isCounting = groups.some((group) => group.isLoading)
+  const label = isCounting ? t('documents.navLabel') : t('documents.navToggle', { count })
   return (
     <GlassPanel
       as="div"
       padded={false}
       className={cn('flex w-full shrink-0 flex-col gap-2.5 px-3.5 py-3 xl:py-5', className)}
     >
-      <ClosedOnSmallScreens label={t('documents.navToggle', { count })} openFrom="xl">
+      <ClosedOnSmallScreens name="documents" label={label} openFrom="xl">
         {(list) => (
           <nav
             id={list.id}
