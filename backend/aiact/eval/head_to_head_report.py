@@ -3,7 +3,9 @@ the draw and the cases' current labels.
 
 Each column (the checker's now, the engine's from V10b) is scored by `column_scores` with the
 engine's own scorers, `metrics.class_match` (risk-class accuracy) and `metrics.class_too_low`
-(false low risk), over the cases it has an answer for. `render_report` takes the engine's classes
+(false low risk), over the cases it has an answer for. The checker column is the sheet's `cases`
+(the agent's runs); the user's hand spot-checks are set beside them, class and differing answers,
+and never scored (decision 036's amendment). `render_report` takes the engine's classes
 as an optional mapping, so V10b fills that column with the same code; without it the column is
 empty.
 """
@@ -19,9 +21,13 @@ from aiact.eval.head_to_head_sheet import (
     CHECKER_URL,
     MEANING_CLASS,
     SCREENSHOT_DIR,
+    SPOT_CHECK_COUNT,
+    SPOT_CHECK_SEED,
+    AnsweredBy,
     CheckerRun,
     HeadToHeadSheet,
     SheetError,
+    spot_check_ids,
 )
 from aiact.eval.metrics import Rate, class_match, class_too_low, rate
 from aiact.schemas.base import ContractModel
@@ -31,6 +37,8 @@ REPORT_FILE = HEAD_TO_HEAD_DIR / "head_to_head.md"
 PENDING = ""
 """A cell of a case not run yet (or an engine column not filled yet)."""
 NO_CLASS = "none (can't determine)"
+NOT_ASKED = "(not asked)"
+"""A spot-check cell for a question only the other run was asked."""
 BACKTICKS = re.compile(r"`+")
 
 ColumnClasses = Mapping[str, RiskClass | None]
@@ -85,17 +93,18 @@ def render_report(
     runs = {run.case_id: run for run in sheet.cases}
     checker = checker_classes(sheet)
     lines = [
-        *_intro(draw),
+        *_intro(draw, sheet),
         *_scores(list(cases.values()), checker, engine),
         *_case_table(draw, runs, cases, checker, engine),
         *_headings_table(sheet),
+        *_spot_check(sheet, draw, runs, cases),
         *_limitations(draw, cases),
         *_answers(draw, runs),
     ]
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
-def _intro(draw: Draw) -> list[str]:
+def _intro(draw: Draw, sheet: HeadToHeadSheet) -> list[str]:
     return [
         "# Head-to-head: the Commission's AI Act Service Desk checker",
         "",
@@ -104,7 +113,8 @@ def _intro(draw: Draw) -> list[str]:
         f"Cases: {draw.size} drawn from the `{draw.labels_ref}` labels "
         f"(`{draw.labels_commit[:12]}`) by seed {draw.seed}, stratified by risk class with at "
         f"least {draw.step_minimum} cases per engine step (`head_to_head_draw.json` states the "
-        "rule). Each case was answered by hand from its description.",
+        "rule).",
+        _answered_line(sheet),
         "Checker: the European Commission's AI Act Service Desk compliance checker "
         f"({CHECKER_URL}), in beta; its results are quoted verbatim per case, with the date run.",
         "Scoring (decision 036): each result maps to one risk class, the strictest of its "
@@ -113,6 +123,21 @@ def _intro(draw: Draw) -> list[str]:
         "Classifications are guidance, not legal advice.",
         "",
     ]
+
+
+def _answered_line(sheet: HeadToHeadSheet) -> str:
+    """Who answered the runs and which checker releases they saw, from the sheet itself."""
+    by_agent = sum(run.answered_by is AnsweredBy.AGENT for run in sheet.cases)
+    by_hand = sum(run.answered_by is AnsweredBy.HAND for run in sheet.spot_checks)
+    done = [run for run in (*sheet.cases, *sheet.spot_checks) if run.is_run]
+    releases = sorted({run.checker_release for run in done if run.checker_release})
+    seen = ", ".join(releases) if releases else "none yet"
+    return (
+        f"Answered (decision 036, amendment 2026-10-14): {by_agent} of {len(sheet.cases)} cases "
+        "by an agent that saw only the case's description (one fresh agent per case), scored; "
+        f"{by_hand} of {SPOT_CHECK_COUNT} spot-checks by hand (below), not scored. Checker "
+        f"question release seen: {seen}."
+    )
 
 
 def _scores(
@@ -209,6 +234,99 @@ def _headings_table(sheet: HeadToHeadSheet) -> list[str]:
     ]
 
 
+def _spot_check(
+    sheet: HeadToHeadSheet,
+    draw: Draw,
+    runs: Mapping[str, CheckerRun],
+    cases: Mapping[str, BenchmarkCase],
+) -> list[str]:
+    hand = {run.case_id: run for run in sheet.spot_checks}
+    pairs = [(runs[case_id], hand.get(case_id)) for case_id in spot_check_ids(draw)]
+    compared = [
+        (agent, by_hand)
+        for agent, by_hand in pairs
+        if by_hand is not None and _both_run(agent, by_hand)
+    ]
+    agree = sum(sheet.checker_class(a) == sheet.checker_class(h) for a, h in compared)
+    return [
+        "## Spot-check",
+        "",
+        f"{SPOT_CHECK_COUNT} cases, one per risk class, picked by seed {SPOT_CHECK_SEED} "
+        "(decision 036, amendment 2026-10-14), are run by the user by hand as well, blind to the "
+        "agent's answers. These hand runs aren't scored.",
+        "",
+        f"{agree} of {len(compared)} agree on the class.",
+        "",
+        "| Case | Our label | Agent class | Hand class | Agree |",
+        "| --- | --- | --- | --- | --- |",
+        *(_spot_row(sheet, agent, by_hand, cases[agent.case_id]) for agent, by_hand in pairs),
+        "",
+        *(line for agent, by_hand in pairs for line in _spot_section(agent, by_hand)),
+    ]
+
+
+def _both_run(agent: CheckerRun, by_hand: CheckerRun) -> bool:
+    return agent.is_run and by_hand.is_run
+
+
+def _spot_row(
+    sheet: HeadToHeadSheet, agent: CheckerRun, by_hand: CheckerRun | None, case: BenchmarkCase
+) -> str:
+    label = case.label.risk_class if isinstance(case.label, CaseLabel) else None
+    agent_class = _run_class(sheet, agent)
+    hand_class = _run_class(sheet, by_hand)
+    agree = PENDING
+    if by_hand is not None and _both_run(agent, by_hand):
+        agree = "yes" if sheet.checker_class(agent) == sheet.checker_class(by_hand) else "no"
+    cells = (
+        f"`{agent.case_id}`",
+        label.value if label else "no class",
+        agent_class,
+        hand_class,
+        agree,
+    )
+    return "| " + " | ".join(cells) + " |"
+
+
+def _run_class(sheet: HeadToHeadSheet, run: CheckerRun | None) -> str:
+    if run is None or not run.is_run:
+        return "not run yet"
+    risk_class = sheet.checker_class(run)
+    return risk_class.value if risk_class else NO_CLASS
+
+
+def _spot_section(agent: CheckerRun, by_hand: CheckerRun | None) -> list[str]:
+    title = f"### Spot-check `{agent.case_id}`"
+    if by_hand is None or not _both_run(agent, by_hand):
+        return [title, "", "Not compared yet: both runs are needed.", ""]
+    differing = _differing_answers(agent, by_hand)
+    body = (
+        [
+            "Answers that differ, verbatim:",
+            "",
+            "| Question | Agent's answer | Hand answer |",
+            "| --- | --- | --- |",
+            *(f"| {_cell(q)} | {_cell(a)} | {_cell(h)} |" for q, a, h in differing),
+        ]
+        if differing
+        else ["Every answer is the same."]
+    )
+    return [title, "", *body, "", *_run_section(by_hand, "#### The hand run")]
+
+
+def _differing_answers(agent: CheckerRun, by_hand: CheckerRun) -> list[tuple[str, str, str]]:
+    """The questions answered differently, or asked in one run only, in the agent's order then
+    the hand run's."""
+    given = {answer.question: answer.answer for answer in agent.answers}
+    hand = {answer.question: answer.answer for answer in by_hand.answers}
+    questions = [*given, *(question for question in hand if question not in given)]
+    return [
+        (question, given.get(question, NOT_ASKED), hand.get(question, NOT_ASKED))
+        for question in questions
+        if given.get(question) != hand.get(question)
+    ]
+
+
 def _limitations(draw: Draw, cases: Mapping[str, BenchmarkCase]) -> list[str]:
     dated = [
         f"`{drawn.case_id}` (judged on {case.as_of.isoformat()})"
@@ -236,10 +354,11 @@ def _answers(draw: Draw, runs: Mapping[str, CheckerRun]) -> list[str]:
     return ["## Runs", "", *(line for section in sections for line in section)]
 
 
-def _run_section(run: CheckerRun) -> list[str]:
-    title = f"### `{run.case_id}`"
+def _run_section(run: CheckerRun, title: str | None = None) -> list[str]:
+    title = title or f"### `{run.case_id}`"
     if run.date is None:
         return [title, "", "Not run yet.", ""]
+    uncertain = set(run.uncertain_questions)
     fence = _fence(run.result_text or "")
     screenshot = (
         [f"- Screenshot: [{run.screenshot}]({SCREENSHOT_DIR.name}/{run.screenshot})"]
@@ -250,6 +369,8 @@ def _run_section(run: CheckerRun) -> list[str]:
         title,
         "",
         f"- Run on: {run.date.isoformat()}",
+        f"- Answered by: {run.answered_by.value if run.answered_by else 'not given'}",
+        f"- Checker question release: {run.checker_release or 'not given'}",
         *screenshot,
         "",
         "Result, verbatim:",
@@ -258,9 +379,13 @@ def _run_section(run: CheckerRun) -> list[str]:
         (run.result_text or "").strip(),
         fence,
         "",
-        "| Question | Answer |",
-        "| --- | --- |",
-        *(f"| {_cell(a.question)} | {_cell(a.answer)} |" for a in run.answers),
+        "| Question | Answer | Uncertain |",
+        "| --- | --- | --- |",
+        *(
+            f"| {_cell(a.question)} | {_cell(a.answer)} | "
+            f"{'yes' if a.question in uncertain else PENDING} |"
+            for a in run.answers
+        ),
         "",
     ]
 

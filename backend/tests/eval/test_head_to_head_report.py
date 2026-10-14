@@ -21,6 +21,7 @@ from aiact.eval.head_to_head_sheet import (
     HeadToHeadSheet,
     check_sheet,
     load_sheet,
+    spot_check_ids,
 )
 from aiact.eval.metrics import Rate, class_match, class_too_low
 from aiact.schemas import Language, Status
@@ -41,6 +42,8 @@ def run(case_id: str, heading: str, **fields: object) -> CheckerRun:
         {
             "case_id": case_id,
             "date": "2026-10-18",
+            "answered_by": "agent",
+            "checker_release": "6.5.1",
             "result_text": f"{heading}. More text.",
             "result_headings": [heading],
             "answers": [{"question": "Who uses it?", "answer": "A bank"}],
@@ -49,10 +52,12 @@ def run(case_id: str, heading: str, **fields: object) -> CheckerRun:
     )
 
 
-def sheet(*runs: CheckerRun) -> HeadToHeadSheet:
+def sheet(*runs: CheckerRun, spot_checks: tuple[CheckerRun, ...] = ()) -> HeadToHeadSheet:
     given = {r.case_id for r in runs}
     pending = [CheckerRun(case_id=c.case_id) for c in DRAW.cases if c.case_id not in given]
-    return HeadToHeadSheet.model_validate({"headings": HEADINGS, "cases": [*runs, *pending]})
+    return HeadToHeadSheet.model_validate(
+        {"headings": HEADINGS, "cases": [*runs, *pending], "spot_checks": spot_checks}
+    )
 
 
 FILLED = sheet(run(HIGH, HIGH_HEADING), run(PROHIBITED, UNSURE_HEADING))
@@ -167,11 +172,82 @@ def test_the_runs_quote_the_result_and_answers_verbatim() -> None:
     text = render_report(filled, DRAW, DRAWN)
     section = text.split(f"### `{HIGH}`", 1)[1].split("### ", 1)[0]
     assert f"````text\n{HIGH_HEADING}\n{result_text}\n````" in section
-    assert "| Is it \\| used? | Yes, always |" in section
+    assert "| Is it \\| used? | Yes, always |  |" in section
     assert "- Screenshot: [high.png](head_to_head/high.png)" in section
     assert "- Run on: 2026-10-18" in section
+    assert "- Answered by: agent\n- Checker question release: 6.5.1" in section
     pending = next(c.case_id for c in DRAW.cases if c.case_id != HIGH)
     assert f"### `{pending}`\n\nNot run yet." in text
+
+
+def test_an_uncertain_question_is_marked_in_its_runs_answers() -> None:
+    filled = sheet(run(HIGH, HIGH_HEADING, uncertain_questions=["Who uses it?"]))
+    section = render_report(filled, DRAW, DRAWN).split(f"### `{HIGH}`", 1)[1]
+    assert "| Question | Answer | Uncertain |" in section
+    assert "| Who uses it? | A bank | yes |" in section
+
+
+def hand(case_id: str, heading: str, **fields: object) -> CheckerRun:
+    return run(case_id, heading, answered_by="hand", **fields)
+
+
+SPOT = spot_check_ids(DRAW)
+SAME, DIFFERENT, UNRUN = SPOT[0], SPOT[1], SPOT[2]
+
+
+def test_the_intro_says_who_answered_and_which_release_from_the_sheet() -> None:
+    filled = sheet(
+        run(HIGH, HIGH_HEADING),
+        run(PROHIBITED, UNSURE_HEADING),
+        spot_checks=(hand(SAME, HIGH_HEADING, checker_release="6.5.2"),),
+    )
+    text = render_report(filled, DRAW, DRAWN)
+    assert (
+        "Answered (decision 036, amendment 2026-10-14): 2 of 25 cases by an agent that saw only "
+        "the case's description (one fresh agent per case), scored; 1 of 5 spot-checks by hand "
+        "(below), not scored. Checker question release seen: 6.5.1, 6.5.2." in text
+    )
+    assert "answered by hand from its description" not in text
+    empty = HeadToHeadSheet(cases=tuple(CheckerRun(case_id=c.case_id) for c in DRAW.cases))
+    assert "0 of 25 cases by an agent" in render_report(empty, DRAW, DRAWN)
+    assert "; 0 of 5 spot-checks by hand" in render_report(empty, DRAW, DRAWN)
+    assert "Checker question release seen: none yet." in render_report(empty, DRAW, DRAWN)
+
+
+def test_the_spot_check_section_compares_the_classes_and_the_answers() -> None:
+    hand_answers = [
+        {"question": "Who uses it?", "answer": "A school"},
+        {"question": "Is it biometric?", "answer": "No"},
+    ]
+    filled = sheet(
+        run(SAME, HIGH_HEADING),
+        run(DIFFERENT, HIGH_HEADING),
+        run(UNRUN, HIGH_HEADING),
+        spot_checks=(
+            hand(SAME, HIGH_HEADING, answers=hand_answers),
+            hand(DIFFERENT, UNSURE_HEADING),
+        ),
+    )
+    text = render_report(filled, DRAW, DRAWN)
+    section = text.split("## Spot-check\n", 1)[1].split("## Limitations", 1)[0]
+    label = {c.case_id: c.risk_class.value for c in DRAW.cases}
+    assert "picked by seed 20261015" in section
+    assert "1 of 2 agree on the class." in section
+    assert f"| `{SAME}` | {label[SAME]} | high_risk | high_risk | yes |" in section
+    assert (
+        f"| `{DIFFERENT}` | {label[DIFFERENT]} | high_risk | none (can't determine) | no |"
+        in section
+    )
+    assert f"| `{UNRUN}` | {label[UNRUN]} | high_risk | not run yet |  |" in section
+    same = section.split(f"### Spot-check `{SAME}`", 1)[1].split("### Spot-check", 1)[0]
+    assert "| Who uses it? | A bank | A school |" in same
+    assert "| Is it biometric? | (not asked) | No |" in same
+    assert "#### The hand run" in same and "- Answered by: hand" in same
+    different = section.split(f"### Spot-check `{DIFFERENT}`", 1)[1].split("### Spot", 1)[0]
+    assert "Every answer is the same." in different
+    unrun = section.split(f"### Spot-check `{UNRUN}`", 1)[1]
+    assert unrun.startswith("\n\nNot compared yet: both runs are needed.")
+    assert section.count("### Spot-check `") == 5
 
 
 def test_an_engine_mapping_fills_the_engine_column() -> None:
