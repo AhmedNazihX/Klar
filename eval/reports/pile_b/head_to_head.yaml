@@ -1,0 +1,170 @@
+# Head-to-head (V10a, decision 036): the Commission's AI Act Service Desk checker, run by hand.
+# Checker: https://ai-act-service-desk.ec.europa.eu/en/eu-ai-act-compliance-checker
+# The cases come from head_to_head_draw.json (seed and rule there). For each case, answer the
+# checker's questions from the case's description (eval/cases/<set>/), then fill in:
+#   date             the day you ran it (YYYY-MM-DD)
+#   result_text      the checker's result, copied verbatim
+#   result_headings  each outcome heading the result shows, exactly as written there
+#   answers          every question the checker asked, with your answer, verbatim:
+#                    - question: "..."
+#                      answer: "..."
+#   screenshot       optional: a file name in head_to_head/ next to this file
+# headings: give every heading a case shows a row, its exact text and what it means, before any
+# case is scored, for example:
+#   headings:
+#     "Exact heading text from the checker": high_risk
+# Meanings: prohibited_practice, high_risk, transparency_only, no_specific_duties, act_does_not_apply, cannot_determine.
+# Check:  uv run aiact evaluate head-to-head check
+# Report: uv run aiact evaluate head-to-head render
+headings: {}
+cases:
+  - case_id: "cb-014-bank-fraud-voice-watchlist"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-075-outage-early-warning"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-116-social-job-ad-audiences"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-151-screening-invitation-targeting"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-156-caseworker-fact-lookup"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-206-device-data-recovery"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-222-missing-child-suspect-filter"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "cb-261-case-file-folder-sorting"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-a-05-vacuum-ad-synthetic-customers"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-a-09-newsroom-reviewed-drafts"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-b-01-overtime-payroll-rules"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-b-06-recon-vehicle-detection"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-b-08-university-protein-model"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-b-10-open-source-plant-app"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-b-12-texas-booking-chat"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-01-undress-photo-app"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-03-image-tool-with-safeguards"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-05-gossip-site-fake-nudes"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-07-unfiltered-image-generator"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-11-police-burglary-risk-list"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-c-14-kids-game-sad-pet-offers"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-d-01-own-brand-screening"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-d-07-office-assistant-seats"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-e-03-talking-plush-toy"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-e-13-wheelchair-obstacle-stop"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
