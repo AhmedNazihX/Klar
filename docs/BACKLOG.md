@@ -1201,6 +1201,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   DoD: each of the three questions is answered with a source link and the date checked, on both runs; if the guidelines are final, the mapping-and-reload story is added to the backlog and the README limitation is noted on the README story.
   Notes from merged stories: B2 (001): if the Commission has adopted final high-risk guidelines, the examples and their hr-ex numbering may change; 001 covers the 2026-05-19 draft only.
   **Run 1 merged (2026-10-01):** guidelines still a draft (adoption expected by end of 2026), so decision 021 is not triggered; simplified tech-doc form not published; Bitkom's 69% is from the 2024 survey (n=602, 9 Sep 2024), and INIT was corrected with the user's sign-off. Decision 007 holds the Run 2 table and instructions. Leave W0 unticked until Run 2, immediately before W1 starts.
+  **Orchestrator (2026-10-14):** User decision (2026-10-14, option a): don't launch W0 early; run Run 2 once, immediately before W1 starts (after B11, V10a, V9, V10b and E20 are merged). An early interim check (b) was declined: Run 1 found adoption expected only by end of 2026.
 
 - [ ] **W1 · Final evaluation (2 full runs)** · Deps: V5, V6, V7, V8, V9, V10b, P7, W0, C7b, E11, E12, E13, P8a, P8b, P10, P11, E20 · Type: mixed
   Output: `eval/reports/final.md` with every INIT metric, per benchmark, per language and per business function, the gap number, and head-to-head; own-case accuracy labelled "development cases" (decision 018).
