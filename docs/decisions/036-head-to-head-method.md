@@ -93,3 +93,18 @@ then, before any case is scored.
   the engine always commits to a class (flagging "needs more information"), while a "don't know" can lead the checker
   to "can't determine", a miss. Rule B gives both the same footing; case-02 was re-run under it, and the report
   counts the uncertain answers per run.
+- **Runs and spot-check outcome (2026-10-14).** All 25 cases were answered by blind agents on question release
+  6.5.1 (Claude Code tokens: 1,738,158 for the 25 kept runs, plus 73,829 for case-02's run under the first rule,
+  kept aside, not scored; OpenRouter $0). The result sentences were mapped to classes by the user's confirmed
+  `headings` table (the "Risk level assessment" sentences, plus the prohibited, Art. 2 exclusion and Art. 50
+  sentences, which the checker prints under "Your obligations"). The user's 5 hand runs agree with the agent's on
+  the class in 3 of 5. Both disagreements were reviewed with the user one at a time:
+  - the high-risk spot-check case (border screening): the hand run's "exclusively military, defence or national
+    security" answer (Art. 2(3)) was a slip; the agent's Annex III point 7(b) route is right (user).
+  - the minimal-risk spot-check case (job-ad wording tool): the hand run's "interacts directly with natural
+    persons" tick (Art. 50(1)) was a slip; the agent's "not an AI system" is a judgement call it flagged as
+    uncertain (expert-written pattern lists), which differs from the label (user). On borderline descriptions the
+    checker's result turns on how the answerer reads "is it an AI system?" and "does it interact with people?".
+  - Copy slips in the hand runs were corrected with the user's agreement (option labels' case and spelling, one
+    question title, the role question's section title replaced by its question text, a lower-case "it"); the
+    scored agent runs are unchanged.
