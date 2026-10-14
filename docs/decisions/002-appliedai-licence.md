@@ -43,5 +43,8 @@ that INIT › Risks made the condition for publishing descriptions.
 - `tests/test_isolation.py` now always checks the appliedAI texts against the corpus (before, only when the
   private file happened to be present).
 - V9 runs the 106 German cases; the English stays in the source JSON if a language comparison is wanted later.
+- V9's review uses a fourth verdict, `label error` (user, 2026-10-14): the experts' 2023 label didn't fit even
+  the 2021 text, and the engine's answer is right today. It deviates from INIT › Disagreement review's three, so the
+  report can tell legal change (`outdated label`) from expert error; both leave the "after" accuracy, counted apart.
 - Revisit if appliedAI changes the licence or the table. Re-extract from a new snapshot then, keeping the old one
   for the runs already stored.

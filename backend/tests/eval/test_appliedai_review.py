@@ -45,6 +45,10 @@ DESCRIPTION = "Ein erfundenes System zur Bewerbervorauswahl."
 COMMENT = "High risk, since it ranks applicants (made-up comment)"
 HIGH, LOW, UNCLEAR = AppliedAILabel.HIGH, AppliedAILabel.LOW, AppliedAILabel.UNCLEAR
 END = "## Annex I disagreements (1)\n"
+NO_VERDICTS = "engine error 0, outdated label 0, label error 0, ambiguous 0"
+LEFT_OUT = "Left out of the after column:"
+OUTDATED_SAID = "outdated by later law (`outdated label`)"
+WRONG_SAID = "wrong when made (`label error`)"
 
 
 def info(benchmark: str = CaseSet.APPLIEDAI.value) -> RunInfo:
@@ -173,8 +177,8 @@ def test_accuracy_before_the_verdicts_equals_the_run_report() -> None:
     assert "| Every case | 50.0% (3/6) | 50.0% (3/6) |" in lines
     assert "| Without the Annex I cases | 50.0% (2/4) | 50.0% (2/4) |" in lines
     assert "| Annex I cases only | 50.0% (1/2) | 50.0% (1/2) |" in lines
-    counts = "Verdicts: 0 of 5 disagreements (engine error 0, outdated label 0, ambiguous 0)."
-    assert counts in lines
+    assert f"Verdicts: 0 of 5 disagreements ({NO_VERDICTS})." in lines
+    assert f"{LEFT_OUT} 0 labels, 0 {OUTDATED_SAID} and 0 {WRONG_SAID}." in lines
     assert "The after column is provisional: 5 disagreements have no verdict yet." in lines
     assert "Counted separately (needs_more_information on an `unclear` case): 1." in lines
 
@@ -191,15 +195,59 @@ def test_cases_marked_outdated_label_leave_the_after_column_only() -> None:
     assert "| Every case | 50.0% (3/6) | 75.0% (3/4) |" in lines
     assert "| Without the Annex I cases | 50.0% (2/4) | 66.7% (2/3) |" in lines
     assert "| Annex I cases only | 50.0% (1/2) | 100.0% (1/1) |" in lines
-    counts = "Verdicts: 5 of 5 disagreements (engine error 2, outdated label 2, ambiguous 1)."
+    counts = (
+        "Verdicts: 5 of 5 disagreements "
+        "(engine error 2, outdated label 2, label error 0, ambiguous 1)."
+    )
     assert counts in lines
+    assert f"{LEFT_OUT} 2 labels, 2 {OUTDATED_SAID} and 0 {WRONG_SAID}." in lines
     assert not any(line.startswith("The after column is provisional") for line in lines)
+
+
+def test_cases_marked_label_error_leave_the_after_column_too() -> None:
+    verdicts = {
+        "aai-002": written("label error: wrong even under the 2021 text"),
+        "aai-005": written("Label Error"),
+    }
+    lines = render_review(review(verdicts)).splitlines()
+    heading = "| Cases | Before excluding outdated and wrong labels "
+    assert f"{heading}| After excluding outdated and wrong labels |" in lines
+    assert "| Every case | 50.0% (3/6) | 75.0% (3/4) |" in lines
+    assert "| Without the Annex I cases | 50.0% (2/4) | 66.7% (2/3) |" in lines
+    assert "| Annex I cases only | 50.0% (1/2) | 100.0% (1/1) |" in lines
+
+
+def test_label_errors_are_counted_apart_from_outdated_labels() -> None:
+    verdicts = {
+        "aai-002": written("outdated label"),
+        "aai-003": written("ambiguous"),
+        "aai-005": written("label error"),
+        "aai-006": written("engine error"),
+    }
+    lines = render_review(review(verdicts)).splitlines()
+    counts = (
+        "Verdicts: 4 of 5 disagreements "
+        "(engine error 1, outdated label 1, label error 1, ambiguous 1)."
+    )
+    assert counts in lines
+    assert f"{LEFT_OUT} 2 labels, 1 {OUTDATED_SAID} and 1 {WRONG_SAID}." in lines
+    row = "| aai-005 | law | unclear | minimal_risk, decided | no | yes | label error |"
+    assert row in lines
 
 
 def test_accuracy_per_appliedai_function() -> None:
     lines = render_review(review({"aai-002": written("outdated label")})).splitlines()
     assert "| human_resource_management | 2 | 1 | 50.0% (1/2) | 100.0% (1/1) |" in lines
     assert "| law | 6 | 4 | 50.0% (2/4) | 50.0% (2/4) |" in lines
+
+
+def test_accuracy_per_appliedai_function_without_the_label_errors() -> None:
+    verdicts = {"aai-002": written("label error"), "aai-005": written("label error")}
+    lines = render_review(review(verdicts)).splitlines()
+    heading = "| Function | Cases | Disagreements | Before excluding outdated and wrong labels "
+    assert f"{heading}| After excluding outdated and wrong labels |" in lines
+    assert "| human_resource_management | 2 | 1 | 50.0% (1/2) | 100.0% (1/1) |" in lines
+    assert "| law | 6 | 4 | 50.0% (2/4) | 66.7% (2/3) |" in lines
 
 
 # --- the file ------------------------------------------------------------------------------------
@@ -297,14 +345,18 @@ def test_an_experts_comment_cannot_write_a_verdict() -> None:
         ("engine error", Verdict.ENGINE_ERROR),
         ("Engine Error, the scope step misread it", Verdict.ENGINE_ERROR),
         ("outdated label: Art. 6(3)", Verdict.OUTDATED_LABEL),
+        ("label error", Verdict.LABEL_ERROR),
+        ("LABEL ERROR: no Annex III point even in 2021", Verdict.LABEL_ERROR),
         ("ambiguous", Verdict.AMBIGUOUS),
     ],
 )
-def test_a_verdict_starts_with_one_of_the_three(text: str, verdict: Verdict) -> None:
+def test_a_verdict_starts_with_one_of_the_four(text: str, verdict: Verdict) -> None:
     assert parse_verdict("aai-001", text) is verdict
 
 
-@pytest.mark.parametrize("text", ["ambiguously right", "label outdated", "maybe"])
+@pytest.mark.parametrize(
+    "text", ["ambiguously right", "label outdated", "label errors", "error label", "maybe"]
+)
 def test_any_other_verdict_is_refused(text: str) -> None:
     with pytest.raises(ReviewFormatError, match="aai-001: a verdict starts with one of"):
         parse_verdict("aai-001", text)
@@ -345,7 +397,32 @@ def test_a_note_line_starting_with_a_hash_is_refused_not_cut(heading: str) -> No
 def test_the_review_is_written_to_the_story_output_by_default() -> None:
     assert REVIEW_FILE.relative_to(EVAL_DIR.parent).as_posix() == "eval/reports/appliedai_review.md"
     assert VERDICT_MARK == "**Verdict:**"
-    assert [verdict.value for verdict in Verdict] == ["engine error", "outdated label", "ambiguous"]
+    values = [verdict.value for verdict in Verdict]
+    assert values == ["engine error", "outdated label", "label error", "ambiguous"]
+    assert "`label error` (the label didn't fit even the 2021 text" in HOW_TO
+
+
+def test_a_file_written_with_the_three_first_verdicts_reads_back_unchanged() -> None:
+    """A review drafted before `label error` existed: old headings, no left-out line."""
+    new = render_review(review())
+    old = new.replace("outdated and wrong labels", "outdated labels").splitlines()
+    old_text = "\n".join(line for line in old if not line.startswith(LEFT_OUT))
+    assert "outdated and wrong" not in old_text and LEFT_OUT not in old_text
+    texts = {
+        "aai-002": "engine error",
+        "aai-003": "outdated label: Art. 6(3) exempts it",
+        "aai-005": "ambiguous: Annex I route open\nsecond line of the note",
+    }
+    verdicts = read_verdicts(with_verdicts(old_text, texts))
+    assert verdicts == {
+        "aai-002": WrittenVerdict(Verdict.ENGINE_ERROR, texts["aai-002"]),
+        "aai-003": WrittenVerdict(Verdict.OUTDATED_LABEL, texts["aai-003"]),
+        "aai-005": WrittenVerdict(Verdict.AMBIGUOUS, texts["aai-005"]),
+    }
+    again = render_review(review(verdicts))
+    assert read_verdicts(again) == verdicts
+    for text in texts.values():
+        assert f"{VERDICT_MARK} {text}" in again
 
 
 def test_verdicts_of_another_run_are_never_overwritten(tmp_path: Path) -> None:

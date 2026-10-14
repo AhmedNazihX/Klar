@@ -124,8 +124,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── head_to_head_report.py the report and its per-column scores; V10b fills the engine column (V10a)
 │   │   │   ├── head_to_head_command.py  `aiact evaluate head-to-head draw|check|render`, registered by cli.py (V10a)
 │   │   │   ├── appliedai_review.py  an appliedai run's disagreements, the user's verdicts read back, accuracy
-│   │   │   │                        before and after the outdated labels (V9); appliedai_review_report.py: the
-│   │   │   │                        markdown; appliedai_review_command.py: `aiact evaluate appliedai-review` (V9)
+│   │   │   │                        before and after the outdated and wrong labels (V9);
+│   │   │   │                        appliedai_review_report.py: the markdown; appliedai_review_command.py:
+│   │   │   │                        `aiact evaluate appliedai-review` (V9)
 │   │   │   ├── citation_index.py    citation existence against the corpus (doc_key, provision, language, version) (V2)
 │   │   │   ├── baselines.py         `baseline_luna` (engine model, one prompt, no retrieval) and `baseline_jev` (V3)
 │   │   │   ├── judge.py             the judge: Jev's probability of yes first, the pinned backup LLM judge for

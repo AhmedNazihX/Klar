@@ -4,15 +4,18 @@
 `appliedai` run: every case with the experts' label and the engine's answer, and every case that
 goes to the disagreement review (`metrics.needs_appliedai_review`, the run report's "appliedAI
 disagreement review" count) with an empty verdict for the user to write: engine error, outdated
-label (the 2023 label no longer fits the law), or ambiguous. Annex I cases (the `annex_i` tag,
-"Annex II" in the experts' 2021 wording) are listed in their own section.
+label (the 2023 label no longer fits the law), label error (the label didn't fit even the 2021
+text, so no change in law explains it, and the engine's answer is right today), or ambiguous. INIT
+names three verdicts; `label error` is the user's fourth (decision 002), so the report can tell
+legal change from expert error. Annex I cases (the `annex_i` tag, "Annex II" in the experts' 2021
+wording) are listed in their own section.
 
 Running the command again reads the verdicts back and keeps them, so the same command recomputes
-risk-class accuracy before and after excluding the cases marked outdated label, overall, without
-the Annex I cases, for the Annex I cases alone, and per appliedAI `function:*` tag. Accuracy is
-`metrics.summarize`'s, so the "before" number equals the run report's. A report holds the verdicts
-of one run: one whose verdicts belong to another run is never overwritten. `--check` is the DoD's
-check: every disagreement has a verdict.
+risk-class accuracy before and after excluding the cases marked outdated label or label error,
+overall, without the Annex I cases, for the Annex I cases alone, and per appliedAI `function:*`
+tag. Accuracy is `metrics.summarize`'s, so the "before" number equals the run report's. A report
+holds the verdicts of one run: one whose verdicts belong to another run is never overwritten.
+`--check` is the DoD's check: every disagreement has a verdict.
 
 The rendering is in `appliedai_review_report`.
 """
@@ -62,11 +65,17 @@ DETAIL_PREFIXES = (
 
 
 class Verdict(StrEnum):
-    """The user's verdict on one disagreement (INIT > Disagreement review)."""
+    """The user's verdict on one disagreement: INIT > Disagreement review's three, plus
+    `label error` (decision 002)."""
 
     ENGINE_ERROR = "engine error"
     OUTDATED_LABEL = "outdated label"
+    LABEL_ERROR = "label error"
     AMBIGUOUS = "ambiguous"
+
+
+EXCLUDED_VERDICTS = frozenset({Verdict.OUTDATED_LABEL, Verdict.LABEL_ERROR})
+"""The verdicts whose cases leave the "after" accuracy: the label, not the engine, is wrong."""
 
 
 class NotAppliedAIRunError(ValueError):
@@ -146,12 +155,17 @@ class Review:
         return tuple(c.case_id for c in self.disagreements if c.case_id not in self.verdicts)
 
     @property
-    def outdated(self) -> frozenset[str]:
+    def excluded(self) -> frozenset[str]:
+        """The cases left out of the "after" accuracy, those with one of `EXCLUDED_VERDICTS`."""
         return frozenset(
             case_id
             for case_id, written in self.verdicts.items()
-            if written.verdict is Verdict.OUTDATED_LABEL
+            if written.verdict in EXCLUDED_VERDICTS
         )
+
+    def count(self, verdict: Verdict) -> int:
+        """How many disagreements the user marked `verdict`."""
+        return sum(written.verdict is verdict for written in self.verdicts.values())
 
 
 def accuracy(cases: Iterable[ReviewCase], excluded: frozenset[str] = frozenset()) -> Rate:

@@ -37,13 +37,17 @@ QUOTE_CREDIT = "appliedAI Institute for Europe gGmbH, CC BY 4.0"
 HOW_TO = (
     f"**How to write a verdict.** Under each disagreement, after `{VERDICT_MARK}`, write "
     f"`{Verdict.ENGINE_ERROR.value}`, `{Verdict.OUTDATED_LABEL.value}` (the 2023 label no longer "
-    f"fits the law) or `{Verdict.AMBIGUOUS.value}`, then any note of your own (for example "
+    f"fits the law), `{Verdict.LABEL_ERROR.value}` (the label didn't fit even the 2021 text, so "
+    "no change in law explains it, and the engine's answer is right today) or "
+    f"`{Verdict.AMBIGUOUS.value}`, then any note of your own (for example "
     f"`{Verdict.OUTDATED_LABEL.value}: Art. 6(3) exempts it`). Keep the mark exactly as written "
     "and write only after it; a note line must not start with `#`. Then run "
     "`uv run aiact evaluate appliedai-review <run id>` again (from `backend/`): it keeps every "
-    "verdict and recomputes the accuracy after excluding the outdated labels. `--check` fails "
-    "while a disagreement has no verdict."
+    "verdict and recomputes the accuracy after excluding the outdated and wrong labels. "
+    "`--check` fails while a disagreement has no verdict."
 )
+BEFORE = "Before excluding outdated and wrong labels"
+AFTER = "After excluding outdated and wrong labels"
 MATCH_RULES = (
     "Matching follows INIT's appliedAI mapping (`score_appliedai`): `low` accepts limited_risk, "
     "minimal_risk and out_of_scope (out_of_scope is reviewed all the same); `unclear` matches "
@@ -112,7 +116,7 @@ def _header(review: Review) -> str:
 
 
 def _accuracy(review: Review, others: Sequence[ReviewCase], annex_i: Sequence[ReviewCase]) -> str:
-    outdated = review.outdated
+    excluded = review.excluded
     rows = (
         ("Every case", review.cases),
         ("Without the Annex I cases", others),
@@ -121,14 +125,15 @@ def _accuracy(review: Review, others: Sequence[ReviewCase], annex_i: Sequence[Re
     lines = [
         "## Risk-class accuracy",
         "",
-        "| Cases | Before excluding outdated labels | After excluding outdated labels |",
+        f"| Cases | {BEFORE} | {AFTER} |",
         "| --- | ---: | ---: |",
         *(
-            f"| {name} | {accuracy(cases).with_counts} | {accuracy(cases, outdated).with_counts} |"
+            f"| {name} | {accuracy(cases).with_counts} | {accuracy(cases, excluded).with_counts} |"
             for name, cases in rows
         ),
         "",
         _verdict_counts(review),
+        _excluded_counts(review),
     ]
     if review.missing:
         lines.append(
@@ -145,12 +150,19 @@ def _accuracy(review: Review, others: Sequence[ReviewCase], annex_i: Sequence[Re
 
 
 def _verdict_counts(review: Review) -> str:
-    written = list(review.verdicts.values())
-    counts = ", ".join(
-        f"{verdict.value} {sum(w.verdict is verdict for w in written)}" for verdict in Verdict
-    )
+    counts = ", ".join(f"{verdict.value} {review.count(verdict)}" for verdict in Verdict)
     total = len(review.disagreements)
-    return f"Verdicts: {len(written)} of {total} disagreements ({counts})."
+    return f"Verdicts: {len(review.verdicts)} of {total} disagreements ({counts})."
+
+
+def _excluded_counts(review: Review) -> str:
+    outdated = review.count(Verdict.OUTDATED_LABEL)
+    wrong = review.count(Verdict.LABEL_ERROR)
+    return (
+        f"Left out of the after column: {len(review.excluded)} labels, {outdated} outdated by "
+        f"later law (`{Verdict.OUTDATED_LABEL.value}`) and {wrong} wrong when made "
+        f"(`{Verdict.LABEL_ERROR.value}`)."
+    )
 
 
 def _by_function(review: Review) -> str:
@@ -162,8 +174,7 @@ def _by_function(review: Review) -> str:
         "",
         "appliedAI's own enterprise function (the `function:*` tag), Annex I cases included.",
         "",
-        "| Function | Cases | Disagreements | Before excluding outdated labels "
-        "| After excluding outdated labels |",
+        f"| Function | Cases | Disagreements | {BEFORE} | {AFTER} |",
         "| --- | ---: | ---: | ---: | ---: |",
     ]
     for function in sorted(groups):
@@ -171,7 +182,7 @@ def _by_function(review: Review) -> str:
         disagreements = sum(case.needs_review for case in cases)
         lines.append(
             f"| {_cell(function)} | {len(cases)} | {disagreements} "
-            f"| {accuracy(cases).with_counts} | {accuracy(cases, review.outdated).with_counts} |"
+            f"| {accuracy(cases).with_counts} | {accuracy(cases, review.excluded).with_counts} |"
         )
     return "\n".join([*lines, ""])
 
