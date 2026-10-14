@@ -769,15 +769,17 @@ NOT_ASSUMED_D = {
 def test_no_sign_of_crime_prediction_is_asked_not_assumed(
     language: Language, law_version: LawVersion
 ) -> None:
-    """The user's rule (2026-10-15): with no sign of the practice of point (d), the step decides
-    not prohibited and asks whether the system predicts offending; it assumes no ban, so a
-    later Annex III finding isn't overridden. The same under the original text, which has (d)."""
+    """The user's rule (2026-10-15): with no sign of the practice of point (d), the step assumes
+    no ban, so a later Annex III finding isn't overridden, and asks whether the system predicts
+    offending: it needs more information, with no match (option B). The same under the original
+    text, which has (d)."""
     result = outcome(answer(NO_CRIME_RISK_CUE), state(language=language, law_version=law_version))
     step = result.step
     assert not result.matched
     assert result.prohibited_points == ()
-    assert step.status is Status.DECIDED
-    assert step.missing_fact is None and step.open_question is None
+    assert step.status is Status.NEEDS_MORE_INFORMATION
+    assert step.open_question is None
+    assert step.missing_fact is not None and step.missing_fact.id == "crime_risk_assessment"
     assert [q.id for q in result.follow_up_questions] == ["crime_risk_assessment"]
     assert [q.about for q in result.follow_up_questions] == ["art:5:1:d"]
     assert NOT_ASSUMED_D[language] in step.decision
@@ -1337,10 +1339,14 @@ def test_no_sign_of_crime_prediction_runs_every_check_with_no_ban_assumed() -> N
     final = _run(check)
     assert tuple(s.step for s in final.get("steps", ())) == STEP_ORDER
     assert "prohibited_points" not in final
+    assert StepName.PROHIBITED not in final.get("matches", ())
     result = final.get("result")
     assert result is not None
-    assert result.risk_class is RiskClass.MINIMAL_RISK
-    assert "crime_risk_assessment" in [q.id for q in result.follow_up_questions]
+    assert result.risk_class is RiskClass.MINIMAL_RISK  # never prohibited on the open question
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    statuses = {s.step: s.status for s in result.steps}
+    assert statuses[StepName.PROHIBITED] is Status.NEEDS_MORE_INFORMATION
+    assert result.follow_up_questions[0].id == "crime_risk_assessment"
 
 
 REFUSAL_TEXT = "I'm sorry, but I cannot assist with that request."

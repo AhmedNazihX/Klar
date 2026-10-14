@@ -26,8 +26,9 @@ Act's rules are applied here, in code:
   practice is open on in law is read on its stricter side, so only another fact can rule the
   practice out (E19, `open_in_law`). A fact left open on Art. 5(1)(d) assumes the ban only when
   the description gives a sign of the practice (it assesses a person's risk of offending, or
-  rests on profiling alone); without one the step asks the question and assumes nothing
-  (`has_cue`, user, 2026-10-15).
+  rests on profiling alone); without one the step asks the question and assumes nothing: it
+  `needs_more_information` with no match, so it never makes the class prohibited (`has_cue`,
+  user, 2026-10-15).
 - **Matched points.** A match names the points it rests on (`prohibited_points`), so the role
   step lists only the duties of the prohibition the system falls under.
 
@@ -164,7 +165,8 @@ def settle(answer: ProhibitedAnswer, law_version: LawVersion, as_of: date) -> Se
     open on it, decides prohibited; otherwise one the law leaves open, then one open on a fact
     that the description gives a sign of, keeps prohibited as the working assumption; otherwise
     no practice matches. A practice open on a fact with no sign of it is asked, not assumed
-    (Art. 5(1)(d), user, 2026-10-15)."""
+    (Art. 5(1)(d), user, 2026-10-15): with no match, the step `needs_more_information` until
+    it is answered, and the class is left to the later checks."""
     read = practices(answer, law_version)
     in_force = [p for p in read if as_of >= p.applies_from]
     not_yet = tuple(
@@ -190,8 +192,11 @@ def settle(answer: ProhibitedAnswer, law_version: LawVersion, as_of: date) -> Se
             not_assumed=not_assumed,
         )
     considered = tuple(p for p in in_force if p.is_raised and p not in not_assumed)
+    # A question left open keeps the step undecided, but nothing is assumed: no match, so the
+    # class stays what the later checks find (user, 2026-10-15, option B).
+    is_asked = bool(_open_facts(not_assumed))
     return Settlement(
-        Status.DECIDED,
+        Status.NEEDS_MORE_INFORMATION if is_asked else Status.DECIDED,
         matched=False,
         considered=considered,
         not_yet=not_yet,
