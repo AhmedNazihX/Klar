@@ -12,8 +12,9 @@ import re
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
+from aiact.eval.appliedai_review_report import _cell
 from aiact.eval.cases import CASES_DIR, BenchmarkCase, CaseLabel, load_cases
-from aiact.eval.head_to_head import DRAW_SETS, HEAD_TO_HEAD_DIR, Draw, DrawnCase
+from aiact.eval.head_to_head import DRAW_SETS, HEAD_TO_HEAD_DIR, Draw, DrawnCase, DrawStep
 from aiact.eval.head_to_head_sheet import (
     CHECKER_URL,
     MEANING_CLASS,
@@ -22,7 +23,7 @@ from aiact.eval.head_to_head_sheet import (
     HeadToHeadSheet,
     SheetError,
 )
-from aiact.eval.metrics import Rate, class_match, class_too_low
+from aiact.eval.metrics import Rate, class_match, class_too_low, rate
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass
 
@@ -49,16 +50,11 @@ def column_scores(cases: Iterable[BenchmarkCase], classes: ColumnClasses) -> Col
     """Risk-class accuracy and the false-low-risk rate of one column's classes (no class is a
     miss, as for the engine), over the cases with an entry in `classes`."""
     answered = [case for case in cases if case.id in classes]
-    matches = [class_match(case, classes[case.id]) for case in answered]
-    too_low = [class_too_low(case, classes[case.id]) for case in answered]
     return ColumnScores(
-        answered=len(answered), risk_class_accuracy=_rate(matches), false_low_risk=_rate(too_low)
+        answered=len(answered),
+        risk_class_accuracy=rate(answered, lambda case: class_match(case, classes[case.id])),
+        false_low_risk=rate(answered, lambda case: class_too_low(case, classes[case.id])),
     )
-
-
-def _rate(scores: Iterable[bool | None]) -> Rate:
-    counted = [score for score in scores if score is not None]
-    return Rate(hits=sum(counted), total=len(counted))
 
 
 def checker_classes(sheet: HeadToHeadSheet) -> dict[str, RiskClass | None]:
@@ -128,22 +124,17 @@ def _scores(
     lines = [
         "## Scores",
         "",
-        "| Column | Cases answered | Risk-class accuracy | Count | False-low-risk rate | Count |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| Column | Cases answered | Risk-class accuracy | False-low-risk rate |",
+        "| --- | ---: | ---: | ---: |",
         *(
             f"| {name} | {scores.answered} of {len(cases)} | "
-            f"{scores.risk_class_accuracy.percent} | {_count(scores.risk_class_accuracy)} | "
-            f"{scores.false_low_risk.percent} | {_count(scores.false_low_risk)} |"
+            f"{scores.risk_class_accuracy.with_counts} | {scores.false_low_risk.with_counts} |"
             for name, scores in rows
         ),
     ]
     if engine is None:
-        lines.append("| Engine | not filled yet (V10b) | | | | |")
+        lines.append("| Engine | not filled yet (V10b) | | |")
     return [*lines, ""]
-
-
-def _count(rate: Rate) -> str:
-    return f"{rate.hits}/{rate.total}"
 
 
 def _case_table(
@@ -224,10 +215,13 @@ def _limitations(draw: Draw, cases: Mapping[str, BenchmarkCase]) -> list[str]:
         for drawn in draw.cases
         if (case := cases[drawn.case_id]).as_of is not None
     ]
+    roles = [f"`{drawn.case_id}`" for drawn in draw.cases if DrawStep.ROLES in drawn.steps]
     lines = [
         "## Limitations",
         "",
         "- The checker is a beta and its outcomes may change; each case gives the date it was run.",
+        f"- The roles step is in the draw ({', '.join(roles)}), but a class-only score can't show "
+        "it: roles aren't compared, and these cases' classes don't depend on the role.",
     ]
     if dated:
         lines.append(
@@ -275,8 +269,3 @@ def _fence(text: str) -> str:
     """A code fence longer than any backtick run in `text`, so the text can't close it."""
     longest = max((len(run) for run in BACKTICKS.findall(text)), default=0)
     return "`" * max(3, longest + 1)
-
-
-def _cell(value: str) -> str:
-    """A table-safe cell: one line, `|` escaped."""
-    return " ".join(value.split()).replace("|", "\\|")

@@ -9,7 +9,10 @@ The rule (`DRAW_RULE`), fixed and committed before any checker run:
   the pool; a class whose share isn't whole gets one more, in seeded order.
 - **Steps.** Every engine step (`DrawStep`) gets at least `STEP_MINIMUM` cases. Steps are served
   first, in `DrawStep` order, each by seeded picks among the cases that exercise it and whose
-  class still has room; then every class is filled to its share by a seeded sample.
+  class still has room; then every class is filled to its share by a seeded sample. For the Annex
+  steps (`POSITIVE_STEPS`) at least one of those cases is a positive, a high-risk label reached
+  through that Annex, when the pool has one: the step's picks are among its positives until one
+  is drawn.
 
 A case exercises a step by what decides its label (`case_steps`): an own case by its category
 (a transparency, b scope, c prohibited practices, d roles, e Annex I, f Annex III), a Commission
@@ -25,7 +28,6 @@ import io
 import json
 import random
 import re
-import subprocess
 import tarfile
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
@@ -38,7 +40,7 @@ from pydantic import Field, ValidationError, model_validator
 
 from aiact.eval.cases import ART_6_3_FILTER, BenchmarkCase, CaseLabel, CaseSet, load_cases
 from aiact.eval.label_filter import PILE_B_FOLDER, REPORTS_DIR
-from aiact.eval.label_freeze import CASES_PATH, REPO_DIR
+from aiact.eval.label_freeze import CASES_PATH, REPO_DIR, FreezeCheckError, git_bytes
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import Language, RiskClass, Status
 
@@ -64,8 +66,10 @@ DRAW_RULE = (
     "a class whose share isn't whole getting one more in seeded order. Steps: each engine step, "
     "in order (scope, prohibited, annex_iii, annex_i, art_6_3, transparency, roles), first gets "
     "seeded picks among the cases that exercise it and whose class still has room, until it has "
-    "the step minimum; then each class is filled to its share by a seeded sample. A case "
-    "exercises: own category a transparency, b scope, c prohibited, d roles, e annex_i, "
+    "the step minimum and, for annex_iii and annex_i, a positive (label class high_risk) when "
+    "the pool has one: while it lacks that positive, the pick is among its positives. Then each "
+    "class is filled to its share by a seeded sample. A case exercises: own category a "
+    "transparency, b scope, c prohibited, d roles, e annex_i, "
     "f annex_iii; Commission area annex_i or annex_iii_*; label class out_of_scope scope, "
     "prohibited prohibited, limited_risk transparency; art_6_3 when its basis is the Art. 6(3) "
     "filter or it cites a lettered Art. 6(3) condition. Cases are sorted by set, then id."
@@ -100,6 +104,9 @@ CLASS_STEPS: Mapping[RiskClass, DrawStep] = {
     RiskClass.LIMITED_RISK: DrawStep.TRANSPARENCY,
 }
 """The classes only one step can give: whatever the case's category, that step decided it."""
+POSITIVE_STEPS = frozenset({DrawStep.ANNEX_III, DrawStep.ANNEX_I})
+"""The steps whose draw includes a positive (a high-risk label through that Annex) when the pool
+has one: a draw of only exempt or out-of-area Annex cases wouldn't show that the step finds one."""
 CATEGORY_TAG_PREFIX = "category:"
 AREA_TAG_PREFIX = "area:"
 ANNEX_I_AREA = "annex_i"
@@ -245,24 +252,38 @@ def _serve_step(
     quotas: Mapping[RiskClass, int],
     rng: random.Random,
 ) -> tuple[BenchmarkCase, ...]:
-    """Pick cases that exercise `step` until it has `step_minimum`, within the class shares."""
-    while (covered := sum(step in case_steps(case) for case in chosen)) < step_minimum:
+    """Pick cases that exercise `step` until it has `step_minimum`, and a positive when
+    `POSITIVE_STEPS` asks for one, within the class shares."""
+    exercising = [case for case in pool if step in case_steps(case)]
+    wants_positive = step in POSITIVE_STEPS and any(map(_is_positive, exercising))
+    while True:
+        covered = sum(step in case_steps(case) for case in chosen)
+        needs_positive = wants_positive and not any(
+            _is_positive(case) and step in case_steps(case) for case in chosen
+        )
+        if covered >= step_minimum and not needs_positive:
+            return chosen
         taken = Counter(_class(case) for case in chosen)
         taken_ids = {case.id for case in chosen}
         open_cases = [
             case
-            for case in pool
+            for case in exercising
             if case.id not in taken_ids
-            and step in case_steps(case)
             and taken[_class(case)] < quotas[_class(case)]
+            and (_is_positive(case) or not needs_positive)
         ]
         if not open_cases:
+            wanted = "a positive" if needs_positive else f"{step_minimum} cases"
             raise DrawError(
-                f"step {step}: {covered} of {step_minimum} cases; no other pool case exercises "
-                "it within the class shares"
+                f"step {step}: {covered} of {step_minimum} cases; no other pool case gives it "
+                f"{wanted} within the class shares"
             )
         chosen = (*chosen, rng.choice(open_cases))
-    return chosen
+
+
+def _is_positive(case: BenchmarkCase) -> bool:
+    """A high-risk label; for a case exercising an Annex step, reached through that Annex."""
+    return _class(case) is RiskClass.HIGH_RISK
 
 
 def _even_quotas(
@@ -308,23 +329,17 @@ def cases_at(
     `git archive` into a temporary folder and validated by `load_cases`."""
     if not ref or ref.startswith("-"):
         raise DrawError(f"not a git ref: {ref!r}")
-    commit = _git(["rev-parse", "--verify", f"{ref}^{{commit}}"], repo_dir).decode().strip()
-    archive = _git(["archive", "--format=tar", commit, "--", str(CASES_PATH)], repo_dir)
+    try:
+        commit = (
+            git_bytes(["rev-parse", "--verify", f"{ref}^{{commit}}"], repo_dir).decode().strip()
+        )
+        archive = git_bytes(["archive", "--format=tar", commit, "--", str(CASES_PATH)], repo_dir)
+    except FreezeCheckError as exc:
+        raise DrawError(str(exc)) from exc
     with TemporaryDirectory() as folder, tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         tar.extractall(folder, filter="data")
         cases_dir = Path(folder) / CASES_PATH
         return commit, tuple(case for s in DRAW_SETS for case in load_cases(s, cases_dir))
-
-
-def _git(arguments: list[str], repo_dir: Path) -> bytes:
-    try:
-        completed = subprocess.run(
-            ["git", *arguments], cwd=repo_dir, capture_output=True, check=True
-        )
-    except subprocess.CalledProcessError as exc:
-        message = exc.stderr.decode(errors="replace").strip()
-        raise DrawError(f"git {' '.join(arguments)} failed: {message}") from exc
-    return completed.stdout
 
 
 # --- the draw file --------------------------------------------------------------------------------

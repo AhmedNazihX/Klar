@@ -8,24 +8,25 @@ Classifications are guidance, not legal advice.
 
 ## Scores
 
-| Column | Cases answered | Risk-class accuracy | Count | False-low-risk rate | Count |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Commission checker | 0 of 25 | n/a | 0/0 | n/a | 0/0 |
-| Engine | not filled yet (V10b) | | | | |
+| Column | Cases answered | Risk-class accuracy | False-low-risk rate |
+| --- | ---: | ---: | ---: |
+| Commission checker | 0 of 25 | n/a (0/0) | n/a (0/0) |
+| Engine | not filled yet (V10b) | | |
 
 ## Cases
 
 | Case | Set | Steps | Our label | Checker headings | Checker class | Match | Engine class | Engine match | Run on |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `cb-014-bank-fraud-voice-watchlist` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
-| `cb-075-outage-early-warning` | commission_b | annex_iii | minimal_risk |  |  |  |  |  | not run yet |
-| `cb-116-social-job-ad-audiences` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
-| `cb-151-screening-invitation-targeting` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
+| `cb-103-certification-exam-proctoring` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
+| `cb-117-staffing-vacancy-matching` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
+| `cb-119-job-ad-wording-check` | commission_b | annex_iii | minimal_risk |  |  |  |  |  | not run yet |
 | `cb-156-caseworker-fact-lookup` | commission_b | annex_iii, art_6_3 | minimal_risk |  |  |  |  |  | not run yet |
 | `cb-206-device-data-recovery` | commission_b | annex_iii | minimal_risk |  |  |  |  |  | not run yet |
-| `cb-222-missing-child-suspect-filter` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
+| `cb-242-entry-check-traveller-score` | commission_b | annex_iii | high_risk |  |  |  |  |  | not run yet |
 | `cb-261-case-file-folder-sorting` | commission_b | annex_iii, art_6_3 | minimal_risk |  |  |  |  |  | not run yet |
 | `own-a-05-vacuum-ad-synthetic-customers` | own | transparency | limited_risk |  |  |  |  |  | not run yet |
+| `own-a-07-surfing-cows-ad` | own | transparency | limited_risk |  |  |  |  |  | not run yet |
 | `own-a-09-newsroom-reviewed-drafts` | own | transparency | limited_risk |  |  |  |  |  | not run yet |
 | `own-b-01-overtime-payroll-rules` | own | scope | out_of_scope |  |  |  |  |  | not run yet |
 | `own-b-06-recon-vehicle-detection` | own | scope | out_of_scope |  |  |  |  |  | not run yet |
@@ -33,15 +34,14 @@ Classifications are guidance, not legal advice.
 | `own-b-10-open-source-plant-app` | own | scope | out_of_scope |  |  |  |  |  | not run yet |
 | `own-b-12-texas-booking-chat` | own | scope | out_of_scope |  |  |  |  |  | not run yet |
 | `own-c-01-undress-photo-app` | own | prohibited | prohibited |  |  |  |  |  | not run yet |
-| `own-c-03-image-tool-with-safeguards` | own | prohibited, transparency | limited_risk |  |  |  |  |  | not run yet |
 | `own-c-05-gossip-site-fake-nudes` | own | prohibited | prohibited |  |  |  |  |  | not run yet |
 | `own-c-07-unfiltered-image-generator` | own | prohibited | prohibited |  |  |  |  |  | not run yet |
 | `own-c-11-police-burglary-risk-list` | own | prohibited | prohibited |  |  |  |  |  | not run yet |
 | `own-c-14-kids-game-sad-pet-offers` | own | prohibited | prohibited |  |  |  |  |  | not run yet |
-| `own-d-01-own-brand-screening` | own | roles | high_risk |  |  |  |  |  | not run yet |
 | `own-d-07-office-assistant-seats` | own | transparency, roles | limited_risk |  |  |  |  |  | not run yet |
+| `own-d-11-importer-stock-forecast` | own | roles | minimal_risk |  |  |  |  |  | not run yet |
 | `own-e-03-talking-plush-toy` | own | annex_i, transparency | limited_risk |  |  |  |  |  | not run yet |
-| `own-e-13-wheelchair-obstacle-stop` | own | annex_i | minimal_risk |  |  |  |  |  | not run yet |
+| `own-e-05-emergency-braking-supplier` | own | annex_i | high_risk |  |  |  |  |  | not run yet |
 
 ## Checker headings and their class
 
@@ -52,7 +52,8 @@ Classifications are guidance, not legal advice.
 ## Limitations
 
 - The checker is a beta and its outcomes may change; each case gives the date it was run.
-- These labels depend on a date (for example the 2025-26 amendments' prohibitions), which the checker may not cover: `own-a-05-vacuum-ad-synthetic-customers` (judged on 2026-10-01), `own-a-09-newsroom-reviewed-drafts` (judged on 2026-10-01), `own-c-01-undress-photo-app` (judged on 2026-12-15), `own-c-03-image-tool-with-safeguards` (judged on 2027-01-15), `own-c-05-gossip-site-fake-nudes` (judged on 2027-02-15), `own-c-07-unfiltered-image-generator` (judged on 2026-12-28).
+- The roles step is in the draw (`own-d-07-office-assistant-seats`, `own-d-11-importer-stock-forecast`), but a class-only score can't show it: roles aren't compared, and these cases' classes don't depend on the role.
+- These labels depend on a date (for example the 2025-26 amendments' prohibitions), which the checker may not cover: `own-a-05-vacuum-ad-synthetic-customers` (judged on 2026-10-01), `own-a-07-surfing-cows-ad` (judged on 2026-10-01), `own-a-09-newsroom-reviewed-drafts` (judged on 2026-10-01), `own-c-01-undress-photo-app` (judged on 2026-12-15), `own-c-05-gossip-site-fake-nudes` (judged on 2027-02-15), `own-c-07-unfiltered-image-generator` (judged on 2026-12-28).
 
 ## Runs
 
@@ -60,15 +61,15 @@ Classifications are guidance, not legal advice.
 
 Not run yet.
 
-### `cb-075-outage-early-warning`
+### `cb-103-certification-exam-proctoring`
 
 Not run yet.
 
-### `cb-116-social-job-ad-audiences`
+### `cb-117-staffing-vacancy-matching`
 
 Not run yet.
 
-### `cb-151-screening-invitation-targeting`
+### `cb-119-job-ad-wording-check`
 
 Not run yet.
 
@@ -80,7 +81,7 @@ Not run yet.
 
 Not run yet.
 
-### `cb-222-missing-child-suspect-filter`
+### `cb-242-entry-check-traveller-score`
 
 Not run yet.
 
@@ -89,6 +90,10 @@ Not run yet.
 Not run yet.
 
 ### `own-a-05-vacuum-ad-synthetic-customers`
+
+Not run yet.
+
+### `own-a-07-surfing-cows-ad`
 
 Not run yet.
 
@@ -120,10 +125,6 @@ Not run yet.
 
 Not run yet.
 
-### `own-c-03-image-tool-with-safeguards`
-
-Not run yet.
-
 ### `own-c-05-gossip-site-fake-nudes`
 
 Not run yet.
@@ -140,11 +141,11 @@ Not run yet.
 
 Not run yet.
 
-### `own-d-01-own-brand-screening`
+### `own-d-07-office-assistant-seats`
 
 Not run yet.
 
-### `own-d-07-office-assistant-seats`
+### `own-d-11-importer-stock-forecast`
 
 Not run yet.
 
@@ -152,6 +153,6 @@ Not run yet.
 
 Not run yet.
 
-### `own-e-13-wheelchair-obstacle-stop`
+### `own-e-05-emergency-braking-supplier`
 
 Not run yet.

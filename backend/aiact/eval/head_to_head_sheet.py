@@ -11,7 +11,7 @@ case shows it, before any case is scored.
 `check_sheet` validates the sheet against the draw: an unknown or missing case id, a run without
 its date, a date in the future, a heading the table lacks or the result text doesn't contain, a
 screenshot that isn't a plain file name in `SCREENSHOT_DIR` or isn't there. A meaning outside
-`CheckerMeaning` (a bad class) fails parsing.
+`CheckerMeaning` (a bad class), or two headings rows that differ only in whitespace, fail parsing.
 """
 
 import datetime as dt
@@ -115,6 +115,20 @@ class HeadToHeadSheet(ContractModel):
 
     headings: dict[NonEmptyText, CheckerMeaning] = Field(default_factory=dict)
     cases: tuple[CheckerRun, ...]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _headings_differ_beyond_whitespace(cls, data: object) -> object:
+        """Refuse two headings rows that differ only in whitespace: stripping would merge them
+        silently, keeping one meaning."""
+        headings = data.get("headings") if isinstance(data, dict) else None
+        if not isinstance(headings, dict):
+            return data
+        folded = Counter(_plain(str(heading)) for heading in headings)
+        repeated = [heading for heading, n in folded.items() if n > 1]
+        if repeated:
+            raise ValueError(f"headings differing only in whitespace: {repeated}")
+        return data
 
     def checker_class(self, run: CheckerRun) -> RiskClass | None:
         """The class a run's headings map to, the strictest of them; None when none gives one

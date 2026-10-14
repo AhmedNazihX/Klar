@@ -7,7 +7,7 @@ from typer.testing import CliRunner
 from aiact.cli import app
 from aiact.eval import head_to_head_report
 from aiact.eval.cases import AppliedAILabel, BenchmarkCase, CaseSet
-from aiact.eval.head_to_head import DRAW_FILE, load_draw, make_draw, write_draw
+from aiact.eval.head_to_head import DRAW_FILE, DrawStep, load_draw, make_draw, write_draw
 from aiact.eval.head_to_head_report import (
     REPORT_FILE,
     column_scores,
@@ -130,8 +130,8 @@ def _row(text: str, case_id: str) -> str:
 
 def test_the_report_scores_the_checker_and_leaves_the_engine_empty() -> None:
     text = render_report(FILLED, DRAW, DRAWN)
-    assert "| Commission checker | 2 of 25 | 50.0% | 1/2 | 0.0% | 0/1 |" in text
-    assert "| Engine | not filled yet (V10b) | | | | |" in text
+    assert "| Commission checker | 2 of 25 | 50.0% (1/2) | 0.0% (0/1) |" in text
+    assert "| Engine | not filled yet (V10b) | | |" in text
     assert _row(text, HIGH).endswith(
         f"| high_risk | {HIGH_HEADING} | high_risk | yes |  |  | 2026-10-18 |"
     )
@@ -176,7 +176,7 @@ def test_the_runs_quote_the_result_and_answers_verbatim() -> None:
 
 def test_an_engine_mapping_fills_the_engine_column() -> None:
     text = render_report(FILLED, DRAW, DRAWN, engine={HIGH: R.MINIMAL_RISK})
-    assert "| Engine | 1 of 25 | 0.0% | 0/1 | 100.0% | 1/1 |" in text
+    assert "| Engine | 1 of 25 | 0.0% (0/1) | 100.0% (1/1) |" in text
     assert _row(text, HIGH).endswith("| high_risk | yes | minimal_risk | no | 2026-10-18 |")
 
 
@@ -191,6 +191,13 @@ def test_a_date_dependent_label_is_listed_as_a_limitation() -> None:
     text = render_report(FILLED, DRAW, {**DRAWN, PROHIBITED: dated})
     assert f"`{PROHIBITED}` (judged on 2026-12-15)" in text
     assert "judged on" not in render_report(FILLED, DRAW, DRAWN)
+
+
+def test_the_roles_cases_are_named_as_a_limitation_of_a_class_only_score() -> None:
+    roles = [f"`{c.case_id}`" for c in DRAW.cases if DrawStep.ROLES in c.steps]
+    limitations = render_report(FILLED, DRAW, DRAWN).split("## Limitations", 1)[1]
+    assert roles
+    assert f"- The roles step is in the draw ({', '.join(roles)}), but a class-only" in limitations
 
 
 def test_an_empty_headings_table_says_what_to_add() -> None:

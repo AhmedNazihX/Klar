@@ -42,31 +42,25 @@ def _errors_exit() -> Iterator[None]:
 
 @app.command("draw")
 def draw(
-    ref: Annotated[str, typer.Option(help="The labels tag to draw from.")] = (
-        head_to_head.LABELS_REF
-    ),
-    seed: Annotated[int, typer.Option(help="The draw's seed.")] = head_to_head.DRAW_SEED,
-    size: Annotated[
-        int,
-        typer.Option(
-            min=head_to_head.MIN_DRAW_SIZE, max=head_to_head.MAX_DRAW_SIZE, help="Cases to draw."
-        ),
-    ] = head_to_head.DRAW_SIZE,
     output: DrawOption = head_to_head.DRAW_FILE,
     sheet: SheetOption = head_to_head_sheet.SHEET_FILE,
 ) -> None:
-    """Draw the cases from the labels at `ref` and write the draw and an empty answer sheet.
+    """Draw the cases from the labels-v1 tag by the committed seed and rule, and write the draw
+    and an empty answer sheet.
 
-    The draw is frozen: re-running with the same inputs changes nothing, and a different draw is
-    refused. An existing sheet is never overwritten.
+    The draw is frozen: re-running changes nothing, and a different draw is refused. An existing
+    sheet is never overwritten.
     """
     with _errors_exit():
-        commit, cases = head_to_head.cases_at(ref)
-        drawn = head_to_head.make_draw(cases, commit, seed, size)
+        commit, cases = head_to_head.cases_at()
+        drawn = head_to_head.make_draw(cases, commit)
         is_written = head_to_head.write_draw(drawn, output)
         is_sheet_written = head_to_head_sheet.write_template(drawn, sheet)
     steps = ", ".join(f"{step} {n}" for step, n in head_to_head.step_counts(drawn).items())
-    typer.echo(f"Drawn: {len(drawn.cases)} cases from {ref} ({commit[:12]}), seed {seed}")
+    typer.echo(
+        f"Drawn: {len(drawn.cases)} cases from {drawn.labels_ref} ({commit[:12]}), "
+        f"seed {drawn.seed}"
+    )
     typer.echo(f"Cases per step: {steps}")
     typer.echo(f"{'Written' if is_written else 'Unchanged'}: {output}")
     typer.echo(f"{'Written' if is_sheet_written else 'Kept'}: {sheet}")

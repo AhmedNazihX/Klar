@@ -382,9 +382,9 @@ def _citations(result: ClassificationResult | None) -> tuple[Citation, ...]:
 # --- aggregates --------------------------------------------------------------------------------
 
 
-def rate(outcomes: Iterable[Outcome], scorer: Scorer) -> Rate:
-    """Hits over the outcomes the scorer applies to."""
-    scores = [score for score in map(scorer, outcomes) if score is not None]
+def rate[T](items: Iterable[T], scorer: Callable[[T], bool | None]) -> Rate:
+    """Hits over the items (outcomes, or V10's cases) the scorer applies to."""
+    scores = [score for score in map(scorer, items) if score is not None]
     return Rate(hits=sum(scores), total=len(scores))
 
 

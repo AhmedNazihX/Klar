@@ -171,12 +171,18 @@ def _read_text(path: Path) -> str:
 
 
 def _git(arguments: list[str], repo_dir: Path) -> str:
+    return git_bytes(arguments, repo_dir).decode()
+
+
+def git_bytes(arguments: list[str], repo_dir: Path) -> bytes:
+    """A git command's raw output (an archive too); `FreezeCheckError` when it fails."""
     try:
         completed = subprocess.run(
-            ["git", *arguments], cwd=repo_dir, capture_output=True, text=True, check=True
+            ["git", *arguments], cwd=repo_dir, capture_output=True, check=True
         )
     except subprocess.CalledProcessError as exc:
-        raise FreezeCheckError(f"git {' '.join(arguments)} failed: {exc.stderr.strip()}") from exc
+        message = exc.stderr.decode(errors="replace").strip()
+        raise FreezeCheckError(f"git {' '.join(arguments)} failed: {message}") from exc
     return completed.stdout
 
 

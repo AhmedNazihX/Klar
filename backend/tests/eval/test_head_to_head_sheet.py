@@ -121,6 +121,7 @@ def test_a_complete_run_validates_and_maps_to_its_class(tmp_path: Path) -> None:
         (["act_does_not_apply"], RiskClass.OUT_OF_SCOPE),
         (["cannot_determine"], None),
         (["cannot_determine", "no_specific_duties"], RiskClass.MINIMAL_RISK),
+        (["no_specific_duties", "transparency_only", "high_risk"], RiskClass.HIGH_RISK),
     ],
 )
 def test_the_strictest_heading_wins(
@@ -142,6 +143,8 @@ def test_a_heading_copied_across_a_line_break_still_matches(tmp_path: Path) -> N
     [
         ({"case_id": FIRST, "result_text": "Copied"}, "missing date"),
         ({"case_id": FIRST, "answers": ANSWERS}, "missing date"),
+        ({"case_id": FIRST, "result_headings": [HIGH_HEADING]}, "missing date"),
+        ({"case_id": FIRST, "screenshot": "run.png"}, "missing date"),
         (run_entry(answers=[]), "missing answers"),
         (run_entry(result_text="  "), "missing result_text"),
         (run_entry(result_headings=[]), "missing result_headings"),
@@ -160,6 +163,16 @@ def test_an_incomplete_or_malformed_run_is_refused(
 def test_a_heading_meaning_outside_the_table_is_a_bad_class(tmp_path: Path) -> None:
     document = sheet_with(run_entry(), headings={HIGH_HEADING: "high"})
     with pytest.raises(SheetError, match="headings"):
+        load_sheet(write_sheet(tmp_path / "sheet.yaml", document))
+
+
+@pytest.mark.parametrize("twin", [f" {HIGH_HEADING}  ", HIGH_HEADING.replace(" ", "  ", 1)])
+def test_headings_differing_only_in_whitespace_are_refused(tmp_path: Path, twin: str) -> None:
+    """Stripped, they would merge into one row silently, keeping one of the two meanings."""
+    document = sheet_with(
+        run_entry(), headings={HIGH_HEADING: "high_risk", twin: "no_specific_duties"}
+    )
+    with pytest.raises(SheetError, match="headings differing only in whitespace"):
         load_sheet(write_sheet(tmp_path / "sheet.yaml", document))
 
 
@@ -190,6 +203,10 @@ def test_a_missing_sheet_is_reported(tmp_path: Path) -> None:
             sheet_with(run_entry(result_text="It is high risk.")),
             "isn't in result_text verbatim",
         ),
+        (
+            sheet_with(run_entry(result_text=RESULT.upper())),
+            "isn't in result_text verbatim",
+        ),
         (sheet_with(run_entry(screenshot="../secret.png")), "isn't a plain image or PDF name"),
         (sheet_with(run_entry(screenshot="run.png")), "run.png isn't in"),
     ],
@@ -199,6 +216,10 @@ def test_a_sheet_that_doesnt_fit_the_draw_is_refused(
 ) -> None:
     with pytest.raises(SheetError, match=message):
         checked(tmp_path, document)
+
+
+def test_a_run_dated_today_is_accepted(tmp_path: Path) -> None:
+    checked(tmp_path, sheet_with(run_entry(date=TODAY.isoformat())))
 
 
 def test_every_problem_is_listed_at_once(tmp_path: Path) -> None:

@@ -24,19 +24,19 @@ cases:
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "cb-075-outage-early-warning"
+  - case_id: "cb-103-certification-exam-proctoring"
     date: null
     result_text: null
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "cb-116-social-job-ad-audiences"
+  - case_id: "cb-117-staffing-vacancy-matching"
     date: null
     result_text: null
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "cb-151-screening-invitation-targeting"
+  - case_id: "cb-119-job-ad-wording-check"
     date: null
     result_text: null
     result_headings: []
@@ -54,7 +54,7 @@ cases:
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "cb-222-missing-child-suspect-filter"
+  - case_id: "cb-242-entry-check-traveller-score"
     date: null
     result_text: null
     result_headings: []
@@ -67,6 +67,12 @@ cases:
     answers: []
     screenshot: null
   - case_id: "own-a-05-vacuum-ad-synthetic-customers"
+    date: null
+    result_text: null
+    result_headings: []
+    answers: []
+    screenshot: null
+  - case_id: "own-a-07-surfing-cows-ad"
     date: null
     result_text: null
     result_headings: []
@@ -114,12 +120,6 @@ cases:
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "own-c-03-image-tool-with-safeguards"
-    date: null
-    result_text: null
-    result_headings: []
-    answers: []
-    screenshot: null
   - case_id: "own-c-05-gossip-site-fake-nudes"
     date: null
     result_text: null
@@ -144,13 +144,13 @@ cases:
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "own-d-01-own-brand-screening"
+  - case_id: "own-d-07-office-assistant-seats"
     date: null
     result_text: null
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "own-d-07-office-assistant-seats"
+  - case_id: "own-d-11-importer-stock-forecast"
     date: null
     result_text: null
     result_headings: []
@@ -162,7 +162,7 @@ cases:
     result_headings: []
     answers: []
     screenshot: null
-  - case_id: "own-e-13-wheelchair-obstacle-stop"
+  - case_id: "own-e-05-emergency-braking-supplier"
     date: null
     result_text: null
     result_headings: []

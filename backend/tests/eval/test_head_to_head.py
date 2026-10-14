@@ -7,7 +7,7 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval import head_to_head
-from aiact.eval.cases import ART_6_3_FILTER, CaseLabel, CaseSet, load_cases
+from aiact.eval.cases import ART_6_3_FILTER, BenchmarkCase, CaseLabel, CaseSet, load_cases
 from aiact.eval.head_to_head import (
     DRAW_FILE,
     Draw,
@@ -23,7 +23,8 @@ from aiact.eval.head_to_head import (
     write_draw,
 )
 from aiact.eval.head_to_head_sheet import SHEET_FILE, load_sheet
-from aiact.schemas import Language, RiskClass, Status
+from aiact.eval.label_freeze import REPO_DIR
+from aiact.schemas import RiskClass
 from tests.eval.head_to_head_pool import NOT_DRAWABLE, POOL, R, commission, make_case, own
 
 COMMIT = "a" * 40
@@ -164,6 +165,70 @@ def test_a_step_with_one_case_in_the_pool_stops_the_draw() -> None:
         draw_cases(pool, seed=7, size=25)
 
 
+@pytest.mark.parametrize("step", [S.ANNEX_I, S.ANNEX_III])
+@pytest.mark.parametrize("seed", range(5))
+def test_an_annex_step_draws_its_one_positive(step: DrawStep, seed: int) -> None:
+    """The step's other cases are all negatives; its one high-risk case is drawn anyway. (The
+    Annex III negatives are Art. 6(3) exemptions, so that step keeps its cases.)"""
+    area = "annex_i" if step is S.ANNEX_I else "annex_iii_5"
+    negatives = commission(area, R.MINIMAL_RISK, 6, basis=ART_6_3_FILTER)
+    pool = [case for case in POOL if step not in case_steps(case)]
+    pool += [*negatives, *commission(area, R.HIGH_RISK, 1)]
+    positive = commission(area, R.HIGH_RISK, 1)[0].id
+    assert positive in {case.case_id for case in draw_cases(pool, seed=seed, size=25)}
+
+
+def test_an_annex_step_without_a_positive_in_the_pool_is_drawn_without_one() -> None:
+    pool = [case for case in POOL if S.ANNEX_I not in case_steps(case)]
+    pool += commission("annex_i", R.MINIMAL_RISK, 4)
+    drawn = draw_cases(pool, seed=7, size=25)
+    annex_i = [case for case in drawn if S.ANNEX_I in case.steps]
+    assert len(annex_i) >= 2
+    assert all(case.risk_class is not R.HIGH_RISK for case in annex_i)
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_a_step_with_candidates_of_one_class_keeps_the_class_shares(seed: int) -> None:
+    pool = [case for case in POOL if S.ANNEX_I not in case_steps(case)]
+    pool += commission("annex_i", R.HIGH_RISK, 4)
+    drawn = draw_cases(pool, seed=seed, size=25)
+    assert Counter(case.risk_class for case in drawn) == {risk_class: 5 for risk_class in R}
+
+
+def _one_class_steps_pool() -> list[BenchmarkCase]:
+    """Annex I, roles and the Annex III positive come from high-risk cases only."""
+    return [
+        *own("a", R.LIMITED_RISK, 5),
+        *own("b", R.OUT_OF_SCOPE, 5),
+        *own("c", R.PROHIBITED, 5),
+        *commission("annex_iii_5", R.MINIMAL_RISK, 5, basis=ART_6_3_FILTER),
+        *commission("annex_iii_4", R.HIGH_RISK, 3),
+        *own("d", R.HIGH_RISK, 3),
+        *own("e", R.HIGH_RISK, 3),
+    ]
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_steps_that_need_more_of_a_class_than_its_share_stop_the_draw(seed: int) -> None:
+    """Size 20 gives high risk a share of 4; Annex III, Annex I and roles need at least 5."""
+    with pytest.raises(DrawError, match=r"step roles: .* within the class shares"):
+        draw_cases(_one_class_steps_pool(), seed=seed, size=20)
+
+
+def test_a_positive_with_no_room_left_in_its_class_stops_the_draw() -> None:
+    """Four Annex III picks, all high risk, fill the share of 4 before Annex I's positive."""
+    pool = [
+        *own("a", R.LIMITED_RISK, 5),
+        *own("b", R.OUT_OF_SCOPE, 5),
+        *own("c", R.PROHIBITED, 5),
+        *commission("annex_iii_4", R.HIGH_RISK, 4),
+        *own("e", R.MINIMAL_RISK, 5),
+        *own("e", R.HIGH_RISK, 1),
+    ]
+    with pytest.raises(DrawError, match=r"step annex_i: 0 of 4 cases; .* a positive"):
+        draw_cases(pool, seed=7, size=20, step_minimum=4)
+
+
 def test_a_class_smaller_than_its_share_stops_the_draw() -> None:
     pool = [case for case in POOL if drawable_class(case) is not R.PROHIBITED]
     pool += own("c", R.PROHIBITED, 4)
@@ -188,13 +253,23 @@ def test_the_draw_file_states_the_rule_seed_and_labels() -> None:
     assert draw.step_minimum == 2
 
 
-@pytest.mark.parametrize("size", [19, 31])
-def test_a_draw_outside_20_to_30_cases_is_refused(size: int) -> None:
+@pytest.mark.parametrize(
+    ("size", "commit", "message"),
+    [
+        (19, COMMIT, "size\n  Input should be greater than or equal to 20"),
+        (31, COMMIT, "size\n  Input should be less than or equal to 30"),
+        (25, "A" * 40, "labels_commit\n  String should match pattern"),
+        (25, "a" * 39, "labels_commit\n  String should match pattern"),
+    ],
+)
+def test_a_draw_outside_20_to_30_cases_or_without_a_full_commit_is_refused(
+    size: int, commit: str, message: str
+) -> None:
     drawn = draw_cases(POOL, seed=7, size=25)
-    with pytest.raises(ValueError, match="size"):
+    with pytest.raises(ValueError, match=message):
         Draw(
             labels_ref="labels-v1",
-            labels_commit=COMMIT,
+            labels_commit=commit,
             seed=7,
             size=size,
             step_minimum=2,
@@ -255,19 +330,25 @@ def _write_case(repo: Path, folder: str, case_id: str, risk_class: str) -> None:
 
 
 def test_the_cases_are_read_as_they_were_at_the_tag(tmp_path: Path) -> None:
-    """A label changed and a case added after the tag don't reach the draw."""
+    """A label changed and a case added after the tag, committed or not, don't reach the
+    draw."""
     _git(tmp_path, "init", "-q")
     _write_case(tmp_path, "own/a", "own-a-01", "limited_risk")
     _write_case(tmp_path, "commission_b/annex_i", "cb-001", "high_risk")
     _git(tmp_path, "add", ".")
     _git(tmp_path, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "c")
     _git(tmp_path, "tag", "labels-test")
+    tagged = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True
+    ).stdout.strip()
     _write_case(tmp_path, "own/a", "own-a-01", "minimal_risk")
     _write_case(tmp_path, "own/a", "own-a-02", "limited_risk")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "d")
 
     commit, cases = cases_at("labels-test", tmp_path)
 
-    assert len(commit) == 40
+    assert commit == tagged
     labels = {case.id: case.label for case in cases}
     assert labels == {
         "cb-001": CaseLabel(risk_class=R.HIGH_RISK),
@@ -288,17 +369,17 @@ def test_a_bad_ref_is_refused(tmp_path: Path, ref: str) -> None:
 def test_the_draw_command_writes_the_draw_and_a_sheet_once(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(head_to_head, "cases_at", lambda ref: (COMMIT, tuple(POOL)))
+    monkeypatch.setattr(head_to_head, "cases_at", lambda: (COMMIT, tuple(POOL)))
     draw_path, sheet = tmp_path / "draw.json", tmp_path / "sheet.yaml"
     arguments = ["evaluate", "head-to-head", "draw", "--output", str(draw_path)]
-    arguments += ["--sheet", str(sheet), "--seed", "7"]
+    arguments += ["--sheet", str(sheet)]
 
     first = CliRunner().invoke(app, arguments)
     sheet.write_text(sheet.read_text(encoding="utf-8") + "# the user's edit\n", encoding="utf-8")
     second = CliRunner().invoke(app, arguments)
 
     assert first.exit_code == 0, first.output
-    assert "Drawn: 25 cases from labels-v1 (aaaaaaaaaaaa), seed 7" in first.output
+    assert "Drawn: 25 cases from labels-v1 (aaaaaaaaaaaa), seed 20261014" in first.output
     assert f"Written: {draw_path}" in first.output
     assert f"Unchanged: {draw_path}" in second.output
     assert f"Kept: {sheet}" in second.output
@@ -311,7 +392,7 @@ def test_the_draw_command_writes_the_draw_and_a_sheet_once(
 def test_the_draw_command_reports_a_pool_that_cant_be_drawn(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(head_to_head, "cases_at", lambda ref: (COMMIT, tuple(NOT_DRAWABLE)))
+    monkeypatch.setattr(head_to_head, "cases_at", lambda: (COMMIT, tuple(NOT_DRAWABLE)))
     arguments = ["evaluate", "head-to-head", "draw", "--output", str(tmp_path / "d.json")]
     result = CliRunner().invoke(app, [*arguments, "--sheet", str(tmp_path / "s.yaml")])
     assert result.exit_code == 1
@@ -336,12 +417,25 @@ def test_the_committed_draw_meets_decision_036() -> None:
     assert Counter(case.risk_class for case in draw.cases) == {risk_class: 5 for risk_class in R}
 
 
-def test_every_committed_draw_case_is_still_an_english_decided_case() -> None:
-    """The labels may change after labels-v1 only with a LABEL_CHANGES row; the draw stays."""
+def test_the_committed_draw_is_the_one_the_rule_draws_from_the_tag() -> None:
+    """Pins the seeded picks: the same labels, seed and rule give the committed draw."""
+    draw = _committed_draw()
+    tag = subprocess.run(
+        ["git", "rev-parse", "--quiet", "--verify", f"refs/tags/{head_to_head.LABELS_REF}"],
+        cwd=REPO_DIR,
+        capture_output=True,
+    )
+    if tag.returncode != 0:
+        pytest.skip(f"no {head_to_head.LABELS_REF} tag here (a shallow clone)")
+    commit, cases = cases_at()
+    assert make_draw(cases, commit) == draw
+
+
+def test_every_committed_draw_case_still_exists_in_its_set() -> None:
+    """A label may change after labels-v1 with a LABEL_CHANGES row (the report shows "X (at
+    draw: Y)"); the case itself stays, so the draw stays."""
     draw = _committed_draw()
     current = {case.id: case for s in head_to_head.DRAW_SETS for case in load_cases(s)}
     for drawn in draw.cases:
-        case = current[drawn.case_id]
-        assert case.set_name is drawn.set_name
-        assert case.language is Language.EN
-        assert isinstance(case.label, CaseLabel) and case.label.status is Status.DECIDED
+        assert drawn.case_id in current
+        assert current[drawn.case_id].set_name is drawn.set_name

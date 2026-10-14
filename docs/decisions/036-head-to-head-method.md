@@ -19,9 +19,10 @@ questionnaires, so the user answers their questions from each case's description
 | 4. Input format | A a hand-filled Markdown table · B a YAML file the user fills, validated, with the report generated from it | **B** | — |
 
 ## Decision
-Draw the cases by a committed seed (stratified by risk class, at least 2 per engine step, decided English labels
-only), run them through the Commission checker, map each answer to one `RiskClass` with a fixed table, and keep
-the answers in a YAML file from which a command writes `eval/reports/head_to_head.md`.
+Draw the cases by a committed seed (stratified by risk class, at least 2 per engine step, a positive among the
+Annex I and Annex III ones, decided English labels only), run them through the Commission checker, map each answer
+to one `RiskClass` with a fixed table, and keep the answers in a YAML file from which a command writes
+`eval/reports/pile_b/head_to_head.md`.
 
 The class table, by meaning; when several apply, the strictest wins, as in the engine:
 
@@ -40,7 +41,7 @@ then, before any case is scored.
 ## Consequences
 - V10a becomes `mixed`. An agent builds the draw (the seed and the rule are committed before any checker run), the
   YAML template (per case: `date`, `result_text` verbatim, `answers`, optional screenshot under
-  `eval/reports/head_to_head/`), the validation, and the rendering with an empty engine column. The user then
+  `eval/reports/pile_b/head_to_head/`), the validation, and the rendering with an empty engine column. The user then
   runs the checker (about 25 questionnaires; my estimate is 2–4 hours).
 - V10b fills the engine column from a stored run and scores both columns with the same code.
 - Role and Annex point aren't compared. The checker is beta: the report gives each run's date, and notes it as a
@@ -48,17 +49,20 @@ then, before any case is scored.
   the own cases).
 - Revisit if the Commission checker is withdrawn or changes its outcomes during the runs.
 
-## Implementation (V10a, for the user to confirm)
+## Implementation (V10a; accepted by the user 2026-10-14: placement A, even split A, positive Annex case B)
 - **Where the files live.** The draw, the answer sheet, the report and the screenshots are in
   `eval/reports/pile_b/` (`head_to_head_draw.json`, `head_to_head.yaml`, `head_to_head.md`, `head_to_head/`),
   not `eval/reports/`: they name Pile B cases with their labels, and the user's answers retell each case, so they
   go where the Engine lane can't read them (docs/LAYOUT.md: no cb-* id above `pile_b/`).
 - **The draw.** Seed 20261014, 25 cases from the cases as tagged `labels-v1` (be072f0), read from the tag itself.
   "Stratified by risk class" is an even split: five per class, since the pool has all five. Each engine step is
-  served first (two cases each, within the class shares), then each class is filled by a seeded sample. A case
-  exercises a step by its own category (a–f) or Commission Annex area, by a class only one step gives (out of
-  scope, prohibited, limited risk), and Art. 6(3) when its basis is the filter or it cites a lettered condition.
-  `aiact evaluate head-to-head draw` reproduces it and refuses a different one.
+  served first (two cases each, within the class shares), then each class is filled by a seeded sample. For
+  Annex I and Annex III, at least one of the step's cases is a positive (a `high_risk` label reached through that
+  Annex) when the pool has one (it has six for Annex I): the step's picks are among its positives until one is
+  drawn. A case exercises a step by its own category (a–f) or Commission Annex area, by a class only one step
+  gives (out of scope, prohibited, limited risk), and Art. 6(3) when its basis is the filter or it cites a
+  lettered condition. `aiact evaluate head-to-head draw` reproduces it and refuses a different one. The first
+  draw had no positive Annex I case; the rule was changed and the case set re-drawn before any checker run.
 - **Scoring.** The checker's class is scored against the current labels (a later change has its LABEL_CHANGES
   row), with `metrics.class_match` and `metrics.class_too_low`, the bare-class forms of `risk_class_match` and
   `false_low_risk`; V10b scores the engine column with the same code.
