@@ -17,8 +17,10 @@ guidance, not legal advice.
   share it answered is given per run below.
 - **Own cases are development cases:** the engine's nodes were developed against them, so Commission
   Pile B carries the headline (decision 018).
-- **Contaminated cases (decision 016):** the headline is given with and without the two cases written
-  from hr-ex-269 and hr-ex-031.
+- **Contaminated cases (decision 016):** the headline is given with and without the two contaminated
+  cases listed in decision 016 (`eval/isolation/contaminated.json`). Decision 016 is revisited if they
+  score clearly better than the rest: they scored 2 of 2 in run 1 and 1 of 2 in run 2 (from the
+  accuracy with and without them below), so they did not, and nothing is revisited.
 
 ## Headline figures (landing and Method pages, P27)
 
@@ -28,8 +30,8 @@ guidance, not legal advice.
 | … without the contaminated cases | 65.3% (98/150) | 60.7% (91/150) |
 | False-low-risk rate, Commission Pile B | 0.0% (0/56) | 1.7% (1/59) |
 | Citations that exist (at run time), Commission Pile B | 100.0% (147/147) | 100.0% (149/149) |
-| Requests the second model answered, Commission Pile B | 3 of 147 (2.0%) | 4 of 149 (2.7%) |
-| Requests refused by both models (not assessed) | 0 of 147 (0.0%) | 0 of 149 (0.0%) |
+| Results the second model answered (the engine model's provider refused), Commission Pile B | 3 of 147 (2.0%) | 4 of 149 (2.7%) |
+| Results refused by both models (not assessed), Commission Pile B | 0 of 147 (0.0%) | 0 of 149 (0.0%) |
 
 Run date: 2026-10-15 for both. Head-to-head against the Commission's AI Act Service Desk checker
 (decision 036; quoted from `eval/reports/pile_b/head_to_head.md`, re-rendered from run
@@ -39,8 +41,9 @@ for both. Both columns are given as they fall.
 
 ## Every INIT metric
 
-Each cell is a value from the run named in its row or column. "Run 1 / Run 2" give the two full runs
-side by side; their spread is the difference between the two values shown, quoted as is.
+Every value is quoted from the run whose id is in its cell or in its column header. "Run 1 / Run 2"
+give the two full runs side by side; their spread is the difference between the two values shown,
+quoted as is.
 
 ### Risk-class accuracy, per benchmark
 
@@ -85,23 +88,32 @@ Isolation check on the traces (`aiact evaluate held-out-hits`): the held-out run
 held-out row (Commission Pile B 0 of 147 (0.0%), own cases 0 of 88 (0.0%)); the gap runs' did
 (Commission Pile B 88 of 146 (60.3%), 112 distinct held-out rows; own cases 9 of 88 (10.2%), 11
 distinct rows). Run 2's held-out runs retrieved none either (Commission Pile B 0 of 148 (0.0%), own
-cases 0 of 86 (0.0%)).
+cases 0 of 86 (0.0%)). In run 2's Pile B run (`3ed735c1-b796-421b-a01e-5d36faa93851`) one search had
+no recorded hit ids and was left out of that check (the output's label reads "traced before V8 recorded
+them", but the run is later than V8); why is not visible in the stored run, so it is unexplained.
 
 ### The other metrics
 
-| Metric | Commission Pile B, run 1 / run 2 | Own cases, run 1 / run 2 | Other sets |
+Runs: Commission Pile B `31baa80c-f3bc-4eaf-93d0-4280b5fa14e7` / `3ed735c1-b796-421b-a01e-5d36faa93851`;
+own cases `d520e689-5c8b-463c-9155-42b2d7a2ab02` / `f5d98467-29ab-42c0-9d18-ecf3c4164939`; the other
+sets' runs are named in their cells by the first part of their id (full ids in the per-run table).
+
+| Metric | Commission Pile B, `31baa80c` / `3ed735c1` | Own cases, `d520e689` / `f5d98467` | Other sets |
 | --- | --- | --- | --- |
-| False-low-risk rate | 0.0% (0/56) / 1.7% (1/59) | 0.0% (0/34) / 0.0% (0/34) | appliedAI 45.0% (9/20); academic 11.3% (17/151); soft pairs 16.7% (4/24) / 18.2% (4/22) |
-| Annex point accuracy | 93.3% (42/45) / 95.7% (44/46) | 100.0% (21/21) / 90.5% (19/21) | Annex matching 97.6% (41/42) / 100.0% (42/42) |
-| Role accuracy | 92.1% (140/152) / 92.1% (140/152) | 82.9% (63/76) / 77.6% (59/76) | academic 90.0% (305/339) |
-| Legally ambiguous: precision | 0.0% (0/6) / 7.1% (1/14) | 16.7% (1/6) / 40.0% (2/5) | appliedAI 25.0% (1/4) |
-| Legally ambiguous: recall | n/a (0/0) / 100.0% (1/1) | 50.0% (1/2) / 40.0% (2/5) | appliedAI 5.3% (1/19) |
+| False-low-risk rate | 0.0% (0/56) / 1.7% (1/59) | 0.0% (0/34) / 0.0% (0/34) | appliedAI 45.0% (9/20) `f0e004fa`; academic 11.3% (17/151) `a6de7ccb`; soft pairs 16.7% (4/24) `c1746ef0` / 18.2% (4/22) `3539d1b0`; soft pairs with key-fact answers 4.3% (1/23) `1ff04bc9` / 8.7% (2/23) `79e16006`; Annex matching 0.0% (0/48) `983fda65` / 2.1% (1/47) `918a061a`; consistency set 0.0% (0/18) `76a3d43e` / 0.0% (0/18) `acf079e8` |
+| Annex point accuracy | 93.3% (42/45) / 95.7% (44/46) | 100.0% (21/21) / 90.5% (19/21) | Annex matching 97.6% (41/42) `983fda65` / 100.0% (42/42) `918a061a` |
+| Role accuracy | 92.1% (140/152) / 92.1% (140/152) | 82.9% (63/76) / 77.6% (59/76) | academic 90.0% (305/339) `a6de7ccb` |
+| Legally ambiguous: precision | 0.0% (0/6) / 7.1% (1/14) | 16.7% (1/6) / 40.0% (2/5) | appliedAI 25.0% (1/4) `f0e004fa` |
+| Legally ambiguous: recall | n/a (0/0) / 100.0% (1/1) | 50.0% (1/2) / 40.0% (2/5) | appliedAI 5.3% (1/19) `f0e004fa` |
 | Needs more information: precision (reported separately) | 0.0% (0/84) / 0.0% (0/79) | 12.9% (4/31) / 11.8% (4/34) | |
 | Needs more information: recall | n/a (0/0) / n/a (0/0) | 80.0% (4/5) / 80.0% (4/5) | |
 | Citation existence (at run time; hard rule 100%) | 100.0% (147/147) / 100.0% (149/149) | 100.0% (84/84) / 100.0% (82/82) | 100.0% in every other engine run (reports below) |
 | Citation support (judged) | 14.5% (97/669) / 15.5% (102/660) | 16.4% (52/318) / 21.6% (65/301) | |
 | Evidence-tag accuracy (judged) | 99.6% (708/711) / 99.6% (709/712) | 99.3% (428/431) / 99.3% (412/415) | |
 | No invented content (code-checked documents, P8a) | 100.0%, 196/196 / 100.0%, 226/226 | 100.0%, 85/85 / 100.0%, 98/98 | |
+
+The engine's false-low-risk rate counts only cases with a result: failed cases are left out, which is
+why its Commission Pile B counts are 0/56 and 1/59 where the baselines' are 0/61.
 
 | Metric | Run 1 | Run 2 |
 | --- | --- | --- |
@@ -145,13 +157,18 @@ that called the lookups it should have):
 
 | Run | Step | Correct | Count | Missed |
 | --- | --- | ---: | ---: | --- |
+| `d520e689-5c8b-463c-9155-42b2d7a2ab02` | scope | 100.0% | 84/84 |  |
+| `d520e689-5c8b-463c-9155-42b2d7a2ab02` | prohibited | 100.0% | 76/76 |  |
+| `d520e689-5c8b-463c-9155-42b2d7a2ab02` | high_risk | 100.0% | 66/66 |  |
+| `d520e689-5c8b-463c-9155-42b2d7a2ab02` | transparency | 100.0% | 66/66 |  |
+| `d520e689-5c8b-463c-9155-42b2d7a2ab02` | role_obligations | 100.0% | 66/66 |  |
 | `f5d98467-29ab-42c0-9d18-ecf3c4164939` | scope | 100.0% | 82/82 |  |
 | `f5d98467-29ab-42c0-9d18-ecf3c4164939` | prohibited | 100.0% | 74/74 |  |
 | `f5d98467-29ab-42c0-9d18-ecf3c4164939` | high_risk | 98.4% | 62/63 | every Annex III point fetched (1) |
 | `f5d98467-29ab-42c0-9d18-ecf3c4164939` | transparency | 100.0% | 63/63 |  |
 | `f5d98467-29ab-42c0-9d18-ecf3c4164939` | role_obligations | 100.0% | 63/63 |  |
 
-Not read: r1-01, r1-03, r2-01 (the LangSmith reads of these runs did not finish; `aiact evaluate tool-calls <run_id>` gives them).
+Not read: `31baa80c-f3bc-4eaf-93d0-4280b5fa14e7`, `3ed735c1-b796-421b-a01e-5d36faa93851` (the LangSmith reads of these runs did not finish; `aiact evaluate tool-calls <run_id>` gives them). Both are Pile B runs; the rows above are own-case runs (development cases).
 
 ## Per language, business function and Commission area
 
@@ -162,7 +179,7 @@ the 3 thin cases have none), Commission cases by their `area:` tag. Full tables 
 ## Failures, cut-offs and refusals per run
 
 "Failed" is the runner's count of cases with no result; a reply cut off at the output cap is asked
-once more (E20), and a reply cut off twice becomes a failed case. Cut-offs are counted from the
+once more (E20), and a reply cut off twice can become a failed case. Cut-offs are counted from the
 runs' logs (lines "the reply was cut off at the output cap; asking once more"); the logs themselves
 are not quoted, as they name cases.
 
@@ -191,7 +208,7 @@ are not quoted, as they name cases.
 | `918a061a-333b-41a3-aeae-26e24971bd45` (r2-07) | annex_match, engine | 48 (1 failed) | 3 | 1 of 47 (2.1%) | $0.4141 |
 | `6b05eb02-df86-4cbd-af1f-0d5caa0b33ce` (r1-15) | qa, RAGAS | 27/29 items (2 failed) | 0 | n/a | $0.1752 |
 | `fffeb510-2aaa-4ff8-b619-125a4af2eb70` (r2-15) | qa, RAGAS | 27/29 items (2 failed) | 0 | n/a | $0.1775 |
-| `7e25cc5a-ba56-4311-a28f-e28762cc8f27`, `a3ae0b4a-9055-4bf3-acb9-2b43df4c38da` (r1-16) | embeddings, Annex matching and Q&A | 48/48, 29/29 | 0 | n/a | $0.000088, $0.000019 |
+| `7e25cc5a-ba56-4311-a28f-e28762cc8f27`, `a3ae0b4a-9055-4bf3-acb9-2b43df4c38da` (r1-16) | embeddings, Annex matching and Q&A | 48/48, 29/29 | 0 | n/a | $0.000092, $0.000029 |
 
 No run stopped at its cost cap; every command exited 0, and no log held a top-level error.
 
@@ -216,8 +233,15 @@ runs with the dummy classifier, used to check the commands, cost nothing.
 - **Citation support is low** (from 14.5% (97/669) to 21.6% (65/301) above). It is quoted as judged;
   this report does not analyse why, and without the hand-review sample the judge's share of wrong
   "not supported" verdicts on these runs is unknown.
-- **Output-cap cut-offs.** A reply cut off at the output cap is asked once more (E20); one cut off twice
-  becomes a failed case, so part of each run's failed count comes from cut-offs (counts above).
+- **Output-cap cut-offs.** A reply cut off at the output cap is asked once more (E20), and one cut off
+  twice can become a failed case. The counted log lines are first cut-offs, so they don't show how
+  many of the failed cases came from them.
+- **False low risks on repeated sets.** Run 2 had false low risks where run 1 had none on the same
+  sets: Commission Pile B 1.7% (1/59) and Annex matching 2.1% (1/47); on the soft pairs with key-fact
+  answers it had 8.7% (2/23) against run 1's 4.3% (1/23).
+- **Tool-call correctness** was read for 2 of the 4 planned runs, both own-case runs (development
+  cases: `d520e689-5c8b-463c-9155-42b2d7a2ab02`, `f5d98467-29ab-42c0-9d18-ecf3c4164939`); the LangSmith
+  reads of the Pile B headline runs did not finish, so there is no figure on them.
 - **RAGAS faithfulness about 0.80** on the Q&A set (0.7937389770723103 and 0.8106407995296884), below its
   context recall: some answers state more than the retrieved text supports, by RAGAS's own measure.
 - **Run-to-run spread.** Run 2 repeats the varying sets on the same build; differences between the
@@ -231,9 +255,11 @@ runs with the dummy classifier, used to check the commands, cost nothing.
   numbers beyond those are not quoted: B4a's tie-break between rows with equal coverage depends on
   hash order, so its n-gram report can differ between runs (the gate result does not).
 - **Head-to-head.** The checker is a beta answered by agents with a hand spot-check (decision 036);
-  re-rendered here from the frozen build's run, the engine column changed on two cases (commission_b
-  cases 37.5% (3/8) to 50.0% (4/8), own cases 94.1% (16/17) to 88.2% (15/17); total unchanged at
-  76.0% (19/25)). Full limits in `eval/reports/pile_b/head_to_head.md`.
+  the engine column now comes from a new engine run on the frozen build
+  (`592089b8-1585-4f8f-a108-9d4ebbe8f38a`, build `6f5fa5024bb4`), not a rescore of the earlier one
+  (`d74843dc-52f0-48c6-95ce-775fbf1610b6`, build `9f945cf01bf6`, 2026-10-14, before E21). Against that
+  earlier run the commission_b cases went from 37.5% (3/8) to 50.0% (4/8) and the own cases from
+  94.1% (16/17) to 88.2% (15/17); the total is 76.0% (19/25) in both. Full limits in `eval/reports/pile_b/head_to_head.md`.
 - **No external legal review of the labels** (INIT › Label rules).
 
 ## Commands
@@ -258,7 +284,7 @@ went to logs outside the repository (they name cases).
 | r1-13, r1-14 | `run --set commission_b` / `--set own --classifier baseline_jev` | $0.01, $0.01 |
 | r1-15, r2-15 | `ragas` | $0.25, $0.22 |
 | r1-16 | `embeddings --arm qwen3-1536 --set annex_match --set qa` | $0.01 |
-| judged | `judged <run_id>` on r1-01, r1-03, r1-15, r2-01, r2-03, r2-15 (a dry run first; r1-03 first with a $0.03 small pass) | $0.72, $0.40, $0.03 |
+| judged | `judged <run_id>`, a dry run first: r1-03 small pass, r1-03, r1-01, r1-15, r2-01, r2-03, r2-15 | $0.03, $0.40, $0.72, $0.03, $0.72, $0.40, $0.03 |
 | head-to-head | `head-to-head render --run-id 592089b8-1585-4f8f-a108-9d4ebbe8f38a` (free; re-reads the stored run) | n/a |
 
 ## Stored outputs
@@ -364,6 +390,22 @@ Known limits of this comparison:
 
 
 ### Tool-call correctness
+
+#### Tool-call correctness, run d520e689-5c8b-463c-9155-42b2d7a2ab02
+
+- Traces scored: 84
+- Left out, no lookup run: 4 (recorded before lookups were traced, or not fully ingested)
+- Left out, still being ingested: 0 (a lookup run has no end yet)
+- Left out, no runs returned: 0 (expired, another workspace, or not yet ingested)
+- Cases without a trace: 0
+
+| Step | Correct | Count | Missed |
+| --- | ---: | ---: | --- |
+| scope | 100.0% | 84/84 |  |
+| prohibited | 100.0% | 76/76 |  |
+| high_risk | 100.0% | 66/66 |  |
+| transparency | 100.0% | 66/66 |  |
+| role_obligations | 100.0% | 66/66 |  |
 
 #### Tool-call correctness, run f5d98467-29ab-42c0-9d18-ecf3c4164939
 
