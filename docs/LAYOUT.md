@@ -120,6 +120,9 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── held_out_hits.py     held-out rows a stored run's traces retrieved; `aiact evaluate held-out-hits` (V8)
 │   │   │   ├── breakdown.py         a stored run's metrics per language, business function or area (W1);
 │   │   │   │                        breakdown_command.py: `aiact evaluate breakdown`, registered by cli.py
+│   │   │   ├── site_metrics.py      the site's accuracy.json from stored runs: the Commission figures of one
+│   │   │   │                        held-out commission_b run, the head-to-head of the draw's run (P27);
+│   │   │   │                        site_metrics_command.py: `aiact evaluate site-metrics`, registered by cli.py
 │   │   │   ├── head_to_head.py      the head-to-head case draw from the labels-v1 tag: seeded, by class, every
 │   │   │   │                        engine step covered (V10a, decision 036)
 │   │   │   ├── head_to_head_sheet.py  the checker answer sheet: schema, checks, template (V10a)

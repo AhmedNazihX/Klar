@@ -109,8 +109,7 @@ const PAGE: Record<
           'False low-risk rate',
           'Citations that exist',
           'Against an existing checker',
-          '[N]',
-          '[CHECKER NAME]',
+          'The same 25 cases run through EU AI Act Compliance Checker',
           'Read the method and the full results',
         ],
       },
@@ -207,8 +206,7 @@ const PAGE: Record<
           'Anteil zu niedrig eingestufter Fälle',
           'Zitate, die existieren',
           'Im Vergleich zu einem bestehenden Prüftool',
-          '[N]',
-          '[NAME DES PRÜFTOOLS]',
+          'Dieselben 25 Fälle, geprüft mit EU AI Act Compliance Checker',
           'Methode und vollständige Ergebnisse lesen',
         ],
       },
@@ -251,19 +249,20 @@ describe.each(['en', 'de'] as const)('the landing page (%s)', (language) => {
     },
   )
 
-  it('shows each unmeasured figure as a marked placeholder', async () => {
+  it('shows the figures accuracy.json publishes, none as a placeholder', async () => {
     await openLanding(language)
     const accuracy = section(PAGE[language].sections[5]?.title ?? '')
-    const placeholders = accuracy.querySelectorAll('[data-placeholder]')
-    expect(Array.from(placeholders, (node) => node.textContent)).toEqual([
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[N]',
-      language === 'de' ? '[NAME DES PRÜFTOOLS]' : '[CHECKER NAME]',
-    ])
+    expect(accuracy.querySelectorAll('[data-placeholder]')).toHaveLength(0)
+    expect(
+      within(accuracy)
+        .getAllByRole('listitem')
+        // Intl puts a no-break space before % in German; compare it as a plain space.
+        .map((tile) => tile.firstElementChild?.firstElementChild?.textContent.replace(/\s/g, ' ')),
+    ).toEqual(
+      language === 'de'
+        ? ['65,8 %', '0 %', '100 %', '76 %vs.84 %']
+        : ['65.8%', '0%', '100%', '76%vs84%'],
+    )
   })
 
   it('gives the nav its section targets', async () => {

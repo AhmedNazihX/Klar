@@ -40,13 +40,6 @@ const PAGE: Record<
     placeholders: [
       '[N]',
       '[WHO LABELS THE CASES]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[N]',
-      '[CHECKER NAME]',
       '[N]',
       '[WHO LABELS THE CASES]',
       '[DATE]',
@@ -68,13 +61,6 @@ const PAGE: Record<
     placeholders: [
       '[N]',
       '[WER DIE FÄLLE KENNZEICHNET]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[—%]',
-      '[N]',
-      '[NAME DES PRÜFTOOLS]',
       '[N]',
       '[WER DIE FÄLLE KENNZEICHNET]',
       '[DATUM]',
@@ -105,7 +91,7 @@ const COPY: Record<Language, string[]> = {
     'Share of cases where Klar’s class matches the label: prohibited, high-risk, limited, minimal or out of scope.',
     'Share of prohibited or high-risk cases that Klar labelled lower. This is the costliest error, so we report it on its own.',
     'Share of cited provisions that exist in the legal text and say what Klar claims. Checked automatically against the consolidated Act.',
-    'The same [N] cases run through [CHECKER NAME], scored the same way.',
+    'The same 25 cases run through EU AI Act Compliance Checker, scored the same way.',
     'How a case is scored',
     'Run',
     'Every case goes through the full engine, in the Act’s order, with the same settings users get.',
@@ -142,7 +128,7 @@ const COPY: Record<Language, string[]> = {
     'Anteil der Fälle, in denen die Klasse von Klar mit dem Label übereinstimmt: verboten, Hochrisiko, begrenztes Risiko, minimales Risiko oder außerhalb des Anwendungsbereichs.',
     'Anteil der verbotenen oder Hochrisiko-Fälle, die Klar niedriger eingestuft hat. Das ist der teuerste Fehler, deshalb weisen wir ihn gesondert aus.',
     'Anteil der zitierten Vorschriften, die im Gesetzestext existieren und sagen, was Klar behauptet. Automatisch an der konsolidierten Verordnung geprüft.',
-    'Dieselben [N] Fälle, geprüft mit [NAME DES PRÜFTOOLS] und genauso bewertet.',
+    'Dieselben 25 Fälle, geprüft mit EU AI Act Compliance Checker und genauso bewertet.',
     'So wird ein Fall bewertet',
     'Durchlauf',
     'Jeder Fall durchläuft die vollständige Prüfung in der Reihenfolge der Verordnung, mit denselben Einstellungen wie für alle Nutzer.',
@@ -212,7 +198,21 @@ describe.each(['en', 'de'] as const)('the method page (%s)', (language) => {
 
 describe('the method figures', () => {
   it('come from the same accuracy.json as the landing page', () => {
-    expect(SITE_ACCURACY).toEqual(accuracyFile)
+    // The file also holds the run date, N, the run ids and the report (P27), which the schema
+    // doesn't read; every figure it does read is the file's.
+    expect(accuracyFile).toMatchObject(SITE_ACCURACY)
+    expect(SITE_ACCURACY.risk_class_accuracy).not.toBeNull()
+  })
+
+  it('show the published figures of the committed accuracy.json (P27)', async () => {
+    await i18n.changeLanguage('en')
+    renderWithProviders(<MethodPage />)
+    const counted = await screen.findByRole('region', { name: 'What we count' })
+    expect(
+      within(counted)
+        .getAllByRole('listitem')
+        .map((tile) => tile.firstElementChild?.textContent),
+    ).toEqual(['65.8%', '0%', '100%', '76%vs84%'])
   })
 
   it('show the measured values once accuracy.json has them', async () => {

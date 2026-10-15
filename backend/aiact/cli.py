@@ -46,6 +46,7 @@ from aiact.eval import (
     report,
     runner,
     similarity,
+    site_metrics_command,
     tool_calls,
 )
 from aiact.eval import split as eval_split
@@ -312,6 +313,7 @@ eval_app.command("judged")(judged_command.judged)
 eval_app.add_typer(head_to_head_command.app, name="head-to-head")
 eval_app.command("appliedai-review")(appliedai_review_command.appliedai_review)
 eval_app.command("breakdown")(breakdown_command.breakdown_command)
+eval_app.command("site-metrics")(site_metrics_command.site_metrics_command)
 
 
 @eval_app.command("academic-import")

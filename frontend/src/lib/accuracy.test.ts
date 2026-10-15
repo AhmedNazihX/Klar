@@ -5,13 +5,18 @@ import { parseSiteAccuracy, SITE_ACCURACY } from './accuracy'
 const FIGURE = { value: 0.874, run_id: 'run-2026-11-02-a' }
 
 describe('the site accuracy file', () => {
-  it('holds no figure until the benchmark publishes them (P27)', () => {
-    expect(SITE_ACCURACY).toEqual({
-      risk_class_accuracy: null,
-      false_low_risk_rate: null,
-      citations_exist: null,
-      head_to_head: null,
-    })
+  it('holds the measured figures, each naming its run (P27)', () => {
+    const { risk_class_accuracy, false_low_risk_rate, citations_exist, head_to_head } =
+      SITE_ACCURACY
+    const figures = [
+      risk_class_accuracy,
+      false_low_risk_rate,
+      citations_exist,
+      head_to_head?.klar,
+      head_to_head?.checker,
+    ]
+    for (const figure of figures) expect(figure?.run_id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(head_to_head?.cases).toBeGreaterThan(0)
   })
 
   it('takes measured figures with their run ids', () => {
