@@ -1,7 +1,7 @@
 # Demo: Klar in Claude Desktop (MCP)
 
-Recorded on 2026-10-13 with the `Klar` server from the README's Claude Desktop config (stdio, `aiact mcp
-serve`), on the user's own `MCP_OPENROUTER_API_KEY`.
+Recorded on 2026-10-13 with the `Klar` server from the Claude Desktop config in [docs/SETUP.md](../SETUP.md)
+(stdio, `aiact mcp serve`), on the user's own `MCP_OPENROUTER_API_KEY`.
 
 [![Claude Desktop calls Klar's classify_system on INIT's worked example](mcp-claude-desktop.png)](mcp-claude-desktop.mp4)
 
