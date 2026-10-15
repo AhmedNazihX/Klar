@@ -14,7 +14,7 @@ from typer.testing import CliRunner
 
 from aiact.cli import app
 from aiact.eval import records
-from aiact.eval.cases import EVAL_DIR
+from aiact.eval.cases import EVAL_DIR, CaseFileError
 from aiact.eval.head_to_head_report import EngineColumn
 from aiact.eval.report import RunInfo
 from aiact.eval.site_metrics import (
@@ -27,7 +27,17 @@ from aiact.eval.site_metrics import (
     head_to_head_figures,
 )
 from aiact.schemas import RiskClass
-from tests.eval.test_head_to_head_report import DRAW, DRAWN, FILLED, sheet, write_sheet_files
+from tests.eval.test_head_to_head_report import (
+    DRAW,
+    DRAWN,
+    FILLED,
+    HIGH,
+    HIGH_HEADING,
+    UNSURE_HEADING,
+    run,
+    sheet,
+    write_sheet_files,
+)
 
 FINAL_REPORT = EVAL_DIR.parent / REPORT_PATH
 HEADLINE_ROWS = {
@@ -112,14 +122,15 @@ def test_the_head_to_head_equals_the_final_report() -> None:
     assert "AI Act Service Desk" in prose
 
 
-def test_the_run_date_and_case_count_are_the_published_runs() -> None:
+def test_the_run_date_and_n_are_the_published_runs() -> None:
     published = _published()
-    run_id = published.risk_class_accuracy.run_id
     date = re.search(r"Run date: (\d{4}-\d{2}-\d{2})", _headline()[1])
     assert date is not None and published.run_date.isoformat() == date.group(1)
-    run_report = _final().split(f"#### Run {run_id}\n", 1)[1].split("\n#### ", 1)[0]
-    cases = re.search(r"^- Cases: (\d+) ", run_report, re.MULTILINE)
-    assert cases is not None and published.cases == int(cases.group(1))
+    rows = _rows(_headline()[0])
+    column = _published_column(rows, published.risk_class_accuracy.run_id)
+    # N is the accuracy's denominator: "65.8% (100/152)" gives 152.
+    counts = re.search(r"\((\d+)/(\d+)\)", rows[HEADLINE_ROWS["risk_class_accuracy"]][column])
+    assert counts is not None and published.scored_cases == int(counts.group(2))
 
 
 def test_the_file_names_every_run_it_quotes_and_the_report() -> None:
@@ -158,24 +169,43 @@ def _engine(classes: dict[str, RiskClass | None]) -> EngineColumn:
     return EngineColumn(run=info, classes=classes)
 
 
-def test_both_columns_are_scored_over_the_drawn_cases_and_name_the_engine_run() -> None:
+ALL_HIGH = {case.case_id: RiskClass.HIGH_RISK for case in DRAW.cases}
+
+
+def test_both_columns_are_scored_over_every_drawn_case_and_name_the_engine_run() -> None:
     # The engine answers high-risk everywhere and gets the drawn high-risk cases right; the
-    # checker answered two cases, one right and one with no class (a miss).
-    engine = _engine({case.case_id: RiskClass.HIGH_RISK for case in DRAW.cases})
+    # checker gets `HIGH` right and can't determine the other 24 (misses).
+    answered = sheet(
+        run(HIGH, HIGH_HEADING),
+        *(run(c.case_id, UNSURE_HEADING) for c in DRAW.cases if c.case_id != HIGH),
+    )
     high = sum(case.risk_class is RiskClass.HIGH_RISK for case in DRAW.cases)
-    figures = head_to_head_figures(engine, FILLED, DRAW, DRAWN)
+    figures = head_to_head_figures(_engine(ALL_HIGH), answered, DRAW, DRAWN)
     assert figures == HeadToHead(
         klar=SiteFigure(value=high / 25, run_id=ENGINE_RUN),
-        checker=SiteFigure(value=0.5, run_id=ENGINE_RUN),
+        checker=SiteFigure(value=0.04, run_id=ENGINE_RUN),
         checker_name="EU AI Act Compliance Checker",
         cases=25,
     )
 
 
+def test_a_checker_column_that_left_drawn_cases_unanswered_is_refused() -> None:
+    # FILLED answers 2 of the 25: "the same 25 cases" would not be true.
+    with pytest.raises(SiteMetricsError, match="checker column answered 2 of the 25 drawn cases"):
+        head_to_head_figures(_engine(ALL_HIGH), FILLED, DRAW, DRAWN)
+
+
+def test_an_engine_run_that_failed_on_a_drawn_case_is_refused() -> None:
+    first = DRAW.cases[0].case_id
+    classes = {case_id: risk for case_id, risk in ALL_HIGH.items() if case_id != first}
+    engine = EngineColumn(run=_engine(classes).run, classes=classes, failed=1)
+    with pytest.raises(SiteMetricsError, match="failed on 1 of the 25 drawn cases"):
+        head_to_head_figures(engine, FILLED, DRAW, DRAWN)
+
+
 def test_a_checker_column_with_no_answer_is_refused() -> None:
-    engine = _engine({case.case_id: RiskClass.HIGH_RISK for case in DRAW.cases})
-    with pytest.raises(SiteMetricsError, match="counted no case for its checker column"):
-        head_to_head_figures(engine, sheet(), DRAW, DRAWN)
+    with pytest.raises(SiteMetricsError, match="checker column answered 0 of the 25"):
+        head_to_head_figures(_engine(ALL_HIGH), sheet(), DRAW, DRAWN)
 
 
 # --- the command without a database --------------------------------------------------------------
@@ -205,3 +235,53 @@ def test_a_database_error_is_reported_without_the_url(
     assert "Error: database error (OperationalError); check DATABASE_URL" in result.stderr
     assert "hunter2" not in result.output
     assert not output.exists()
+
+
+def _invoke(tmp_path: Path, *arguments: str) -> tuple[int, str, Path]:
+    output = tmp_path / "accuracy.json"
+    result = CliRunner().invoke(
+        app,
+        [
+            *("evaluate", "site-metrics", "--commission-run", RUN_ID),
+            *("--head-to-head-run", RUN_ID, "--output", str(output), *arguments),
+        ],
+    )
+    return result.exit_code, result.output, output
+
+
+def test_a_sheet_error_never_prints_the_case_ids_it_names(tmp_path: Path) -> None:
+    # The draw is fine; the sheet names a made-up case and leaves every drawn one out.
+    files = write_sheet_files(tmp_path)[:4]
+    (tmp_path / "s.yaml").write_text(
+        "headings: {}\ncases:\n  - case_id: cb-test-not-drawn\n", encoding="utf-8"
+    )
+    code, output, path = _invoke(tmp_path, *files, "--note", "n")
+    assert code == 1
+    assert output.startswith(
+        "Error: the draw, the answer sheet (s.yaml) or a case file doesn't fit (SheetError)"
+    )
+    assert "cb-test" not in output
+    assert not any(case.case_id in output for case in DRAW.cases)
+    assert not path.exists()
+
+
+def test_a_case_file_error_never_prints_its_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def current_cases(draw: object) -> object:
+        raise CaseFileError("cb-test-secret: bad label")
+
+    monkeypatch.setattr("aiact.eval.head_to_head_report.current_cases", current_cases)
+    files = write_sheet_files(tmp_path)[:4]
+    code, output, path = _invoke(tmp_path, *files, "--note", "n")
+    assert code == 1
+    assert "(CaseFileError)" in output and "cb-test" not in output
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("note", ["from cb-12 on", "own-3 was", "aai-x", "see acad-7"])
+def test_a_note_naming_a_case_id_is_refused(tmp_path: Path, note: str) -> None:
+    code, output, path = _invoke(tmp_path, *write_sheet_files(tmp_path)[:4], "--note", note)
+    assert code == 1
+    assert output == "Error: --note names a case id; the site file is public\n"
+    assert not path.exists()

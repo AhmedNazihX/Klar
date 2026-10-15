@@ -23,7 +23,7 @@
     "checker_name": "EU AI Act Compliance Checker",
     "cases": 25
   },
-  "cases": 153,
+  "scored_cases": 152,
   "run_date": "2026-10-15",
   "run_ids": [
     "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7",

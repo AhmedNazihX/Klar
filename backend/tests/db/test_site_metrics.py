@@ -112,7 +112,7 @@ def test_the_commission_figures_come_from_the_stored_run(db: psycopg.Connection)
     assert metrics.false_low_risk_rate == SiteFigure(value=1.0, run_id=run_id)
     assert metrics.citations_exist == SiteFigure(value=0.75, run_id=run_id)
     assert metrics.head_to_head == HEAD_TO_HEAD
-    assert metrics.cases == 4
+    assert metrics.scored_cases == 4
     assert metrics.run_date.isoformat() == _started(db, run_id)
     assert metrics.run_ids == (run_id, HEAD_TO_HEAD.klar.run_id)
     assert (metrics.report, metrics.note) == ("eval/reports/final.md", NOTE)
@@ -127,7 +127,7 @@ def test_a_case_whose_scoring_failed_is_left_out_as_in_the_report(db: psycopg.Co
     metrics = site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
     assert metrics.risk_class_accuracy.value == pytest.approx(1 / 3)
     assert metrics.citations_exist.value == 1.0
-    assert metrics.cases == 3
+    assert metrics.scored_cases == 3
 
 
 def test_a_run_of_another_set_is_refused(db: psycopg.Connection) -> None:
@@ -178,25 +178,32 @@ def _head_to_head_run(db: psycopg.Connection) -> UUID:
     return run_benchmark(cases, DummyClassifier(), PostgresRunStore(db), options, LOO).run_id
 
 
-def _sheet_files(tmp_path: Path) -> list[str]:
-    """The draw and a sheet the checker answered two cases of (one right, one with no class)."""
+def _sheet_files(tmp_path: Path, *, is_complete: bool = True) -> list[str]:
+    """The draw and a sheet the checker answered every drawn case of: the high-risk one `HIGH`
+    right, every other "can't determine" (a miss); or, not complete, only two cases."""
     draw_path, sheet_path = tmp_path / "d.json", tmp_path / "s.yaml"
     head_to_head.write_draw(DRAW, draw_path)
+    others = [c.case_id for c in DRAW.cases if c.case_id != HIGH]
+    if not is_complete:
+        others = [PROHIBITED]
     filled = sheet(
-        run(HIGH, HIGH_HEADING, date=RUN_ON), run(PROHIBITED, UNSURE_HEADING, date=RUN_ON)
+        run(HIGH, HIGH_HEADING, date=RUN_ON),
+        *(run(case_id, UNSURE_HEADING, date=RUN_ON) for case_id in others),
     )
     sheet_path.write_text(yaml.safe_dump(filled.model_dump(mode="json")), encoding="utf-8")
     return ["--draw-file", str(draw_path), "--sheet", str(sheet_path)]
 
 
-def _invoke(tmp_path: Path, commission: UUID, engine: UUID) -> tuple[int, str, Path]:
+def _invoke(
+    tmp_path: Path, commission: UUID, engine: UUID, *extra: str, is_complete: bool = True
+) -> tuple[int, str, Path]:
     output = tmp_path / "accuracy.json"
     result = CliRunner().invoke(
         app,
         [
-            *("evaluate", "site-metrics", *_sheet_files(tmp_path)),
+            *("evaluate", "site-metrics", *_sheet_files(tmp_path, is_complete=is_complete)),
             *("--commission-run", str(commission), "--head-to-head-run", str(engine)),
-            *("--note", NOTE, "--output", str(output)),
+            *("--note", NOTE, "--output", str(output), *extra),
         ],
     )
     return result.exit_code, result.output, output
@@ -212,23 +219,23 @@ def test_the_command_writes_the_site_file_from_both_stored_runs(
 ) -> None:
     _patch_sources(db, monkeypatch)
     commission, engine = _commission_run(db), _head_to_head_run(db)
-    code, output, path = _invoke(tmp_path, commission, engine)
+    url = "https://example.org/final.md"
+    code, output, path = _invoke(tmp_path, commission, engine, "--report-url", url)
     assert code == 0, output
     text = path.read_text(encoding="utf-8")
     written = SiteMetrics.model_validate_json(text)
     assert written.risk_class_accuracy == SiteFigure(value=0.5, run_id=commission)
     assert written.false_low_risk_rate == SiteFigure(value=1.0, run_id=commission)
     assert written.citations_exist == SiteFigure(value=0.75, run_id=commission)
-    # The dummy (out of scope) is right on 5 of the 25 drawn cases; the checker answered two,
-    # one right and one with no class.
+    # The dummy (out of scope) is right on 5 of the 25 drawn cases; the checker on 1.
     assert written.head_to_head == HeadToHead(
         klar=SiteFigure(value=0.2, run_id=engine),
-        checker=SiteFigure(value=0.5, run_id=engine),
+        checker=SiteFigure(value=0.04, run_id=engine),
         checker_name="EU AI Act Compliance Checker",
         cases=25,
     )
-    assert (written.cases, written.run_ids, written.note) == (4, (commission, engine), NOTE)
-    assert written.report == "eval/reports/final.md"
+    assert (written.scored_cases, written.run_ids, written.note) == (4, (commission, engine), NOTE)
+    assert written.report == url
     assert "cb-test" not in text and "Made-up description" not in text
     assert not any(case.case_id in text for case in DRAW.cases)
 
@@ -253,3 +260,24 @@ def test_the_command_refuses_a_commission_run_that_is_not_held_out(
     assert code == 1
     assert "has exclude mode all, not heldout" in output
     assert not path.exists()
+
+
+def test_the_command_refuses_a_checker_column_that_left_drawn_cases_unanswered(
+    db: psycopg.Connection, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _patch_sources(db, monkeypatch)
+    commission, engine = _commission_run(db), _head_to_head_run(db)
+    code, output, path = _invoke(tmp_path, commission, engine, is_complete=False)
+    assert code == 1
+    assert "the checker column answered 2 of the 25 drawn cases" in output
+    assert not path.exists()
+
+
+def test_the_report_link_defaults_to_the_reports_path_in_the_repository(
+    db: psycopg.Connection, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _patch_sources(db, monkeypatch)
+    code, output, path = _invoke(tmp_path, _commission_run(db), _head_to_head_run(db))
+    assert code == 0, output
+    written = SiteMetrics.model_validate_json(path.read_text(encoding="utf-8"))
+    assert written.report == "eval/reports/final.md"
