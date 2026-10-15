@@ -15,7 +15,8 @@ The full list behind the README's Limitations section. Each item names the decis
 - **The headline benchmark rests on draft guidance.** It is built from the Commission's draft high-risk guidelines
   of 19 May 2026; if they are finalised, the benchmark stays frozen on the draft (decision 021).
 - **On Commission Pile B the engine over-classifies rather than under-classifies.** None of run 1's 46 misses
-  with a result put a system lower than its label, and 27 of its 52 misses came from taking the stricter reading
+  with a result put a high-risk or prohibited system lower; 4 answered "not an AI system" where the label is
+  minimal (the same duties). 27 of its 52 misses came from taking the stricter reading
   when a step was unsure (decision 010's working assumption). Source: eval/reports/final.md › Later analysis
   (2026-10-15), an AI agent's reading of the stored steps, not reviewed case by case.
 - **The problem wasn't validated with users.** The evidence comes from secondary sources; no user interviews or

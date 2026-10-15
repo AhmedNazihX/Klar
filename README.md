@@ -76,15 +76,15 @@ flowchart LR
     UI -->|anonymous session| DB
 ```
 
-The engine (`backend/aiact/engine/`) is a LangGraph graph with a fixed check order that no path can skip:
+The engine (`backend/aiact/engine/`) is a fixed LangGraph graph, not a tool-using agent: the AI Act prescribes the
+order of checks (Art. 5 before Art. 6 before Art. 50), so every run follows the same order, no check can be skipped,
+and each result is reproducible (decision 037):
 
 ```
 facts → scope → prohibited → high_risk → transparency → role_obligations → finalize
 ```
 
-The engine is a fixed LangGraph graph, not a tool-using agent: the AI Act prescribes the order of checks (Art. 5
-before Art. 6 before Art. 50), so every run takes the same path, no check can be skipped, and each result is
-reproducible (decision 037). `scope` and `prohibited` end a run early only when they matched and decided; an uncertain match goes on with the
+`scope` and `prohibited` end a run early only when they matched and decided; an uncertain match goes on with the
 stricter reading as the working assumption (decision 010). Every check node is wrapped by a citation check: each
 citation must resolve in the corpus, and its quote is rebuilt from the corpus row. Retrieval fetches a provision by
 its ID where the law says where to look, and otherwise searches the AI Act corpus (official texts and Commission
@@ -185,7 +185,7 @@ leave people unprotected and the company exposed. The safeguards (INIT › Ethic
   Azure and Google Vertex AI, never used for training (decision 005). OpenRouter's own processing isn't limited to
   the EU, and the embedding host Nebius's region is still to be confirmed; the in-app Privacy page and "Your data"
   say so. DeepSeek and other providers EU data protection authorities have acted against are excluded.
-- **Traces carry metadata only** outside development (see Architecture), and no real user input enters the
+- **Traces carry metadata only** outside development ([docs/ARCHITECTURE.md › Tracing](docs/ARCHITECTURE.md#tracing)), and no real user input enters the
   evaluation. Traces go to LangSmith when a key is set; `backend/.env.example` points `LANGSMITH_ENDPOINT` at its
   EU endpoint (`eu.api.smith.langchain.com`), and an empty value means the SDK's default, the US region.
 
@@ -198,10 +198,12 @@ The main ones; every item, with its source, is in [docs/LIMITATIONS.md](docs/LIM
 - **Own cases are development cases:** the engine was tuned on them (decision 018).
 - **The headline rests on the draft high-risk guidelines** of 19 May 2026 (decision 021).
 - **The original-text toggle covers the class, not the duties:** only the Art. 113 route dates change (decision 020).
-- **Run-to-run spread** (headline 65.8% and 60.5%), false low risks in run 2 only, citation support 14.5–21.6%
+- **Run-to-run spread** (headline 65.8% and 60.5%), false low risks on Pile B and Annex matching in run 2 only (run 1: none on those sets), citation support 14.5–21.6%
   as judged with no hand-checked sample, RAGAS faithfulness about 0.80 (final.md › Limitations).
-- **On Commission Pile B the engine over-classifies rather than under-classifies:** none of its misses put a
-  system lower than its label, and 27 of 52 come from taking the stricter reading when a fact is missing
+- **On Commission Pile B the engine over-classifies rather than under-classifies:** none of run 1's 46 misses with
+  a result put a high-risk or prohibited system lower; 4 answered "not an AI system" where the label is minimal
+  (the same duties); 27 of its 52 misses come from taking the stricter reading when a step was unsure (needs more
+  information or legally ambiguous)
   ([final.md › Later analysis](eval/reports/final.md#later-analysis-2026-10-15-why-run-1-missed-52-of-152-pile-b-cases)).
 - **Art. 111(1) isn't modelled**, and Art. 111(2)'s per-product caveat rests on the Blue Guide (decision 022).
 - **The EU link is read from the description only:** the company profile isn't a classification input (decision 026).

@@ -226,6 +226,9 @@ runs with the dummy classifier, used to check the commands, cost nothing.
 
 ## Limitations
 
+A later read-only analysis of run 1's Pile B misses, made after W1, is at the end of this report (*Later
+analysis*); it is not one of the stored outputs.
+
 - **No hand-reviewed sample of the judge's verdicts.** Citation support and evidence tags are judged by
   Jev with the backup LLM judge for unsure items, validated in V4 against hand-labelled items
   (decision 006). INIT's manual sample of the W1 runs' verdicts is not done (user, 2026-10-15): the
@@ -2454,8 +2457,8 @@ with run 2 (`3ed735c1-b796-421b-a01e-5d36faa93851`) and the plain-prompt baselin
 (`b2b88c38-5f2d-438e-8741-7e234ebb6cc5`). The failure types were assigned by an AI agent reading each case's
 stored steps; the user did not review them case by case. Counts only: no case ids and no Pile B text.
 
-**None of the 46 misses with a result put a system lower than its label.** 42 were too strict; 4 said "not an
-AI system" where the label is minimal (the same duties). The other 6 were failed cases.
+**None of the 46 misses with a result put a high-risk or prohibited system lower.** 42 were too strict; 4
+answered "not an AI system" where the label is minimal (the same duties). The other 6 were failed cases.
 
 | Failure type | Misses | Too strict | Baseline right |
 | --- | ---: | ---: | ---: |

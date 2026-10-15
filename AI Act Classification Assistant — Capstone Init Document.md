@@ -10,7 +10,7 @@ Case fit: Case 1 (RAG knowledge assistant) and Case 3 (smart search over a legal
 
 **README paragraph (draft):** The EU AI Act sorts AI systems into risk classes with very different obligations, and its timeline changed in July 2026. Small companies often can't tell which class their tools fall into, and the free checkers available are questionnaires that give indicative answers without showing their reasoning. This assistant lets a company describe its AI tools in plain words, in English or German. It checks each one against the Act in the Act's own order: scope, prohibited practices, high-risk status and transparency duties. It returns a classification in which every step cites the provision it relies on, and turns the result into a list of obligations with deadlines and draft documents. When the facts or the law don't settle the answer, it says so instead of guessing. Its accuracy is measured against labelled cases based on current law and published in this README. It gives guidance, not legal advice.
 
-A link to the project on [showcase.turingcollege.com](https://showcase.turingcollege.com/) will go near the top of the README.
+A link to the project on [showcase.turingcollege.com](https://showcase.turingcollege.com/) will go near the top of the README (dropped by the user's decision, 2026-10-15).
 
 ## Situation, Complication, Resolution
 
