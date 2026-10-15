@@ -29,6 +29,7 @@ test checks every figure against `eval/reports/final.md`. Any other change after
 re-run.
 
 - 2026-10-15, user: the Method page may read N, the run date and the report link from accuracy.json (P27).
+- 2026-10-15, user: the Method page states who labels the cases (P27).
 
 ## Amendment (2026-10-15)
 Report-only tooling that reads stored runs and cannot change a measured result is allowed after the freeze (user, 2026-10-15; first use: W1's breakdown command).

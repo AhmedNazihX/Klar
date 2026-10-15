@@ -38,7 +38,7 @@ const PAGE: Record<
     penalties:
       'Klar covers the Act’s own maximum fines (Art. 99). National penalty rules, which each Member State lays down, are out of scope.',
     lawVersion: 'Consolidated AI Act of 27 July 2026, CELEX 02024R1689-20260727',
-    placeholders: ['[WHO LABELS THE CASES]', '[WHO LABELS THE CASES]'],
+    placeholders: [],
   },
   de: {
     title: 'So wird Klar gemessen',
@@ -52,7 +52,7 @@ const PAGE: Record<
     penalties:
       'Klar deckt die Höchstbeträge der Geldbußen ab, die die Verordnung selbst festlegt (Art. 99). Nationale Sanktionsvorschriften, die jeder Mitgliedstaat erlässt, sind nicht abgedeckt.',
     lawVersion: 'Konsolidierte KI-Verordnung vom 27. Juli 2026, CELEX 02024R1689-20260727',
-    placeholders: ['[WER DIE FÄLLE KENNZEICHNET]', '[WER DIE FÄLLE KENNZEICHNET]'],
+    placeholders: [],
   },
 }
 
@@ -95,7 +95,7 @@ const COPY: Record<Language, string[]> = {
     'Limits',
     'Size',
     'Labels',
-    'Labels reflect [WHO LABELS THE CASES]’s reading of the Act and may be disputed.',
+    'Labels reflect the Commission’s and the author’s reading of the Act and may be disputed.',
     'Guidance',
     'Some Commission guidance is still in draft; results may shift when it’s final.',
     'Descriptions',
@@ -127,7 +127,7 @@ const COPY: Record<Language, string[]> = {
     'Grenzen',
     'Umfang',
     'Labels',
-    'Die Labels geben die Lesart der Verordnung von [WER DIE FÄLLE KENNZEICHNET] wieder und können umstritten sein.',
+    'Die Labels geben die Lesart der Verordnung durch die Kommission und den Autor wieder und können umstritten sein.',
     'Leitlinien',
     'Einige Leitlinien der Kommission sind noch Entwürfe; die Ergebnisse können sich ändern, wenn sie endgültig sind.',
     'Beschreibungen',
@@ -222,12 +222,12 @@ const PUBLISHED_COPY: Record<
   (published: ReturnType<typeof publishedAccuracy>) => string[]
 > = {
   en: ({ cases, checkerName, scoredCases, ownCases }) => [
-    `The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus ${ownCases} cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role by [WHO LABELS THE CASES].`,
+    `The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus ${ownCases} cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role: the Commission examples by the Commission’s own verdict in its draft guidelines, the cases written for Klar by the project’s author.`,
     `The same ${cases} cases run through ${checkerName}, scored the same way.`,
     `The test set has ${scoredCases} cases. Small differences between runs are not meaningful.`,
   ],
   de: ({ cases, checkerName, scoredCases, ownCases }) => [
-    `Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um ${ownCases} eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet, von [WER DIE FÄLLE KENNZEICHNET].`,
+    `Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um ${ownCases} eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet: die Kommissionsbeispiele nach dem Urteil der Kommission in ihrem Leitlinienentwurf, die eigens für Klar geschriebenen Fälle vom Autor des Projekts.`,
     `Dieselben ${cases} Fälle, geprüft mit ${checkerName} und genauso bewertet.`,
     `Der Testdatensatz umfasst ${scoredCases} Fälle. Kleine Unterschiede zwischen zwei Durchläufen sind nicht aussagekräftig.`,
   ],

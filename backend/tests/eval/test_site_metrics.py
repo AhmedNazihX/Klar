@@ -17,6 +17,7 @@ from aiact.cli import app
 from aiact.eval import records
 from aiact.eval.cases import EVAL_DIR, CaseFileError
 from aiact.eval.head_to_head_report import EngineColumn
+from aiact.eval.head_to_head_sheet import SheetError
 from aiact.eval.report import RunInfo
 from aiact.eval.site_metrics import (
     REPORT_PATH,
@@ -288,7 +289,8 @@ def test_a_sheet_error_never_prints_the_case_ids_it_names(tmp_path: Path) -> Non
     code, output, path = _invoke(tmp_path, *files, "--note", "n")
     assert code == 1
     assert output.startswith(
-        "Error: the draw, the answer sheet (s.yaml) or a case file doesn't fit (SheetError)"
+        "Error: the draw, the answer sheet (s.yaml) or a case file doesn't fit (SheetError); "
+        "run `aiact evaluate head-to-head render`"
     )
     assert "cb-test" not in output
     assert not any(case.case_id in output for case in DRAW.cases)
@@ -309,9 +311,40 @@ def test_a_case_file_error_never_prints_its_text(
     assert not path.exists()
 
 
-@pytest.mark.parametrize("note", ["from cb-12 on", "own-3 was", "aai-x", "see acad-7"])
+@pytest.mark.parametrize(
+    "note", ["from cb-12 on", "own-3 was", "aai-x", "see acad-7", "CB-Test-1", "Own-2"]
+)
 def test_a_note_naming_a_case_id_is_refused(tmp_path: Path, note: str) -> None:
     code, output, path = _invoke(tmp_path, *write_sheet_files(tmp_path)[:4], "--note", note)
     assert code == 1
     assert output == "Error: --note names a case id; the site file is public\n"
+    assert not path.exists()
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["http://example.org/final.md", "javascript:alert(1)", "eval/reports/other.md", "https://"],
+)
+def test_a_report_url_that_is_neither_https_nor_the_reports_path_is_refused(
+    tmp_path: Path, url: str
+) -> None:
+    files = write_sheet_files(tmp_path)[:4]
+    code, output, path = _invoke(tmp_path, *files, "--note", "n", "--report-url", url)
+    assert code == 1
+    assert output == "Error: --report-url must be an https URL or eval/reports/final.md\n"
+    assert not path.exists()
+
+
+def test_the_count_of_drawn_cases_gone_from_the_case_files_is_printed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # current_cases' own error counts the missing cases and names none (V11), so it is shown.
+    def current_cases(draw: object) -> object:
+        raise SheetError("24 drawn cases are no longer in eval/cases")
+
+    monkeypatch.setattr("aiact.eval.head_to_head_report.current_cases", current_cases)
+    files = write_sheet_files(tmp_path)[:4]
+    code, output, path = _invoke(tmp_path, *files, "--note", "n")
+    assert code == 1
+    assert output == "Error: 24 drawn cases are no longer in eval/cases\n"
     assert not path.exists()

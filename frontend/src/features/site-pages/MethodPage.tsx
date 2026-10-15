@@ -6,7 +6,7 @@ import { GlassPanel } from '@/components/GlassPanel'
 import { Placeholder } from '@/components/Placeholder'
 import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
 import { longDate } from '@/features/classify/dates'
-import type { Language } from '@/i18n'
+import { useLanguage } from '@/hooks/use-language'
 import { SITE_ACCURACY, type SiteAccuracy } from '@/lib/accuracy'
 
 import { InfoRows, InfoSection, InfoText, PageIntro, type InfoRow } from './SitePageParts'
@@ -136,7 +136,7 @@ function LimitsSection({ accuracy }: { accuracy: SiteAccuracy }): JSX.Element {
     {
       key: 'labels',
       label: t('sitePages.method.limits.labels'),
-      text: <Trans i18nKey="sitePages.method.limits.labelsText" components={PLACEHOLDER_TAGS} />,
+      text: t('sitePages.method.limits.labelsText'),
     },
     {
       key: 'guidance',
@@ -190,8 +190,8 @@ function ReportLink({ report }: { report: string | null }): JSX.Element {
 }
 
 function ResultsSection({ accuracy }: { accuracy: SiteAccuracy }): JSX.Element {
-  const { t, i18n } = useTranslation()
-  const language: Language = i18n.resolvedLanguage === 'de' ? 'de' : 'en'
+  const { t } = useTranslation()
+  const language = useLanguage()
   const rows: InfoRow[] = [
     {
       key: 'lastRun',

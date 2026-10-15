@@ -4,6 +4,7 @@ it."""
 import re
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import urlparse
 from uuid import UUID
 
 import psycopg
@@ -17,7 +18,7 @@ from aiact.eval import (
     records,
     report,
 )
-from aiact.eval.cases import CaseFileError
+from aiact.eval.cases import BenchmarkCase, CaseFileError
 from aiact.eval.site_metrics import (
     REPORT_PATH,
     SITE_FILE,
@@ -38,11 +39,11 @@ EXPECTED_ERRORS = (
 """Errors whose text names runs, counts and paths only: printed as they are."""
 CASE_NAMING_ERRORS = (head_to_head.DrawError, head_to_head_sheet.SheetError, CaseFileError)
 """Errors whose text can name drawn case ids, Pile B's included: never printed (V11)."""
-CASE_ID = re.compile(r"\b(cb|own|aai|acad)-")
+CASE_ID = re.compile(r"\b(cb|own|aai|acad)-", re.IGNORECASE)
 """A case id's start; the note goes into the public site file, so it may hold none."""
 CASE_FILES_ERROR = (
     "Error: the draw, the answer sheet ({sheet}) or a case file doesn't fit ({kind}); run "
-    "`aiact evaluate head-to-head check` for details"
+    "`aiact evaluate head-to-head render` for details"
 )
 
 
@@ -81,9 +82,12 @@ def site_metrics_command(
     if CASE_ID.search(note):
         typer.echo("Error: --note names a case id; the site file is public", err=True)
         raise typer.Exit(code=1)
+    if not _is_report_location(report_url):
+        typer.echo(f"Error: --report-url must be an https URL or {REPORT_PATH}", err=True)
+        raise typer.Exit(code=1)
     try:
         drawn, filled = head_to_head_command.checked_sheet(draw_file, sheet)
-        cases = head_to_head_report.current_cases(drawn)
+        cases = _current_cases(drawn)
         with records.connect() as connection:
             engine = head_to_head_report.engine_column(connection, head_to_head_run, drawn)
             figures = head_to_head_figures(engine, filled, drawn, cases)
@@ -102,3 +106,20 @@ def site_metrics_command(
         raise typer.Exit(code=1) from error
     write_site_file(metrics, output)
     typer.echo(f"Written: {output}")
+
+
+def _is_report_location(report_url: str) -> bool:
+    """An https URL with a host (the page links it), or the report's default repository path."""
+    if report_url == REPORT_PATH:
+        return True
+    parsed = urlparse(report_url)
+    return parsed.scheme == "https" and bool(parsed.netloc)
+
+
+def _current_cases(drawn: head_to_head.Draw) -> dict[str, BenchmarkCase]:
+    """The drawn cases as labelled now. Their `SheetError` only counts the missing cases (it
+    names none), so it is printed as it is; a `CaseFileError` still never is."""
+    try:
+        return head_to_head_report.current_cases(drawn)
+    except head_to_head_sheet.SheetError as error:
+        raise SiteMetricsError(str(error)) from error
