@@ -4,13 +4,12 @@ the interface's "Texts used" and "Answers draw on" lists (decision 026).
 No model is involved: one read of the `documents` table, one row per text and law version. The
 German row is returned when it exists; otherwise the English one, with `english_only` set (most
 guidance exists only in English), as `get_provision` does for a provision's text. The Digital
-Omnibus is listed too, marked `is_amending`: results cite it for the changes it made. A German
-row is listed under its German title (`GERMAN_TITLES`; P7).
+Omnibus is listed too, marked `is_amending`: results cite it for the changes it made. Each row
+keeps the title the corpus stores for its language: the German rows carry their German titles
+from `data/manifest.yaml` (P32).
 """
 
-from collections.abc import Mapping
 from datetime import date
-from types import MappingProxyType
 from typing import Any, Literal, LiteralString
 
 import psycopg
@@ -29,21 +28,6 @@ SELECT_DOCUMENTS: LiteralString = """
     order by d.doc_key, d.law_version, d.language = %(language)s desc
 """
 """One row per (doc_key, law_version): the wanted language first, else English."""
-
-GERMAN_TITLES: Mapping[str, str] = MappingProxyType(
-    {
-        "ai-act": "Verordnung (EU) 2024/1689 (KI-Verordnung)",
-        "ai-act-consolidated": "KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026",
-        "omnibus": "Verordnung (EU) 2026/1744 (digitaler Omnibus zur KI)",
-        "guide-definition": "Leitlinien der Kommission zur Definition eines KI-Systems",
-        "guide-prohibited": (
-            "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz"
-        ),
-    }
-)
-"""The German title of each text the corpus holds in German (P7). The manifest gives these rows
-the English title, so the German row is listed under this one; a text only in English keeps its
-English title and is marked `english_only`."""
 
 
 class DocumentInfo(ContractModel):
@@ -95,10 +79,6 @@ def _select(connection: psycopg.Connection, params: dict[str, Any]) -> list[dict
 
 
 def _document(row: dict[str, Any], wanted: Language) -> DocumentInfo:
-    language = Language(row["language"])
-    title = row["title"]
-    if language is Language.DE:
-        title = GERMAN_TITLES.get(row["doc_key"], title)
     return DocumentInfo.model_validate(
-        {**row, "title": title, "english_only": language is not wanted}
+        {**row, "english_only": Language(row["language"]) is not wanted}
     )

@@ -3,7 +3,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "4.3. Außerhalb des Anwendungsbereichs",
    "keyword_idf": 21.456622778095,
    "keyword_rank": 2,
@@ -22,7 +22,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "c) Szenario 2: Verbotene KI-Systeme \"mit der Wirkung\", das Verhalten wesentlich zu verändern",
    "keyword_idf": 15.2414266173213,
    "keyword_rank": 7,
@@ -41,7 +41,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "3.5.2. Manipulative, täuschende und ausbeuterische KI-Systeme, die voraussichtlich keinen erheblichen Schaden verursachen",
    "keyword_idf": 8.34286226583411,
    "keyword_rank": 33,
@@ -60,7 +60,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "2.7. Anwendung der Verbote auf KI-Systeme mit allgemeinem Verwendungszweck und Systeme mit Zweckbestimmung",
    "keyword_idf": 7.81334450905597,
    "keyword_rank": 41,
@@ -79,7 +79,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "2.2. Rechtsgrundlage der Verbote",
    "keyword_idf": 7.51323991660563,
    "keyword_rank": 43,
@@ -98,7 +98,7 @@
   {
    "doc_key": "guide-prohibited",
    "doc_type": "guideline",
-   "document_title": "Commission Guidelines on prohibited AI practices",
+   "document_title": "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
    "heading": "a) Zum Begriff der \"wesentlichen Veränderung des Verhaltens\"",
    "keyword_idf": 12.213115858386,
    "keyword_rank": 14,
@@ -119,7 +119,7 @@
   "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
   "doc_key": "ai-act-consolidated",
   "doc_type": "law",
-  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "document_title": "KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026",
   "english_only": false,
   "heading": "Artikel 5 — Verbotene Praktiken im KI-Bereich",
   "language": "de",
@@ -134,7 +134,7 @@
   "disclaimer": "Dies ist eine Orientierungshilfe, keine Rechtsberatung. Sie beruht ausschließlich auf der angegebenen Beschreibung und der angezeigten Fassung der KI-Verordnung. Lassen Sie Entscheidungen mit rechtlicher Tragweite anwaltlich prüfen.",
   "doc_key": "ai-act-consolidated",
   "doc_type": "law",
-  "document_title": "AI Act, consolidated text as of 27 July 2026",
+  "document_title": "KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026",
   "english_only": false,
   "heading": "Artikel 5 — Verbotene Praktiken im KI-Bereich",
   "language": "de",
