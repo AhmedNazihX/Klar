@@ -3,7 +3,6 @@ Postgres, on two test documents loaded inside the `db` fixture's rolled-back tra
 guideline in English and German, and a code in English only. The app gets the test's connection
 through the `database` dependency."""
 
-import os
 from collections.abc import AsyncIterator, Iterator
 from contextlib import nullcontext
 from datetime import date
@@ -22,7 +21,6 @@ from aiact.retrieval.documents import DocumentInfo, DocumentList
 from aiact.retrieval.provisions import Provision
 from aiact.schemas import DISCLAIMER_DE, DocumentStatus, Language
 from tests.api.conftest import api_settings
-from tests.test_isolation import REQUIRE_CORPUS_ENV
 
 pytestmark = pytest.mark.db
 
@@ -133,18 +131,6 @@ async def test_documents_are_listed_in_german_with_the_english_fallback(
     assert ours[CODE].english_only and ours[CODE].language is Language.EN
     keys = [(d.doc_key, d.law_version) for d in listed.documents]
     assert len(keys) == len(set(keys))  # one row per text and law version
-
-
-@pytest.fixture
-def corpus(db: psycopg.Connection) -> psycopg.Connection:
-    """The loaded corpus (its German texts included), inside the rolled-back test transaction."""
-    row = db.execute("select count(*) from documents where doc_key = 'ai-act'").fetchone()
-    if row is None or not row[0]:
-        reason = "the corpus isn't loaded; run `aiact corpus load`"
-        if os.environ.get(REQUIRE_CORPUS_ENV):
-            pytest.fail(reason, pytrace=False)
-        pytest.skip(reason)
-    return db
 
 
 @pytest.mark.anyio

@@ -248,4 +248,4 @@ jobs:
         env:
           AIACT_REQUIRE_CORPUS: "1"
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        run: uv run pytest -q tests/test_isolation.py tests/db/test_citations_corpus.py
+        run: uv run pytest -q tests/test_isolation.py tests/db/test_citations_corpus.py tests/db/test_api_lookups.py::test_the_corpus_lists_its_german_texts_under_their_german_titles

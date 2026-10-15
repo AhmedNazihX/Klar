@@ -69,12 +69,15 @@ from aiact.retrieval.provisions import ProvisionNotFoundError, get_provision
 from aiact.retrieval.search import CANDIDATES as SEARCH_CANDIDATES
 from aiact.retrieval.search import search_ai_act
 from aiact.settings import BACKEND_DIR, Settings, get_settings
-from tests.db.conftest import db, db_connection  # noqa: F401  (fixtures)
+from tests.db.conftest import (  # noqa: F401  (fixtures)
+    REQUIRE_CORPUS_ENV,
+    db,
+    db_connection,
+)
 from tests.mcp.test_server import HIDDEN_ARGUMENTS, property_names
 
 pytestmark = pytest.mark.db
 
-REQUIRE_CORPUS_ENV = "AIACT_REQUIRE_CORPUS"
 AFTER_THE_GUIDELINES = date(2026, 9, 30)
 INJECTED_DOC = "test-b13-guide"
 FOOTNOTE_NUMBER = " 114"
