@@ -43,3 +43,11 @@ evidence tags) and run 15 (Q&A support), caps $0.75, $0.40 and $0.03.
 
 Planned after run 1's spend is known, sized to the rest of the $15: the sets whose numbers vary from
 run to run (runs 1, 3, 5, 6, 7, 15 and 17 above, then their judged passes).
+The gap runs, appliedai, academic, the baselines, the head-to-head draw and the embeddings check run
+once, in run 1 (user, 2026-10-15).
+
+## Limitations
+
+- Citation support and evidence tags are judged by Jev with the backup LLM judge for unsure items,
+  validated in V4 against hand-labelled items (decision 006). INIT's manual sample of the W1 runs'
+  verdicts is not done (user, 2026-10-15): the judged rates are not checked by hand on these runs.
