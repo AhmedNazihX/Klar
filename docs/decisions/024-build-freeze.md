@@ -27,3 +27,6 @@ A data-only exception: after the freeze, P27 may write `frontend/src/content/acc
 on the landing and Method pages) from W1's stored runs. Nothing else changes. Each figure names its run_id, and a
 test checks every figure against `eval/reports/final.md`. Any other change after W1 starts still means a logged
 re-run.
+
+## Amendment (2026-10-15)
+Report-only tooling that reads stored runs and cannot change a measured result is allowed after the freeze (user, 2026-10-15; first use: W1's breakdown command).

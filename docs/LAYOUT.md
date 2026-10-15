@@ -118,6 +118,8 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   │   │   ├── answers.py           fixed answers for the downgrade rate's second run, `run --answers-from` (V8)
 │   │   │   ├── gap.py               held-out vs in-corpus gap of two stored runs; `aiact evaluate gap` (V8)
 │   │   │   ├── held_out_hits.py     held-out rows a stored run's traces retrieved; `aiact evaluate held-out-hits` (V8)
+│   │   │   ├── breakdown.py         a stored run's metrics per language, business function or area (W1);
+│   │   │   │                        breakdown_command.py: `aiact evaluate breakdown`, registered by cli.py
 │   │   │   ├── head_to_head.py      the head-to-head case draw from the labels-v1 tag: seeded, by class, every
 │   │   │   │                        engine step covered (V10a, decision 036)
 │   │   │   ├── head_to_head_sheet.py  the checker answer sheet: schema, checks, template (V10a)
