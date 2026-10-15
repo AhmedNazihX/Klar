@@ -2446,3 +2446,45 @@ Judged metrics: not judged yet (`aiact evaluate judged <run_id>`).
 
 Not measured: the judge's reply was refused or broken, or the item was too long to send; never counted as a fail.
 
+
+## Later analysis (2026-10-15): why run 1 missed 52 of 152 Pile B cases
+
+A read-only analysis of stored run `31baa80c-f3bc-4eaf-93d0-4280b5fa14e7`, made after W1 and cross-checked
+with run 2 (`3ed735c1-b796-421b-a01e-5d36faa93851`) and the plain-prompt baseline
+(`b2b88c38-5f2d-438e-8741-7e234ebb6cc5`). The failure types were assigned by an AI agent reading each case's
+stored steps; the user did not review them case by case. Counts only: no case ids and no Pile B text.
+
+**None of the 46 misses with a result put a system lower than its label.** 42 were too strict; 4 said "not an
+AI system" where the label is minimal (the same duties). The other 6 were failed cases.
+
+| Failure type | Misses | Too strict | Baseline right |
+| --- | ---: | ---: | ---: |
+| Art. 50 duty assumed where minimal | 16 | 16 | 7 |
+| Wrongly prohibited (Art. 5) | 13 | 13 | 9 |
+| Wrong Annex III point or area, or Annex I route | 12 | 12 | 1 |
+| No result (a step failed) | 6 | n/a | 4 |
+| "Not an AI system" where minimal | 4 | 0 (4 too lenient, no practical effect) | 3 |
+| Art. 6(3) exception missed | 1 | 1 | 0 |
+| Total | 52 | 42 | 24 |
+
+**The cross-cutting cause.** 27 of the 52 misses came from a step returning "needs more information" or
+"legally ambiguous"; the engine then put the stricter reading as the headline class (decision 010's working
+assumption). That covers 13 of the 13 prohibited, 6 of the 12 wrong-area and 8 of the 16 transparency misses.
+
+**Top areas:** education 9 of 15; essential services and credit 9 of 24; law enforcement 8 of 24.
+
+**Stability.** 46 of the 52 were missed in run 2 too; 6 flipped, 3 of them failed cases that ran fine the second
+time. The baseline got 24 of the engine's misses right; the engine got 32 right that the baseline missed.
+
+**Three patterns:**
+
+- Art. 5(1)(c) is flagged when a description doesn't state whether worse treatment is unjustified or
+  disproportionate.
+- Art. 50(2) "synthetic content" is read as covering analytic or structured outputs (forecasts, reports, rosters).
+- "Profiling" is read broadly, which blocks the Art. 6(3) exception.
+
+**Label doubts, flagged only; nothing was changed:** 1 case where "not an AI system" looks right; 2–3 arguable
+out-of-scope versus minimal cases; 1 arguable credit case.
+
+**Suggested fix, not applied:** when a step is unsure, keep the class the engine can establish as the headline
+and show the stricter reading as an open question. The estimate is up to about 27 cases; it is untested.

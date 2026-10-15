@@ -402,6 +402,7 @@ this layout. A story that adds a new folder, or a new top-level file, updates th
 │   ├── ARCHITECTURE.md              the README's architecture in detail: engine, retrieval, models, databases, tracing (W2)
 │   ├── SETUP.md                     setup beyond the tests: an own Supabase project, the Claude Desktop MCP config (W2)
 │   ├── LIMITATIONS.md               every known limitation with its source; the README lists the main ones (W2)
+│   ├── showcase/                    README screenshots from the running app: result, reviewer, inventory, documents, phone-result (.png) (W2)
 │   ├── demo/                        recorded demos linked from the README: mcp-claude-desktop.md, .mp4 and .png (P2b)
 │   ├── design-system/               copy of the user's Klar design system (README brand book, localisation, components, components.d.ts, tokens.json); the claude.ai artifact is the source
 │   └── decisions/NNN-<slug>.md      decision records (/decision skill)

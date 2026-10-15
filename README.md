@@ -10,12 +10,21 @@ documents. When the facts or the law don't settle the answer, it says so instead
 measured against labelled cases based on current law and published in this README. It gives guidance, not legal
 advice.
 
-**Showcase:** TODO(user): the link to this project's [showcase.turingcollege.com](https://showcase.turingcollege.com/)
-entry goes here. **Measured accuracy:** 65.8% (100/152) risk-class accuracy on the held-out Commission examples,
+**Measured accuracy:** 65.8% (100/152) risk-class accuracy on the held-out Commission examples,
 false-low-risk rate 0.0% (0/56) (run 1, the figures the website shows; [details](#measured-accuracy)).
 
-<!-- TODO(W2, screenshots): Result, Reviewer, Inventory, Documents and a phone view, captured from the running app,
-go here (docs/showcase/). -->
+| Result | Reviewer view |
+| --- | --- |
+| ![High-risk result for a CV-screening tool](docs/showcase/result.png) | ![Reviewer view: facts with evidence tags, steps and citations](docs/showcase/reviewer.png) |
+| **Inventory** | **Draft documents** |
+| ![Inventory of three tools with their classes](docs/showcase/inventory.png) | ![Draft human-oversight record from the result](docs/showcase/documents.png) |
+
+<img src="docs/showcase/phone-result.png" alt="Limited-risk result on a phone" width="240" align="right">
+
+Screens from the app (2026-10-15), for three made-up tools of a made-up company: a CV-screening tool
+(high-risk, Annex III 4(a)), a customer-service chat assistant (limited risk, Art. 50) and a mail spam filter
+(minimal risk, with "is it an AI system?" left legally ambiguous). Right: the chat assistant's result on a phone.
+<br clear="right">
 
 ## What it does, and what it is not
 
@@ -73,7 +82,9 @@ The engine (`backend/aiact/engine/`) is a LangGraph graph with a fixed check ord
 facts → scope → prohibited → high_risk → transparency → role_obligations → finalize
 ```
 
-`scope` and `prohibited` end a run early only when they matched and decided; an uncertain match goes on with the
+The engine is a fixed LangGraph graph, not a tool-using agent: the AI Act prescribes the order of checks (Art. 5
+before Art. 6 before Art. 50), so every run takes the same path, no check can be skipped, and each result is
+reproducible (decision 037). `scope` and `prohibited` end a run early only when they matched and decided; an uncertain match goes on with the
 stricter reading as the working assumption (decision 010). Every check node is wrapped by a citation check: each
 citation must resolve in the corpus, and its quote is rebuilt from the corpus row. Retrieval fetches a provision by
 its ID where the law says where to look, and otherwise searches the AI Act corpus (official texts and Commission
@@ -189,6 +200,9 @@ The main ones; every item, with its source, is in [docs/LIMITATIONS.md](docs/LIM
 - **The original-text toggle covers the class, not the duties:** only the Art. 113 route dates change (decision 020).
 - **Run-to-run spread** (headline 65.8% and 60.5%), false low risks in run 2 only, citation support 14.5–21.6%
   as judged with no hand-checked sample, RAGAS faithfulness about 0.80 (final.md › Limitations).
+- **On Commission Pile B the engine over-classifies rather than under-classifies:** none of its misses put a
+  system lower than its label, and 27 of 52 come from taking the stricter reading when a fact is missing
+  ([final.md › Later analysis](eval/reports/final.md#later-analysis-2026-10-15-why-run-1-missed-52-of-152-pile-b-cases)).
 - **Art. 111(1) isn't modelled**, and Art. 111(2)'s per-product caveat rests on the Blue Guide (decision 022).
 - **The EU link is read from the description only:** the company profile isn't a classification input (decision 026).
 - **No prompt-injection framing or injection tests,** and no app-level spending cap beyond the OpenRouter key limit.

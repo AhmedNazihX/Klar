@@ -84,7 +84,7 @@ Every tool result carries the law version it used and the "guidance, not legal a
 
 ## How it works
 
-The engine doesn't make one big judgement. It follows the order of checks the Act sets out. The order is fixed and no check can be skipped, but inside each step the model decides what to look up. The input is a company's description of one system; the Act is the library the engine reads from, not the input.
+The engine doesn't make one big judgement. It follows the order of checks the Act sets out. The order is fixed and no check can be skipped. Inside each step the code looks up the relevant law text and searches the guidelines before the model answers; the model gets no tools (decision 037). The input is a company's description of one system; the Act is the library the engine reads from, not the input.
 
 ```mermaid
 flowchart TD
