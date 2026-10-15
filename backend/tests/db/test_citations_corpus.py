@@ -6,7 +6,6 @@ It also checks that the in-memory corpus the replays use (`tests/engine/built_co
 resolves citations exactly as the database does.
 """
 
-import os
 from datetime import date
 
 import psycopg
@@ -22,26 +21,11 @@ from aiact.engine.nodes.common import Lookup
 from aiact.schemas import Citation, Language, LawVersion, Status
 from tests.engine.built_corpus import built_corpus, omnibus_changes
 from tests.engine.test_citations import ART_5_1_BA, FAKE, STATE, ScriptedNode, decided
-from tests.test_isolation import REQUIRE_CORPUS_ENV
 
 pytestmark = pytest.mark.db
 
 AFTER = date(2026, 12, 10)
 BEFORE = date(2026, 3, 1)
-
-
-@pytest.fixture
-def corpus(db: psycopg.Connection) -> psycopg.Connection:
-    loaded = db.execute(
-        "select count(distinct doc_key) from documents "
-        "where doc_key in ('ai-act', 'ai-act-consolidated', 'omnibus')"
-    ).fetchone()
-    if loaded is None or loaded[0] < 3:
-        reason = "the corpus isn't loaded; run `aiact corpus load`"
-        if os.environ.get(REQUIRE_CORPUS_ENV):
-            pytest.fail(reason, pytrace=False)
-        pytest.skip(reason)
-    return db
 
 
 def lookup(as_of: date | None, language: Language = Language.EN) -> Lookup:
