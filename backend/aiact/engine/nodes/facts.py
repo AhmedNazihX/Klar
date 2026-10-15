@@ -306,11 +306,11 @@ class FactExtractor:
         chat: BaseChatModel | None = None,
         refusal_chat: BaseChatModel | None = None,
     ) -> None:
-        """`chat` replaces the OpenRouter model (tests), and `refusal_chat` the second model
-        a refused request goes to (decision 033; a `chat` alone has none). Raises
-        `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`, `REFUSAL_MODEL`,
-        `REFUSAL_PROVIDER` or the API key is not set: both models are always pinned to their
-        EU endpoints with fallbacks off (decisions 005, 033), so descriptions stay in the EU."""
+        """`chat` replaces the OpenRouter model (tests), and `refusal_chat` the second model a
+        refused request goes to (decision 033; a `chat` alone has none, and gets no cut-off retry:
+        E20). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`, `REFUSAL_MODEL`,
+        `REFUSAL_PROVIDER` or the API key is not set: both models are always pinned to their EU
+        endpoints with fallbacks off (decisions 005, 033), so descriptions stay in the EU."""
         self._route = engine_route(
             max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat
         )

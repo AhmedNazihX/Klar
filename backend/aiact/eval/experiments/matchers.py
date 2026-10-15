@@ -96,16 +96,24 @@ def replay_state(case: BenchmarkCase, as_of: date) -> EngineState:
     }
 
 
+PROHIBITION_POINT_PREFIX = "art:5:1:"
+"""A label citation naming an Art. 5(1) point, the match `role_check_state` gives a prohibited
+label."""
+
+
 def role_check_state(case: BenchmarkCase, as_of: date) -> EngineState:
     """The replay state plus the class the label settles, as the earlier checks would leave it:
-    the Art. 5 match, the high-risk route (Annex I when a label point is in Annex I, else
-    Annex III), or an Art. 50(1) duty for limited_risk."""
+    the Art. 5 match on the points the label cites, the high-risk route (Annex I when a label
+    point is in Annex I, else Annex III), or an Art. 50(1) duty for limited_risk."""
     label = case_label(case)
     is_prohibited = label.risk_class is RiskClass.PROHIBITED
     state: EngineState = {
         **replay_state(case, as_of),
         "matches": (StepName.PROHIBITED,) if is_prohibited else (),
     }
+    if is_prohibited:
+        points = tuple(c for c in case.label_citation if c.startswith(PROHIBITION_POINT_PREFIX))
+        state["prohibited_points"] = points
     if label.risk_class is RiskClass.HIGH_RISK:
         is_annex_i = any(point.startswith("annex:I:") for point in label.annex_point)
         route = HighRiskRoute.ANNEX_I if is_annex_i else HighRiskRoute.ANNEX_III

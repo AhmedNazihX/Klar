@@ -802,16 +802,15 @@ class HighRiskCheck:
         library: HighRiskLibrary | None = None,
         embedder: QueryEmbedder | None = None,
     ) -> None:
-        """`chat` replaces the OpenRouter model and `library` the corpus (tests), and
-        `refusal_chat` the second model a refused request goes to (decision 033; a `chat` alone
-        has none). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`,
-        `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both models are always
-        pinned to their EU endpoints with fallbacks off (decisions 005, 033). Without a
-        `library`, the query embedder is `embedder` (shared by a run, E10) or is built here
-        from the same settings, so
-        `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too (`EMBEDDING_DIMENSIONS` has
-        a default); each step then reads the corpus with it over a short connection before the
-        model call, and another for the citations after it."""
+        """`chat` replaces the OpenRouter model and `library` the corpus (tests), and `refusal_chat`
+        the second model a refused request goes to (decision 033; a `chat` alone has none, and gets
+        no cut-off retry: E20). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`,
+        `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both models are always pinned
+        to their EU endpoints with fallbacks off (decisions 005, 033). Without a `library`, the
+        query embedder is `embedder` (shared by a run, E10) or is built here from the same settings,
+        so `EMBEDDING_MODEL` and `EMBEDDING_PROVIDER` must be set too (`EMBEDDING_DIMENSIONS` has a
+        default); each step then reads the corpus with it over a short connection before the model
+        call, and another for the citations after it."""
         self._route = engine_route(
             max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat
         )

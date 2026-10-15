@@ -368,6 +368,10 @@ class Practice:
     """An Art. 5(1)(h) use the exception allows: the Art. 5(4) notification applies."""
     facts: frozenset[str] | None = None
     """The key facts the practice reads; None for every fact of its answer part."""
+    has_cue: bool = True
+    """The description gives a sign of the practice, so a fact left open keeps it assumed
+    (decision 010). Only Art. 5(1)(d) can lack one (`_profiling_practices`): a fact left open
+    then asks its question without assuming the ban."""
 
     @property
     def is_open(self) -> bool:
@@ -476,6 +480,16 @@ def _settled_if_moot(answer: SocialScoringAnswer) -> SocialScoringAnswer:
     return answer.model_copy(update={"settled_in_law": Settled.YES, "open_question": None})
 
 
+def _has_crime_risk_cue(answer: CrimeRiskAnswer) -> bool:
+    """Whether the description gives a sign of the practice of point (d) (user, 2026-10-15): a
+    "yes" to either fact that describes it, that the system assesses a person's risk of
+    offending, or that the assessment rests on profiling or personality traits alone. Art.
+    5(1)(d) bans only that assessment, and spares support for a human assessment that rests on
+    objective, verifiable facts linked to a criminal activity (recital 42). A description that
+    says neither gives no sign of the ban, so the ban is not assumed: it is asked."""
+    return Answer.YES in (answer.crime_risk_assessment, answer.solely_profiling)
+
+
 def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
     """(c) social scoring and (d) crime prediction from profiling alone."""
     c, d = answer.social_scoring, answer.crime_risk
@@ -507,6 +521,7 @@ def _profiling_practices(answer: ProhibitedAnswer) -> tuple[Practice, ...]:
             is_raised=_raised(d, "crime_risk_assessment", d.crime_risk_assessment),
             summary=d,
             cited=("art:5:1:d",),
+            has_cue=_has_crime_risk_cue(d),
         ),
     )
 

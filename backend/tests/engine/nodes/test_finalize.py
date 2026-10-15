@@ -129,7 +129,11 @@ def high_risk(
 
 
 def prohibited_match(status: Status = Status.DECIDED) -> CheckOutcome:
-    return CheckOutcome(step=step(StepName.PROHIBITED, NO_PRACTICE, status=status), matched=True)
+    return CheckOutcome(
+        step=step(StepName.PROHIBITED, NO_PRACTICE, status=status),
+        matched=True,
+        prohibited_points=("art:5:1:a",),
+    )
 
 
 Check = CheckOutcome | CheckNode
@@ -272,6 +276,26 @@ def test_an_ambiguous_prohibited_step_keeps_prohibited_and_the_annex_point() -> 
     assert result.legal_review is not None
     assert result.legal_review.startswith(LEGAL_REVIEW[Language.EN][RiskClass.PROHIBITED])
     assert "the stricter reading (prohibited) is assumed" in result.legal_review
+
+
+def test_an_unmatched_prohibited_question_leaves_the_class_to_the_later_checks() -> None:
+    """E21 (user, 2026-10-15, option B): a prohibited step that asks a question but assumes no
+    ban (no match) needs more information, yet never makes the class prohibited: the high-risk
+    finding stands, the result's status follows the open step, and its question is asked."""
+    asked = FollowUpQuestion(id="crime_risk_assessment", text="Does it predict offending?")
+    unassumed = CheckOutcome(
+        step=step(
+            StepName.PROHIBITED, NO_PRACTICE, status=Status.NEEDS_MORE_INFORMATION, missing=asked
+        ),
+        follow_up_questions=(asked,),
+    )
+    result = run({StepName.PROHIBITED: unassumed, StepName.HIGH_RISK: high_risk("annex:III:6:d")})
+    assert result.risk_class is RiskClass.HIGH_RISK
+    assert result.status is Status.NEEDS_MORE_INFORMATION
+    assert [s.step for s in result.steps] == list(STEP_ORDER)
+    assert result.annex_point == "annex:III:6:d"
+    assert question_ids(result)[0] == "crime_risk_assessment"
+    assert result.legal_review == LEGAL_REVIEW[Language.EN][RiskClass.HIGH_RISK]
 
 
 def test_a_needs_information_state_asks_the_missing_fact_first() -> None:

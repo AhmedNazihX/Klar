@@ -25,8 +25,9 @@ applied here, in code:
   the deployer duties, is the working assumption until a person reviews the description.
 
 Conditional duties are filtered by their `applies_if`. Rows another finding settles are never
-asked of the model: Art. 50 by the transparency step's duties, Art. 5 by the prohibited class,
-Art. 6(4) by the high-risk step's Art. 6(3) exemption, the GPAI flag by the GPAI answer. Every
+asked of the model: Art. 50 by the transparency step's duties, Art. 5 by the points the
+prohibited step matched (only the prohibition the system falls under, E21), Art. 6(4) by the
+high-risk step's Art. 6(3) exemption, the GPAI flag by the GPAI answer. Every
 other condition goes to the model. A duty whose condition is "no" is dropped; "yes" and
 "unknown" keep it, with its condition shown.
 
@@ -123,6 +124,9 @@ DOWNSTREAM_PROVIDER_ARTICLE = "art:3:68"
 EXEMPTION_ARTICLE = "art:6:4"
 PROHIBITION_ARTICLE = "art:5:1"
 """Rows whose condition is settled by another finding, not asked of the model."""
+OWN_ROW_POINTS = frozenset({"art:5:1:ba", "art:5:1:bb"})
+"""The Art. 5(1) points with prohibition rows of their own (the Omnibus's (ba) and (bb)); the
+`art:5:1` rows are those of every other point."""
 
 OWN_NAME_CLASSES = frozenset({RiskClass.LIMITED_RISK, RiskClass.MINIMAL_RISK})
 """The classes where own-name placement makes the role legally ambiguous under Art. 3(3)."""
@@ -406,9 +410,17 @@ def _is_art_5(article: str) -> bool:
     return article == PROHIBITION_ARTICLE or article.startswith(f"{PROHIBITION_ARTICLE}:")
 
 
+def _falls_under(article: str, points: Sequence[str]) -> bool:
+    """Whether a prohibition row is that of a point the prohibited step matched (E21): a (ba)
+    or (bb) row only for its own point, an `art:5:1` row for any other point."""
+    if article in OWN_ROW_POINTS:
+        return article in points
+    return any(point not in OWN_ROW_POINTS for point in points)
+
+
 def _is_settled_elsewhere(obligation: Obligation) -> bool:
     """Rows another finding settles: Art. 50 (transparency), Art. 53(1)(b) (the GPAI answer),
-    Art. 5 (the class: E4 found the practice) and Art. 6(4) (E5's Art. 6(3) exemption)."""
+    Art. 5 (the points the prohibited step matched) and Art. 6(4) (E5's Art. 6(3) exemption)."""
     article = obligation.article
     return (
         article.startswith(TRANSPARENCY_PREFIX)
@@ -472,10 +484,11 @@ def _kept(
         return _found(article in state.get("transparency_duties", ()), StepName.TRANSPARENCY, state)
     if article == EXEMPTION_ARTICLE:
         return _found(state.get("annex_iii_exempt", False), StepName.HIGH_RISK, state)
+    if _is_art_5(article):
+        points = state.get("prohibited_points", ())
+        return _found(_falls_under(article, points), StepName.PROHIBITED, state)
     if article == GPAI_FLAG_ARTICLE:
         is_met = gpai is not Answer.NO
-    elif _is_art_5(article):
-        is_met = True  # listed only for the prohibited class, which E4's finding settled
     else:
         is_met = answers.get(obligation.applies_if, Answer.UNKNOWN) is not Answer.NO
     return Kept.YES if is_met else Kept.CONDITION_NOT_MET
@@ -781,11 +794,11 @@ class RoleObligationsCheck:
         refusal_chat: BaseChatModel | None = None,
         table: ObligationTable | None = None,
     ) -> None:
-        """`chat` replaces the OpenRouter model and `table` the committed obligations (tests),
-        and `refusal_chat` the second model a refused request goes to (decision 033; a `chat`
-        alone has none). Raises `LLMConfigError` when `ENGINE_MODEL`, `ENGINE_PROVIDER`,
-        `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both models are always
-        pinned to their EU endpoints with fallbacks off (decisions 005, 033)."""
+        """`chat` replaces the OpenRouter model and `table` the committed obligations (tests), and
+        `refusal_chat` the second model a refused request goes to (decision 033; a `chat` alone has
+        none, and gets no cut-off retry: E20). Raises `LLMConfigError` when `ENGINE_MODEL`,
+        `ENGINE_PROVIDER`, `REFUSAL_MODEL`, `REFUSAL_PROVIDER` or the API key is not set: both
+        models are always pinned to their EU endpoints with fallbacks off (decisions 005, 033)."""
         settings = settings or get_settings()
         self._route = engine_route(
             max_tokens=MAX_OUTPUT_TOKENS, settings=settings, chat=chat, refusal_chat=refusal_chat

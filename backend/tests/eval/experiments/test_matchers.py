@@ -60,14 +60,21 @@ def test_a_dated_case_replays_at_its_own_date() -> None:
         (RiskClass.HIGH_RISK, ("annex:I:A:11",), {"high_risk_route": HighRiskRoute.ANNEX_I}),
         (RiskClass.HIGH_RISK, (), {"high_risk_route": HighRiskRoute.ANNEX_III}),
         (RiskClass.LIMITED_RISK, (), {"transparency_duties": ("art:50:1",)}),
-        (RiskClass.PROHIBITED, (), {"matches": (StepName.PROHIBITED,)}),
+        (
+            RiskClass.PROHIBITED,
+            (),
+            {"matches": (StepName.PROHIBITED,), "prohibited_points": ("art:5:1:d",)},
+        ),
         (RiskClass.MINIMAL_RISK, (), {}),
     ],
 )
 def test_the_role_check_gets_the_class_the_label_settles(
     risk_class: RiskClass, annex_point: tuple[str, ...], expected: dict[str, object]
 ) -> None:
-    labelled = case("d-1", risk_class, annex_point=annex_point)
+    """A prohibited label's match rests on the Art. 5(1) points it cites, not on Art. 3 or a
+    paragraph such as Art. 5(1a) (E21)."""
+    citation = ("art:5:1:d", "art:3:4", "art:5:1a:a:i")
+    labelled = case("d-1", risk_class, annex_point=annex_point, citation=citation)
     state = matchers.role_check_state(labelled, AS_OF)
     assert state == {**matchers.replay_state(labelled, AS_OF), **expected}
 

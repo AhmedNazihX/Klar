@@ -2193,13 +2193,10 @@ def _assumes_high_risk_on_point_2(result: CheckOutcome, case: BenchmarkCase) -> 
 
 OWN_F_KNOWN_GAPS: dict[str, KnownGap] = {
     "own-f-07-water-mains-renewal-plan": KnownGap(
-        "E20's re-record (2026-10-13): Annex III point 2 is assumed until the utility says "
-        "whether it is a critical entity under the CER Directive (the retrieved guideline "
-        "passage, para 198), against the H4 rule that a tool planning investment is no safety "
-        "component (minimal_risk label); over-strict, not a false low risk. Run-to-run "
-        "variance: E19's recording read `uses` 'no' on a request that differs only by E20's "
-        "exemption rule, which is about the Annex I conformity route, not point 2; kept by the "
-        "user, 2026-10-14",
+        "Annex III point 2: the guidelines leave the line between a maintenance-need detector "
+        "(para 184(b)) and a supporting predictive-maintenance tool beside independent safety "
+        "systems (ex:065, ex:068) open for a renewal planner; the user kept it as a known gap "
+        "(E21, 2026-10-15, option A)",
         _assumes_high_risk_on_point_2,
     ),
 }
