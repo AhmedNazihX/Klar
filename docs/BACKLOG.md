@@ -1293,6 +1293,7 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
 - [ ] **S1 · Stretch: fixed order vs free agent** · Deps: W1, P2a · Type: agent
   Output: `aiact/eval/experiments/free_agent.py`, a free agent with only the lookup tools, run on the headline set; accuracy, skipped checks (Art. 5) and cost compared.
   DoD: both arms ran on the same headline set, with stored run_ids; the report compares accuracy, skipped checks (especially Art. 5), and cost and tool calls per case.
+  **Orchestrator (2026-10-15):** tool-call correctness for the Pile B headline runs is still unread (LangSmith reads failed in parallel); free, run one at a time: aiact evaluate tool-calls 31baa80c-f3bc-4eaf-93d0-4280b5fa14e7, then 3ed735c1-b796-421b-a01e-5d36faa93851; paste into final.md › Stored outputs. Useful as the fixed-order baseline S1 compares against.
 
 - [ ] **S3 · Stretch: deployment** · Deps: W1, P11, P12, P13, E15 · Type: mixed
   Output: EU hosting, real accounts (upgrade from anonymous sessions), MCP over HTTP, a GDPR data policy.
@@ -1316,6 +1317,20 @@ The workflow comes from the `foreman` plugin (config in `.claude/foreman.json`);
   **From P13 (merged):** The e2e suite needs the backend uv env and a second local Supabase project (frontend/e2e/supabase, project_id aiact_e2e, ports 54330-54332; make e2e-db, make e2e). The replay API (python -m tests.e2e.replay_server) reads only the environment, never the backend's env file, and only talks to 54332. CI's e2e job starts that stack, loads the corpus and runs pnpm e2e. A deployed app needs none of this, but keep site_url and ports in step if the preview port changes.
   **Orchestrator (2026-10-13):** MCP leftovers from P2a/P2b for a deployed or HTTP MCP: German-then-English guidance fallback in MCP search; extra undefined tool arguments are dropped silently by the SDK (rejecting them needs a custom argument model); with AIACT_ENV=development, LangSmith traces descriptions sent through MCP to the operator's own LangSmith project (predates P2b). The local aiact_e2e Supabase stack (54330-54332) is left running after P13 for make e2e; stop it with supabase stop --project-id aiact_e2e when not needed.
   **From P31 (merged):** Report size caps: LIST_REPORT_MAX_CHARS = 330,000 and LIST_REPORT_MAX_LINES = 11,500 (api/reports.py), measured on a dev machine; re-measure a near-cap report render on the chosen host and adjust. A provider that also deploys, at x100 systems, still gets a 413.
+  **Orchestrator (2026-10-15):** before going public, add an app-level daily spending cap (today only the OpenRouter key limit backs it) and prompt-injection tests (the engine prompts have no data-not-instructions framing; guards today are rate limits, input caps, strict schemas, fixed graph, citation check). If the GitHub repo becomes public, rerun site-metrics with --report-url https://github.com/TuringCollegeSubmissions/anazih-AE.CAP.AFA.1.1/blob/main/eval/reports/final.md so the Method page links the report.
+
+- [ ] **F12 · Follow-ups after the capstone** · Deps: W3 · Type: agent · Size: S
+  Context: items collected at the 2026-10-15 handover (W1, P27, P32, W2 reviews and the user's questions); none blocks the capstone. Split into atomic stories before starting any.
+  Output: each item below done or turned into its own story.
+  DoD: every item is either merged with its tests, or has its own backlog story; the global checks pass.
+  - Isolation guard gap: tests/test_isolation.py checks Pile B case ids outside eval/reports/pile_b/ but not Pile B example ids (hr-ex-NNN in split.json pile_b); extend it through the guardrails skill (found by W1's isolation audit).
+  - The copied _read_errors_exit block in cli.py (deferred from V7).
+  - Result summary date: a limited-risk result says "Your duties apply from 2 February 2025" (the earliest duty, Art. 4) rather than Art. 50's date (seen in docs/showcase/phone-result.png); check whether the headline date should be the class's own duty date.
+  - The company profile's countries are not a classification input (decision 026 item 7), so scope asks the EU-link question even when the profile answers it; passing it would need care (company vs system placement).
+  - Engine accuracy (post-freeze, user decision needed first): when a step is unsure, keep the class it can establish as the headline and show the stricter reading as an open question (final.md › Later analysis: up to ~27 of 52 Pile B misses, untested). Any prompt-rule change must take its criteria from the Act's text, never from the Pile B miss patterns.
+  - ScopeOutputError: a scope reply cut off twice at MAX_OUTPUT_TOKENS (3000) becomes a failed case (E20); see whether the cut-off replies are runaway output before raising the cap.
+  - Confirm the Nebius embedding region and update the README line.
+  - P31 optional items: with_relief falls back to the English relief note when relief_note_de is missing; the engine's not_yet later points are free text.
 
 - [x] **W2 · README + showcase** · Deps: W1, W2a · Type: mixed
   Output: the README paragraph from INIT, architecture, setup, measured accuracy tables, ethical considerations and privacy (from INIT › Ethical considerations; course brief criterion 3), limitations (including the per-category label freeze, decision 017; own cases as development cases, 018; the original toggle covering the class only, 020), the P2b MCP demo, and the showcase link near the top.
