@@ -51,6 +51,10 @@ def site_metrics_command(
         UUID,
         typer.Option(help="The stored held-out commission_b run whose figures are published."),
     ],
+    own_run: Annotated[
+        UUID,
+        typer.Option(help="The stored held-out own-cases run whose case count the page states."),
+    ],
     head_to_head_run: Annotated[
         UUID,
         typer.Option(help="The stored engine run of the head-to-head draw (V10b)."),
@@ -71,8 +75,9 @@ def site_metrics_command(
     ] = head_to_head_sheet.SHEET_FILE,
 ) -> None:
     """Write the site's accuracy figures (the landing and Method pages) from stored runs only:
-    the Commission figures of --commission-run and the head-to-head of --head-to-head-run, each
-    figure naming its run (read-only on the database, no model call; decision 024 addendum)."""
+    the Commission figures of --commission-run, the own cases of --own-run and the head-to-head of
+    --head-to-head-run, each figure naming its run (read-only on the database, no model call;
+    decision 024 addendum)."""
     if CASE_ID.search(note):
         typer.echo("Error: --note names a case id; the site file is public", err=True)
         raise typer.Exit(code=1)
@@ -82,7 +87,9 @@ def site_metrics_command(
         with records.connect() as connection:
             engine = head_to_head_report.engine_column(connection, head_to_head_run, drawn)
             figures = head_to_head_figures(engine, filled, drawn, cases)
-            metrics = site_metrics(connection, commission_run, figures, note, report_url)
+            metrics = site_metrics(
+                connection, commission_run, figures, note, own_run=own_run, report=report_url
+            )
     except CASE_NAMING_ERRORS as error:
         typer.echo(CASE_FILES_ERROR.format(sheet=sheet.name, kind=type(error).__name__), err=True)
         raise typer.Exit(code=1) from None

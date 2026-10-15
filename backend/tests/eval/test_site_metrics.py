@@ -4,6 +4,7 @@ head-to-head scoring and the command's errors without a database. The DB-backed 
 `tests/db/test_site_metrics.py`."""
 
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
@@ -130,12 +131,39 @@ def test_the_run_date_and_n_are_the_published_runs() -> None:
     column = _published_column(rows, published.risk_class_accuracy.run_id)
     # N is the accuracy's denominator: "65.8% (100/152)" gives 152.
     counts = re.search(r"\((\d+)/(\d+)\)", rows[HEADLINE_ROWS["risk_class_accuracy"]][column])
-    assert counts is not None and published.scored_cases == int(counts.group(2))
+    assert counts is not None and published.scored_cases.count == int(counts.group(2))
+    assert published.scored_cases.run_id == published.risk_class_accuracy.run_id
+
+
+def _run_section(run_id: UUID) -> str:
+    """The final report's `aiact evaluate report` output for one run."""
+    return _final().split(f"#### Run {run_id}\n", 1)[1].split("\n#### ", 1)[0]
+
+
+def test_the_own_case_count_is_the_own_runs_in_the_same_full_run() -> None:
+    published = _published()
+    own = published.own_cases
+    section = _run_section(own.run_id)
+    assert "- Benchmark: `own`" in section and "- Exclude mode: `heldout`" in section
+    cases = re.search(r"^- Cases: (\d+) ", section, re.MULTILINE)
+    assert cases is not None and own.count == int(cases.group(1))
+    # The per-benchmark table puts the own run in the same full run's column as the Commission one.
+    table = _final().split("### Risk-class accuracy, per benchmark", 1)[1].split("\n### ", 1)[0]
+    rows = _rows("\n".join(line for line in table.splitlines() if line.startswith("| ")))
+    headline = rows["Commission Pile B, held out (headline)"]
+    column = next(
+        n for n, cell in enumerate(headline) if str(published.risk_class_accuracy.run_id) in cell
+    )
+    assert f"`{own.run_id}`" in rows["Own cases (development cases)"][column]
 
 
 def test_the_file_names_every_run_it_quotes_and_the_report() -> None:
     published = _published()
-    quoted = (published.risk_class_accuracy.run_id, published.head_to_head.klar.run_id)
+    quoted = (
+        published.risk_class_accuracy.run_id,
+        published.own_cases.run_id,
+        published.head_to_head.klar.run_id,
+    )
     assert published.run_ids == quoted
     assert all(f"`{run_id}`" in _final() for run_id in quoted)
     assert published.report == "eval/reports/final.md" and FINAL_REPORT.is_file()
@@ -158,7 +186,7 @@ def test_the_site_file_is_next_to_the_frontend_schema() -> None:
 ENGINE_RUN = UUID("00000000-0000-4000-8000-0000000000e1")
 
 
-def _engine(classes: dict[str, RiskClass | None]) -> EngineColumn:
+def _engine(classes: Mapping[str, RiskClass | None]) -> EngineColumn:
     info = RunInfo(
         id=ENGINE_RUN,
         benchmark="head_to_head",
@@ -228,6 +256,7 @@ def test_a_database_error_is_reported_without_the_url(
         [
             *("evaluate", "site-metrics", *write_sheet_files(tmp_path)[:4]),
             *("--commission-run", RUN_ID, "--head-to-head-run", RUN_ID, "--note", "n"),
+            *("--own-run", RUN_ID),
             *("--output", str(output)),
         ],
     )
@@ -243,7 +272,8 @@ def _invoke(tmp_path: Path, *arguments: str) -> tuple[int, str, Path]:
         app,
         [
             *("evaluate", "site-metrics", "--commission-run", RUN_ID),
-            *("--head-to-head-run", RUN_ID, "--output", str(output), *arguments),
+            *("--head-to-head-run", RUN_ID, "--own-run", RUN_ID),
+            *("--output", str(output), *arguments),
         ],
     )
     return result.exit_code, result.output, output

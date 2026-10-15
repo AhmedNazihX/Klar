@@ -61,6 +61,13 @@ class SiteFigure(ContractModel):
     run_id: UUID
 
 
+class SiteCount(ContractModel):
+    """A number of cases a page sentence states, with the stored run that counted them."""
+
+    count: int = Field(gt=0)
+    run_id: UUID
+
+
 class HeadToHead(ContractModel):
     """The engine and the checker on the same drawn cases."""
 
@@ -72,15 +79,19 @@ class HeadToHead(ContractModel):
 
 class SiteMetrics(ContractModel):
     """`SITE_FILE`: the figures in the shape `frontend/src/lib/accuracy.ts` checks, then the facts
-    the pages may show beside them (N, the run date, the run ids, the report, the choice made)."""
+    the pages may show beside them (the case counts, the run date, the run ids, the report, the
+    choice made)."""
 
     risk_class_accuracy: SiteFigure
     false_low_risk_rate: SiteFigure
     citations_exist: SiteFigure
     head_to_head: HeadToHead
-    scored_cases: int
-    """N: the held-out Commission cases the published risk-class accuracy is computed over (its
-    denominator, as in the report's "100/152")."""
+    scored_cases: SiteCount
+    """The held-out Commission cases the published risk-class accuracy is computed over (its
+    denominator, as in the report's "100/152"): the Method page's "The test set has N cases"."""
+    own_cases: SiteCount
+    """The own cases written for Klar, as the own run's report counts them ("Cases: 88"): the
+    Method page's "plus N cases written for Klar"."""
     run_date: date
     """The day the published Commission run started."""
     run_ids: tuple[UUID, ...]
@@ -96,7 +107,7 @@ class CommissionFigures(ContractModel):
     risk_class_accuracy: SiteFigure
     false_low_risk_rate: SiteFigure
     citations_exist: SiteFigure
-    scored_cases: int
+    scored_cases: SiteCount
 
 
 def commission_figures(info: RunInfo, cases: Sequence[StoredCase]) -> CommissionFigures:
@@ -111,8 +122,20 @@ def commission_figures(info: RunInfo, cases: Sequence[StoredCase]) -> Commission
         risk_class_accuracy=_figure(info.id, "risk-class accuracy", metrics.risk_class_accuracy),
         false_low_risk_rate=_figure(info.id, "false-low-risk rate", metrics.false_low_risk),
         citations_exist=_figure(info.id, "citation existence", metrics.citation_existence),
-        scored_cases=metrics.risk_class_accuracy.total,
+        scored_cases=SiteCount(count=metrics.risk_class_accuracy.total, run_id=info.id),
     )
+
+
+def own_cases(info: RunInfo, cases: Sequence[StoredCase]) -> SiteCount:
+    """The own cases of one stored held-out, completed `own` run, as its report's "Cases" line
+    counts them (a case whose scoring failed is left out, as there)."""
+    problem = reported_run_problem(info, CaseSet.OWN.value, CaseSet.OWN.value)
+    if problem is not None:
+        raise SiteMetricsError(problem)
+    count = scored_metrics([case for case in cases if not case.is_scoring_error]).cases
+    if count == 0:
+        raise SiteMetricsError(f"run {info.id} holds no scored case")
+    return SiteCount(count=count, run_id=info.id)
 
 
 def _figure(run_id: UUID, name: str, rate: Rate) -> SiteFigure:
@@ -163,20 +186,25 @@ def site_metrics(
     commission_run: UUID,
     head_to_head: HeadToHead,
     note: str,
+    *,
+    own_run: UUID,
     report: str = REPORT_PATH,
 ) -> SiteMetrics:
-    """The site file's content: the Commission figures of stored run `commission_run`, beside
-    the head-to-head figures; `report` is the final report's URL, or by default its path."""
+    """The site file's content: the Commission figures of stored run `commission_run`, the own
+    cases of stored run `own_run`, beside the head-to-head figures; `report` is the final
+    report's URL, or by default its path."""
     info = load_run_info(conn, commission_run)
     commission = commission_figures(info, load_stored_cases(conn, commission_run))
+    own = own_cases(load_run_info(conn, own_run), load_stored_cases(conn, own_run))
     return SiteMetrics(
         risk_class_accuracy=commission.risk_class_accuracy,
         false_low_risk_rate=commission.false_low_risk_rate,
         citations_exist=commission.citations_exist,
         head_to_head=head_to_head,
         scored_cases=commission.scored_cases,
+        own_cases=own,
         run_date=info.started_at.date(),
-        run_ids=(info.id, head_to_head.klar.run_id),
+        run_ids=(info.id, own.run_id, head_to_head.klar.run_id),
         report=report,
         note=note,
     )

@@ -24,6 +24,7 @@ from aiact.eval.report import RunNotFoundError
 from aiact.eval.runner import DummyClassifier, ExcludeMode, RunOptions, run_benchmark
 from aiact.eval.site_metrics import (
     HeadToHead,
+    SiteCount,
     SiteFigure,
     SiteMetrics,
     SiteMetricsError,
@@ -56,10 +57,12 @@ HEAD_TO_HEAD = HeadToHead(
 )
 
 
-def _case(case_id: str, risk_class: RiskClass) -> BenchmarkCase:
+def _case(
+    case_id: str, risk_class: RiskClass, set_name: CaseSet = CaseSet.COMMISSION_B
+) -> BenchmarkCase:
     return BenchmarkCase(
         id=case_id,
-        set_name=CaseSet.COMMISSION_B,
+        set_name=set_name,
         language=Language.EN,
         description="Made-up description",
         label=CaseLabel(risk_class=risk_class),
@@ -74,14 +77,17 @@ CASES = (
     _case("cb-test-s3", RiskClass.OUT_OF_SCOPE),
     _case("cb-test-s4", RiskClass.OUT_OF_SCOPE),
 )
+# Three own cases, so their count differs from the Commission run's four.
+OWN_CASES = tuple(_case(f"own-test-s{n}", RiskClass.OUT_OF_SCOPE, CaseSet.OWN) for n in range(1, 4))
 # Citation existence as stored at run time: 3 of 4.
 CITATIONS = {"cb-test-s1": True, "cb-test-s2": True, "cb-test-s3": True, "cb-test-s4": False}
 
 
-def _commission_run(
+def _stored(
     db: psycopg.Connection,
-    benchmark: CaseSet = CaseSet.COMMISSION_B,
-    exclude_mode: ExcludeMode = ExcludeMode.HELDOUT,
+    cases: tuple[BenchmarkCase, ...],
+    benchmark: CaseSet,
+    exclude_mode: ExcludeMode,
 ) -> UUID:
     options = RunOptions(
         benchmark=benchmark,
@@ -90,7 +96,28 @@ def _commission_run(
         git_sha=GIT_SHA,
         concurrency=1,
     )
-    run_id = run_benchmark(CASES, DummyClassifier(), PostgresRunStore(db), options, LOO).run_id
+    return run_benchmark(cases, DummyClassifier(), PostgresRunStore(db), options, LOO).run_id
+
+
+def _own_run(
+    db: psycopg.Connection,
+    benchmark: CaseSet = CaseSet.OWN,
+    exclude_mode: ExcludeMode = ExcludeMode.HELDOUT,
+) -> UUID:
+    return _stored(db, OWN_CASES, benchmark, exclude_mode)
+
+
+def _metrics(db: psycopg.Connection, commission: UUID, own: UUID | None = None) -> SiteMetrics:
+    own_run = _own_run(db) if own is None else own
+    return site_metrics(db, commission, HEAD_TO_HEAD, NOTE, own_run=own_run)
+
+
+def _commission_run(
+    db: psycopg.Connection,
+    benchmark: CaseSet = CaseSet.COMMISSION_B,
+    exclude_mode: ExcludeMode = ExcludeMode.HELDOUT,
+) -> UUID:
+    run_id = _stored(db, CASES, benchmark, exclude_mode)
     for case_id, exists in CITATIONS.items():
         db.execute(
             "update eval_case_results set scores = scores || %s where run_id = %s and case_id = %s",
@@ -106,15 +133,16 @@ def _started(db: psycopg.Connection, run_id: UUID) -> str:
 
 
 def test_the_commission_figures_come_from_the_stored_run(db: psycopg.Connection) -> None:
-    run_id = _commission_run(db)
-    metrics = site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+    run_id, own = _commission_run(db), _own_run(db)
+    metrics = _metrics(db, run_id, own)
     assert metrics.risk_class_accuracy == SiteFigure(value=0.5, run_id=run_id)
     assert metrics.false_low_risk_rate == SiteFigure(value=1.0, run_id=run_id)
     assert metrics.citations_exist == SiteFigure(value=0.75, run_id=run_id)
     assert metrics.head_to_head == HEAD_TO_HEAD
-    assert metrics.scored_cases == 4
+    assert metrics.scored_cases == SiteCount(count=4, run_id=run_id)
+    assert metrics.own_cases == SiteCount(count=3, run_id=own)
     assert metrics.run_date.isoformat() == _started(db, run_id)
-    assert metrics.run_ids == (run_id, HEAD_TO_HEAD.klar.run_id)
+    assert metrics.run_ids == (run_id, own, HEAD_TO_HEAD.klar.run_id)
     assert (metrics.report, metrics.note) == ("eval/reports/final.md", NOTE)
 
 
@@ -124,22 +152,22 @@ def test_a_case_whose_scoring_failed_is_left_out_as_in_the_report(db: psycopg.Co
         "update eval_case_results set scores = scores || %s where run_id = %s and case_id = %s",
         (Jsonb({"scoring_error": True}), run_id, "cb-test-s4"),
     )
-    metrics = site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+    metrics = _metrics(db, run_id)
     assert metrics.risk_class_accuracy.value == pytest.approx(1 / 3)
     assert metrics.citations_exist.value == 1.0
-    assert metrics.scored_cases == 3
+    assert metrics.scored_cases.count == 3
 
 
 def test_a_run_of_another_set_is_refused(db: psycopg.Connection) -> None:
     run_id = _commission_run(db, benchmark=CaseSet.OWN)
     with pytest.raises(SiteMetricsError, match="is a run of own, not of commission_b"):
-        site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+        _metrics(db, run_id)
 
 
 def test_a_gap_run_is_refused(db: psycopg.Connection) -> None:
     run_id = _commission_run(db, exclude_mode=ExcludeMode.ALL)
     with pytest.raises(SiteMetricsError, match="has exclude mode all, not heldout"):
-        site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+        _metrics(db, run_id)
 
 
 def test_a_run_that_did_not_complete_is_refused(db: psycopg.Connection) -> None:
@@ -149,7 +177,7 @@ def test_a_run_that_did_not_complete_is_refused(db: psycopg.Connection) -> None:
         (Jsonb({"outcome": {"status": "cost_cap_reached"}}), run_id),
     )
     with pytest.raises(SiteMetricsError, match="is cost_cap_reached, not completed"):
-        site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+        _metrics(db, run_id)
 
 
 def test_a_run_without_stored_citation_scores_is_refused(db: psycopg.Connection) -> None:
@@ -159,12 +187,12 @@ def test_a_run_without_stored_citation_scores_is_refused(db: psycopg.Connection)
         (CITATION_EXISTENCE_KEY, run_id),
     )
     with pytest.raises(SiteMetricsError, match="counted no case for its citation existence"):
-        site_metrics(db, run_id, HEAD_TO_HEAD, NOTE)
+        _metrics(db, run_id)
 
 
 def test_an_unknown_run_is_refused(db: psycopg.Connection) -> None:
     with pytest.raises(RunNotFoundError):
-        site_metrics(db, UUID("00000000-0000-4000-8000-00000000dead"), HEAD_TO_HEAD, NOTE)
+        _metrics(db, UUID("00000000-0000-4000-8000-00000000dead"))
 
 
 def _head_to_head_run(db: psycopg.Connection) -> UUID:
@@ -195,7 +223,12 @@ def _sheet_files(tmp_path: Path, *, is_complete: bool = True) -> list[str]:
 
 
 def _invoke(
-    tmp_path: Path, commission: UUID, engine: UUID, *extra: str, is_complete: bool = True
+    db: psycopg.Connection,
+    tmp_path: Path,
+    commission: UUID,
+    engine: UUID,
+    *extra: str,
+    is_complete: bool = True,
 ) -> tuple[int, str, Path]:
     output = tmp_path / "accuracy.json"
     result = CliRunner().invoke(
@@ -203,6 +236,7 @@ def _invoke(
         [
             *("evaluate", "site-metrics", *_sheet_files(tmp_path, is_complete=is_complete)),
             *("--commission-run", str(commission), "--head-to-head-run", str(engine)),
+            *("--own-run", str(_own_run(db))),
             *("--note", NOTE, "--output", str(output), *extra),
         ],
     )
@@ -220,7 +254,7 @@ def test_the_command_writes_the_site_file_from_both_stored_runs(
     _patch_sources(db, monkeypatch)
     commission, engine = _commission_run(db), _head_to_head_run(db)
     url = "https://example.org/final.md"
-    code, output, path = _invoke(tmp_path, commission, engine, "--report-url", url)
+    code, output, path = _invoke(db, tmp_path, commission, engine, "--report-url", url)
     assert code == 0, output
     text = path.read_text(encoding="utf-8")
     written = SiteMetrics.model_validate_json(text)
@@ -234,7 +268,10 @@ def test_the_command_writes_the_site_file_from_both_stored_runs(
         checker_name="EU AI Act Compliance Checker",
         cases=25,
     )
-    assert (written.scored_cases, written.run_ids, written.note) == (4, (commission, engine), NOTE)
+    assert written.scored_cases == SiteCount(count=4, run_id=commission)
+    assert written.own_cases.count == 3
+    assert written.run_ids == (commission, written.own_cases.run_id, engine)
+    assert written.note == NOTE
     assert written.report == url
     assert "cb-test" not in text and "Made-up description" not in text
     assert not any(case.case_id in text for case in DRAW.cases)
@@ -245,7 +282,7 @@ def test_the_command_refuses_a_head_to_head_run_that_is_not_the_draw(
 ) -> None:
     _patch_sources(db, monkeypatch)
     commission = _commission_run(db)
-    code, output, path = _invoke(tmp_path, commission, commission)
+    code, output, path = _invoke(db, tmp_path, commission, commission)
     assert code == 1
     assert "is a run of commission_b, not of the head-to-head draw" in output
     assert not path.exists()
@@ -256,7 +293,7 @@ def test_the_command_refuses_a_commission_run_that_is_not_held_out(
 ) -> None:
     _patch_sources(db, monkeypatch)
     commission = _commission_run(db, exclude_mode=ExcludeMode.ALL)
-    code, output, path = _invoke(tmp_path, commission, _head_to_head_run(db))
+    code, output, path = _invoke(db, tmp_path, commission, _head_to_head_run(db))
     assert code == 1
     assert "has exclude mode all, not heldout" in output
     assert not path.exists()
@@ -267,7 +304,7 @@ def test_the_command_refuses_a_checker_column_that_left_drawn_cases_unanswered(
 ) -> None:
     _patch_sources(db, monkeypatch)
     commission, engine = _commission_run(db), _head_to_head_run(db)
-    code, output, path = _invoke(tmp_path, commission, engine, is_complete=False)
+    code, output, path = _invoke(db, tmp_path, commission, engine, is_complete=False)
     assert code == 1
     assert "the checker column answered 2 of the 25 drawn cases" in output
     assert not path.exists()
@@ -277,7 +314,22 @@ def test_the_report_link_defaults_to_the_reports_path_in_the_repository(
     db: psycopg.Connection, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _patch_sources(db, monkeypatch)
-    code, output, path = _invoke(tmp_path, _commission_run(db), _head_to_head_run(db))
+    code, output, path = _invoke(db, tmp_path, _commission_run(db), _head_to_head_run(db))
     assert code == 0, output
     written = SiteMetrics.model_validate_json(path.read_text(encoding="utf-8"))
     assert written.report == "eval/reports/final.md"
+
+
+@pytest.mark.parametrize(
+    ("run", "message"),
+    [
+        ({"benchmark": CaseSet.COMMISSION_B}, "is a run of commission_b, not of own"),
+        ({"exclude_mode": ExcludeMode.ALL}, "has exclude mode all, not heldout"),
+    ],
+)
+def test_an_own_run_that_is_not_a_held_out_own_run_is_refused(
+    db: psycopg.Connection, run: dict[str, object], message: str
+) -> None:
+    own = _own_run(db, **run)  # pyright: ignore[reportArgumentType]
+    with pytest.raises(SiteMetricsError, match=message):
+        _metrics(db, _commission_run(db), own)
