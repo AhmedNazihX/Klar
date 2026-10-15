@@ -8,7 +8,7 @@ import { Placeholder } from './Placeholder'
 
 /**
  * One published rate from accuracy.json as a percentage in the page's language, or the marked
- * `[—%]` while it is unmeasured (components.md › MetricTile: never invent a figure).
+ * `[—%]` when the file holds none for it (components.md › MetricTile: never invent a figure).
  */
 export function AccuracyFigure({ figure }: { figure: Figure | null }): JSX.Element {
   const { t, i18n } = useTranslation()

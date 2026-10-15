@@ -47,8 +47,8 @@ from aiact.eval.head_to_head_sheet import (
     spot_check_ids,
 )
 from aiact.eval.metrics import Rate, class_match, class_too_low, rate
-from aiact.eval.report import RunInfo, load_run_info, load_stored_cases
-from aiact.eval.runner import ExcludeMode, RunStatus
+from aiact.eval.report import RunInfo, load_run_info, load_stored_cases, reported_run_problem
+from aiact.eval.runner import RunStatus
 from aiact.schemas.base import ContractModel
 from aiact.schemas.enums import RiskClass
 
@@ -136,18 +136,10 @@ def engine_column(conn: psycopg.Connection, run_id: UUID, draw: Draw) -> EngineC
 
 
 def _check_engine_run(run: RunInfo) -> None:
-    if run.benchmark != HEAD_TO_HEAD_BENCHMARK:
-        raise EngineRunError(
-            f"run {run.id} is a run of {run.benchmark}, not of the head-to-head draw "
-            "(`aiact evaluate run --cases-from-draw`)"
-        )
-    if run.status != RunStatus.COMPLETED.value:
-        raise EngineRunError(f"run {run.id} is {run.status or 'without a status'}, not completed")
-    if run.exclude_mode != ExcludeMode.HELDOUT.value:
-        raise EngineRunError(
-            f"run {run.id} has exclude mode {run.exclude_mode}, not {ExcludeMode.HELDOUT.value} "
-            "(the reported number)"
-        )
+    wanted = "the head-to-head draw (`aiact evaluate run --cases-from-draw`)"
+    problem = reported_run_problem(run, HEAD_TO_HEAD_BENCHMARK, wanted)
+    if problem is not None:
+        raise EngineRunError(problem)
 
 
 class EngineFile(ContractModel):

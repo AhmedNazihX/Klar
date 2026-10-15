@@ -69,7 +69,13 @@ from aiact.eval.metrics import (
 )
 from aiact.eval.ragas_metrics import BENCHMARK as QA_BENCHMARK
 from aiact.eval.refusals import RefusalCase, render_refusals, summarize_refusals
-from aiact.eval.runner import MODELS_KEY, SCORING_ERROR_KEY, is_failed
+from aiact.eval.runner import (
+    MODELS_KEY,
+    SCORING_ERROR_KEY,
+    ExcludeMode,
+    RunStatus,
+    is_failed,
+)
 from aiact.eval.texts import render_texts
 from aiact.schemas.base import ContractModel
 from aiact.schemas.result import ClassificationResult
@@ -305,6 +311,22 @@ def run_reports(conn: psycopg.Connection, run_id: UUID) -> RunReport:
         build_report(info, cases, contaminated, pile_b_pointer=pointer),
         pile_b_heading(info.id) + PILE_B_INTRO.format(run=info.id) + named,
     )
+
+
+def reported_run_problem(run: RunInfo, benchmark: str, wanted: str) -> str | None:
+    """Why stored `run` can't give a reported number: it isn't a run of `benchmark` (`wanted`
+    names that set in the message), it didn't complete, or it isn't held out (decision 012).
+    None when it can."""
+    if run.benchmark != benchmark:
+        return f"run {run.id} is a run of {run.benchmark}, not of {wanted}"
+    if run.status != RunStatus.COMPLETED.value:
+        return f"run {run.id} is {run.status or 'without a status'}, not completed"
+    if run.exclude_mode != ExcludeMode.HELDOUT.value:
+        return (
+            f"run {run.id} has exclude mode {run.exclude_mode}, not {ExcludeMode.HELDOUT.value} "
+            "(the reported number)"
+        )
+    return None
 
 
 def is_pile_b(info: RunInfo) -> bool:
