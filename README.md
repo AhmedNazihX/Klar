@@ -23,7 +23,7 @@ false-low-risk rate 0.0% (0/56) (run 1, the figures the website shows; [details]
 
 Screens from the app (2026-10-15), for three made-up tools of a made-up company: a CV-screening tool
 (high-risk, Annex III 4(a)), a customer-service chat assistant (limited risk, Art. 50) and a mail spam filter
-(minimal risk, with "is it an AI system?" left legally ambiguous). Right: the chat assistant's result on a phone.
+(minimal risk). Right: the chat assistant's result on a phone.
 <br clear="right">
 
 ## What it does, and what it is not
