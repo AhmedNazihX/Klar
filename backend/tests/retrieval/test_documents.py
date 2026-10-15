@@ -1,6 +1,7 @@
-"""`list_documents` (P1, P7): a German row is listed under its German title; a text only in
-English keeps its English title, marked `english_only`. The query is stubbed: the real table is
-covered by `tests/db/test_api_lookups.py`."""
+"""`list_documents` (P1, P32): each row is listed under the title the corpus stores for it (the
+German rows' German titles come from the manifest); a text only in English keeps its English
+title, marked `english_only`. The query is stubbed: the real table, and the loaded corpus's
+German titles, are covered by `tests/db/test_api_lookups.py`."""
 
 from datetime import date
 from typing import Any
@@ -49,17 +50,10 @@ class FakeConnection:
         return FakeCursor(self.rows)
 
 
+STORED_DE = "KI-Verordnung (der gespeicherte Titel)"
+"""Not the manifest's title: the list must show what the row stores, never a title from code."""
 ROWS_DE = [
-    row("ai-act", "de", "Regulation (EU) 2024/1689 (AI Act)"),
-    row("ai-act-consolidated", "de", "AI Act, consolidated text as of 27 July 2026"),
-    row(
-        "guide-definition",
-        "de",
-        "Commission Guidelines on the definition of an AI system",
-        "guideline",
-    ),
-    row("guide-prohibited", "de", "Commission Guidelines on prohibited AI practices", "guideline"),
-    row("omnibus", "de", "Regulation (EU) 2026/1744 (Digital Omnibus on AI)"),
+    row("ai-act", "de", STORED_DE),
     row(
         "guide-art50",
         "en",
@@ -69,27 +63,11 @@ ROWS_DE = [
 ]
 
 
-def test_german_rows_are_listed_under_their_german_titles() -> None:
+def test_each_row_is_listed_under_the_title_it_stores() -> None:
     listed = list_documents(Language.DE, connection=FakeConnection(ROWS_DE))  # pyright: ignore[reportArgumentType]
     titles = {d.doc_key: (d.title, d.language, d.english_only) for d in listed.documents}
     assert titles == {
-        "ai-act": ("Verordnung (EU) 2024/1689 (KI-Verordnung)", Language.DE, False),
-        "ai-act-consolidated": (
-            "KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026",
-            Language.DE,
-            False,
-        ),
-        "guide-definition": (
-            "Leitlinien der Kommission zur Definition eines KI-Systems",
-            Language.DE,
-            False,
-        ),
-        "guide-prohibited": (
-            "Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
-            Language.DE,
-            False,
-        ),
-        "omnibus": ("Verordnung (EU) 2026/1744 (digitaler Omnibus zur KI)", Language.DE, False),
+        "ai-act": (STORED_DE, Language.DE, False),
         # Only in English: its English title, marked.
         "guide-art50": (
             "Commission Guidelines on the transparency obligations under Article 50",
