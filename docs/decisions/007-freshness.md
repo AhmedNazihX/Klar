@@ -3,7 +3,7 @@
 - **Date:** 2026-10-01 (Run 1); 2026-10-15 (Run 2, immediately before W1)
 - **Story:** W0 (docs/BACKLOG.md); also affects W1, W2, W3, P8b, C2, C3
 - **Status:** accepted for Run 1 (the user signed off the Bitkom correction on 2026-10-01; INIT corrected the same day); Run 2
-  done 2026-10-15 (no decision changes; decision 021 not triggered), awaiting the user's acceptance
+  done 2026-10-15 (no decision changes; decision 021 not triggered); accepted by the user on 2026-10-15
 
 ## Question
 INIT › Legal corpus and Open questions list three facts to check before the build freezes (decision 024: the freeze
@@ -52,7 +52,7 @@ it._
 | 2 | Simplified tech-doc form published? | **No.** The AI Act Service Desk's Art. 11 page (consolidated text as at 27 July 2026) still only quotes the duty: "the Commission shall establish a simplified technical documentation form". It links to no form, only to Recitals 66 and 71. The AI Act page (last updated 3 August 2026) mentions "simplified technical documentation requirements" being extended to SMCs, but no published form; the only template it names is the GPAI training-content summary. A web search found no published form. | [AI Act Service Desk, Art. 11](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-11); [Commission AI Act page](https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai) |
 | 3 | Bitkom 69% figure | **Confirmed, unchanged.** The 9 September 2024 press release still says "Eine breite Mehrheit von 69 Prozent der Unternehmen braucht nach eigenem Dafürhalten Hilfe bei der Auseinandersetzung mit dem AI Act" (602 companies with 20 or more employees, telephone survey, calendar weeks 23–30 of 2024). The 14 September 2026 press release on Bitkom's newer AI survey (603 companies, calendar weeks 28–33 of 2026) reports no figure on needing help with the AI Act, so nothing replaces the 69%. Run 1's guidance on 2026 figures stands. | [Bitkom press release, 9 Sep 2024](https://www.bitkom.org/Presse/Presseinformation/Jedes-vierte-Unternehmen-beschaeftigt-mit-AI-Act); [Bitkom press release, 14 Sep 2026](https://www.bitkom.org/Presse/Presseinformation/Erstmals-nutzt-Mehrheit-Unternehmen-KI) |
 
-Run 2 outcome (no decision changes; awaiting the user's acceptance): the guidelines are still a draft, so decision 021 is not triggered (no mapping-and-reload story, no README
+Run 2 outcome (no decision changes; accepted by the user on 2026-10-15): the guidelines are still a draft, so decision 021 is not triggered (no mapping-and-reload story, no README
 limitation for finalisation). The simplified form is not published, so P8b and W2 stay as they are. The Bitkom
 citation from Run 1 stands.
 
