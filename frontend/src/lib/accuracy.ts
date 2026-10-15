@@ -3,8 +3,14 @@ import { z } from 'zod'
 import accuracyFile from '@/content/accuracy.json'
 
 // The published accuracy figures (decision 024 addendum): `aiact evaluate site-metrics` (P27) writes
-// src/content/accuracy.json from the stored benchmark runs; until then every figure is null and the
-// pages show a marked placeholder (components.md › MetricTile: never invent a figure).
+// src/content/accuracy.json from the stored benchmark runs. A null figure shows a marked placeholder
+// (components.md › MetricTile: never invent a figure).
+
+/** A number of cases a page sentence states, with the run that counted them. */
+const countSchema = z.object({
+  count: z.number().int().positive(),
+  run_id: z.string().min(1),
+})
 
 /** One measured rate, between 0 and 1, with the run it comes from. */
 const figureSchema = z.object({
@@ -25,6 +31,17 @@ const accuracySchema = z.object({
       cases: z.number().int().positive(),
     })
     .nullable(),
+  /** The held-out Commission cases the risk-class accuracy is computed over ("The test set has N"). */
+  scored_cases: countSchema.nullable(),
+  /** The own cases written for Klar ("plus N cases written for Klar"). */
+  own_cases: countSchema.nullable(),
+  /** The day the published Commission run started, `YYYY-MM-DD`. */
+  run_date: z.iso.date().nullable(),
+  /** The final evaluation report: a public URL the Method page links to, or its repository path. */
+  report: z.string().min(1).nullable(),
+  /** Every run the figures come from, and which runs are published and why. */
+  run_ids: z.array(z.string().min(1)),
+  note: z.string(),
 })
 
 export type AccuracyFigure = z.infer<typeof figureSchema>

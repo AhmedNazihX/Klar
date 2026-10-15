@@ -9,6 +9,7 @@ import { axe } from 'vitest-axe'
 
 import { LANGUAGE_STORAGE_KEY } from '@/i18n'
 import { stubIntersectionObserver } from '@/test/intersection-observer'
+import { plainSpaces, publishedAccuracy } from '@/test/published-accuracy'
 import { stubReducedMotion } from '@/test/reduced-motion'
 import { renderRoute } from '@/test/test-utils'
 
@@ -109,7 +110,6 @@ const PAGE: Record<
           'False low-risk rate',
           'Citations that exist',
           'Against an existing checker',
-          'The same 25 cases run through EU AI Act Compliance Checker',
           'Read the method and the full results',
         ],
       },
@@ -206,7 +206,6 @@ const PAGE: Record<
           'Anteil zu niedrig eingestufter Fälle',
           'Zitate, die existieren',
           'Im Vergleich zu einem bestehenden Prüftool',
-          'Dieselben 25 Fälle, geprüft mit EU AI Act Compliance Checker',
           'Methode und vollständige Ergebnisse lesen',
         ],
       },
@@ -252,16 +251,17 @@ describe.each(['en', 'de'] as const)('the landing page (%s)', (language) => {
   it('shows the figures accuracy.json publishes, none as a placeholder', async () => {
     await openLanding(language)
     const accuracy = section(PAGE[language].sections[5]?.title ?? '')
+    const published = publishedAccuracy(language)
     expect(accuracy.querySelectorAll('[data-placeholder]')).toHaveLength(0)
     expect(
       within(accuracy)
         .getAllByRole('listitem')
-        // Intl puts a no-break space before % in German; compare it as a plain space.
-        .map((tile) => tile.firstElementChild?.firstElementChild?.textContent.replace(/\s/g, ' ')),
-    ).toEqual(
+        .map((tile) => plainSpaces(tile.firstElementChild?.firstElementChild?.textContent)),
+    ).toEqual(published.tiles.map(plainSpaces))
+    expect(accuracy).toHaveTextContent(
       language === 'de'
-        ? ['65,8 %', '0 %', '100 %', '76 %vs.84 %']
-        : ['65.8%', '0%', '100%', '76%vs84%'],
+        ? `Dieselben ${published.cases} Fälle, geprüft mit ${published.checkerName}`
+        : `The same ${published.cases} cases run through ${published.checkerName}`,
     )
   })
 

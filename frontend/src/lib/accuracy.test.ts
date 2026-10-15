@@ -25,6 +25,12 @@ describe('the site accuracy file', () => {
       false_low_risk_rate: { value: 0.031, run_id: 'run-2026-11-02-a' },
       citations_exist: { value: 1, run_id: 'run-2026-11-02-b' },
       head_to_head: { klar: FIGURE, checker: FIGURE, checker_name: 'Checker', cases: 120 },
+      scored_cases: { count: 152, run_id: 'run-2026-11-02-a' },
+      own_cases: { count: 88, run_id: 'run-2026-11-02-c' },
+      run_date: '2026-11-02',
+      report: 'eval/reports/final.md',
+      run_ids: ['run-2026-11-02-a', 'run-2026-11-02-b'],
+      note: 'Run a, the user’s choice.',
     }
     expect(parseSiteAccuracy(figures)).toEqual(figures)
   })

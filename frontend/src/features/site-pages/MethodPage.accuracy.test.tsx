@@ -20,6 +20,12 @@ vi.mock('@/content/accuracy.json', () => ({
       checker_name: 'the Commission checker',
       cases: 24,
     },
+    scored_cases: { count: 140, run_id: 'run-a' },
+    own_cases: { count: 60, run_id: 'run-c' },
+    run_date: '2026-11-02',
+    report: 'eval/reports/final.md',
+    run_ids: ['run-a', 'run-b'],
+    note: 'A made-up run.',
   },
 }))
 

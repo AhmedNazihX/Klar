@@ -159,7 +159,8 @@
       "lead": "Genauigkeit testen und veröffentlichen wir, statt sie zu versprechen. Diese Seite erklärt den Testdatensatz, was wir zählen und wo die Methode an Grenzen stößt.",
       "set": {
         "title": "Der Testdatensatz",
-        "text": "Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um <ph>[N]</ph> eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet, von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph>."
+        "text": "Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um <ph>[N]</ph> eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet, von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph>.",
+        "textMeasured": "Der wichtigste Testdatensatz stammt aus den Beispielen der Kommission für Hochrisiko- und andere Systeme, ergänzt um {{ownCases}} eigens für Klar geschriebene Fälle. Die Hälfte der Kommissionsbeispiele ist aus allem entfernt, was Klar durchsuchen kann, damit es die Antworten nicht einfach nachschlägt. Jeder Fall ist mit seiner richtigen Klasse und Rolle gekennzeichnet, von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph>."
       },
       "count": {
         "title": "Was wir zählen",
@@ -184,6 +185,7 @@
         "title": "Grenzen",
         "size": "Umfang",
         "sizeText": "Der Testdatensatz umfasst <ph>[N]</ph> Fälle. Kleine Unterschiede zwischen zwei Durchläufen sind nicht aussagekräftig.",
+        "sizeTextMeasured": "Der Testdatensatz umfasst {{cases}} Fälle. Kleine Unterschiede zwischen zwei Durchläufen sind nicht aussagekräftig.",
         "labels": "Labels",
         "labelsText": "Die Labels geben die Lesart der Verordnung von <ph>[WER DIE FÄLLE KENNZEICHNET]</ph> wieder und können umstritten sein.",
         "guidance": "Leitlinien",
@@ -200,7 +202,9 @@
         "lawVersion": "Fassung des Gesetzes",
         "lawVersionText": "Konsolidierte KI-Verordnung vom 27. Juli 2026, CELEX 02024R1689-20260727",
         "report": "Vollständige Ergebnisse",
-        "reportPh": "[LINK ZUM EVALUATIONSBERICHT]"
+        "reportPh": "[LINK ZUM EVALUATIONSBERICHT]",
+        "reportLink": "Der abschließende Evaluationsbericht",
+        "reportPath": "<path>{{path}}</path> im Projekt-Repository"
       }
     },
     "privacy": {

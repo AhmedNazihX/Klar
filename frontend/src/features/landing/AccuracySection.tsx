@@ -44,7 +44,8 @@ function Tile({
 
 /**
  * "Accuracy is measured and published, not promised." (components.md › MetricTile): four figures
- * read from src/content/accuracy.json, each a marked `[—%]` until P27 publishes the measured value.
+ * read from src/content/accuracy.json, which `aiact evaluate site-metrics` writes (P27); a figure
+ * the file holds none for shows a marked `[—%]`.
  */
 export function AccuracySection({
   accuracy = SITE_ACCURACY,

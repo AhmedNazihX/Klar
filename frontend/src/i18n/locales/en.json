@@ -159,7 +159,8 @@
       "lead": "Accuracy is something we test and publish, not something we promise. This page explains the test set, what we count, and where the method has limits.",
       "set": {
         "title": "The test set",
-        "text": "The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus <ph>[N]</ph> cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role by <ph>[WHO LABELS THE CASES]</ph>."
+        "text": "The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus <ph>[N]</ph> cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role by <ph>[WHO LABELS THE CASES]</ph>.",
+        "textMeasured": "The main test set is built from the Commission’s own worked examples of high-risk and not-high-risk systems, plus {{ownCases}} cases written for Klar. Half of the Commission examples are removed from everything Klar can search, so it can’t simply look the answers up. Each case is labelled with its correct class and role by <ph>[WHO LABELS THE CASES]</ph>."
       },
       "count": {
         "title": "What we count",
@@ -184,6 +185,7 @@
         "title": "Limits",
         "size": "Size",
         "sizeText": "The test set has <ph>[N]</ph> cases. Small differences between runs are not meaningful.",
+        "sizeTextMeasured": "The test set has {{cases}} cases. Small differences between runs are not meaningful.",
         "labels": "Labels",
         "labelsText": "Labels reflect <ph>[WHO LABELS THE CASES]</ph>’s reading of the Act and may be disputed.",
         "guidance": "Guidance",
@@ -200,7 +202,9 @@
         "lawVersion": "Law version",
         "lawVersionText": "Consolidated AI Act of 27 July 2026, CELEX 02024R1689-20260727",
         "report": "Full results",
-        "reportPh": "[LINK TO THE EVALUATION REPORT]"
+        "reportPh": "[LINK TO THE EVALUATION REPORT]",
+        "reportLink": "The final evaluation report",
+        "reportPath": "<path>{{path}}</path> in the project repository"
       }
     },
     "privacy": {
