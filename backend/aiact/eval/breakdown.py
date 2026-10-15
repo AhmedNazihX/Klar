@@ -18,20 +18,22 @@ from uuid import UUID
 
 import psycopg
 
-from aiact.eval.cases import BenchmarkCase, CaseSet
+from aiact.eval.cases import BenchmarkCase
 from aiact.eval.head_to_head import AREA_TAG_PREFIX
 from aiact.eval.ragas_metrics import BENCHMARK as QA_BENCHMARK
 from aiact.eval.report import (
-    DEVELOPMENT_CASES,
     RunInfo,
     StoredCase,
     load_run_info,
     load_stored_cases,
+    run_lines,
     scored_metrics,
 )
 
 NO_GROUP = "(none)"
 NOISY = "Groups with few cases are noisy: read each rate with its count."
+SCORING_ERRORS = "Scoring failed, left out of the metrics: {count}"
+"""As the report words it; a count only, so a Pile B run's line names no case."""
 
 
 class GroupBy(StrEnum):
@@ -80,18 +82,15 @@ def group_cases(cases: Sequence[StoredCase], by: GroupBy) -> dict[str, tuple[Sto
     return {name: tuple(groups[name]) for name in names}
 
 
-def render_markdown(info: RunInfo, by: GroupBy, groups: Mapping[str, Sequence[StoredCase]]) -> str:
+def render_markdown(
+    info: RunInfo, by: GroupBy, groups: Mapping[str, Sequence[StoredCase]], scoring_errors: int = 0
+) -> str:
+    """The run's header (as the report shows it), then one row per group; `scoring_errors` is
+    how many cases scoring failed on, left out of every group."""
     lines = [
         f"## Run {info.id} by {by.value}",
         "",
-        f"- Benchmark: `{info.benchmark}`",
-        f"- Classifier: `{info.classifier or 'n/a'}`",
-        f"- Exclude mode: `{info.exclude_mode or 'n/a'}`",
-        f"- Status: {info.status or 'n/a'}",
-    ]
-    if info.benchmark == CaseSet.OWN.value:
-        lines.append(f"- Own cases are {DEVELOPMENT_CASES}")
-    lines += [
+        *run_lines(info),
         f"- {NOISY}",
         "",
         f"| {by.value} | Cases | Risk-class accuracy | False-low-risk rate | Annex point accuracy "
@@ -105,6 +104,8 @@ def render_markdown(info: RunInfo, by: GroupBy, groups: Mapping[str, Sequence[St
             f"{metrics.false_low_risk.with_counts} | {metrics.annex_point_accuracy.with_counts} | "
             f"{metrics.role_accuracy.with_counts} |"
         )
+    if scoring_errors:
+        lines += ["", SCORING_ERRORS.format(count=scoring_errors)]
     return "\n".join(lines) + "\n"
 
 
@@ -115,4 +116,6 @@ def breakdown_report(conn: psycopg.Connection, run_id: UUID, by: GroupBy) -> str
         raise NotAClassificationRunError(
             f"run {run_id} is a Q&A run: it holds no classifications to break down"
         )
-    return render_markdown(info, by, group_cases(load_stored_cases(conn, run_id), by))
+    cases = load_stored_cases(conn, run_id)
+    errors = sum(case.is_scoring_error for case in cases)
+    return render_markdown(info, by, group_cases(cases, by), errors)

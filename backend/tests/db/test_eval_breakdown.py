@@ -86,9 +86,11 @@ def test_an_own_run_breaks_down_by_language(db: psycopg.Connection) -> None:
 
 def test_a_commission_run_breaks_down_by_area_and_names_no_case(db: psycopg.Connection) -> None:
     cases = (
-        _case("cb-991", CaseSet.COMMISSION_B, RiskClass.HIGH_RISK, tags=("area:annex_iii_4",)),
-        _case("cb-992", CaseSet.COMMISSION_B, RiskClass.OUT_OF_SCOPE, tags=("area:annex_iii_4",)),
-        _case("cb-993", CaseSet.COMMISSION_B, RiskClass.OUT_OF_SCOPE, tags=("area:annex_i",)),
+        _case("cb-test-d1", CaseSet.COMMISSION_B, RiskClass.HIGH_RISK, tags=("area:annex_iii_4",)),
+        _case(
+            "cb-test-d2", CaseSet.COMMISSION_B, RiskClass.OUT_OF_SCOPE, tags=("area:annex_iii_4",)
+        ),
+        _case("cb-test-d3", CaseSet.COMMISSION_B, RiskClass.OUT_OF_SCOPE, tags=("area:annex_i",)),
     )
     run_id = _run(db, CaseSet.COMMISSION_B, cases)
     text = breakdown_report(db, run_id, GroupBy.AREA)
@@ -97,7 +99,8 @@ def test_a_commission_run_breaks_down_by_area_and_names_no_case(db: psycopg.Conn
     for by in GroupBy:
         output = breakdown_report(db, run_id, by)
         assert all(stored.id not in output for stored in cases)
-        assert "cb-99" not in output
+        assert "cb-test" not in output
+        assert "Made-up description" not in output
 
 
 def test_a_qa_run_is_refused(db: psycopg.Connection) -> None:

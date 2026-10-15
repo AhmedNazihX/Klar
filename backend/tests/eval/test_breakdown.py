@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import cast
 from uuid import UUID, uuid4
 
 import psycopg
@@ -71,9 +72,9 @@ def test_cases_group_by_language() -> None:
 
 def test_commission_cases_group_by_their_area_tag() -> None:
     cases = (
-        stored(commission("cb-901", RiskClass.HIGH_RISK, "annex_iii_4"), RiskClass.HIGH_RISK),
-        stored(commission("cb-902", RiskClass.HIGH_RISK, "annex_i"), RiskClass.HIGH_RISK),
-        stored(commission("cb-903", RiskClass.HIGH_RISK, None), RiskClass.HIGH_RISK),
+        stored(commission("cb-test-a1", RiskClass.HIGH_RISK, "annex_iii_4"), RiskClass.HIGH_RISK),
+        stored(commission("cb-test-a2", RiskClass.HIGH_RISK, "annex_i"), RiskClass.HIGH_RISK),
+        stored(commission("cb-test-a3", RiskClass.HIGH_RISK, None), RiskClass.HIGH_RISK),
     )
     assert list(group_cases(cases, GroupBy.AREA)) == ["annex_i", "annex_iii_4", NO_GROUP]
 
@@ -104,6 +105,27 @@ def test_each_group_row_has_its_count_and_rates() -> None:
     assert f"- {breakdown.NOISY}" in lines
 
 
+def test_the_header_is_the_reports_run_lines() -> None:
+    text = render_markdown(info(), GroupBy.LANGUAGE, {})
+    assert all(line in text.splitlines() for line in report.run_lines(info()))
+    assert f"- Commit: `{'0' * 40}`" in text
+
+
+def test_scoring_errors_are_counted_below_the_table(monkeypatch: pytest.MonkeyPatch) -> None:
+    broken = stored(
+        own("own-a-04", RiskClass.HIGH_RISK, BusinessFunction.HR),
+        RiskClass.HIGH_RISK,
+        is_scoring_error=True,
+    )
+    monkeypatch.setattr(breakdown, "load_run_info", lambda conn, run_id: info())
+    monkeypatch.setattr(breakdown, "load_stored_cases", lambda conn, run_id: (*OWN_CASES, broken))
+    text = breakdown.breakdown_report(cast(psycopg.Connection, object()), RUN_ID, GroupBy.LANGUAGE)
+    assert text.splitlines()[-1] == "Scoring failed, left out of the metrics: 1"
+    assert "| en | 3 |" in text
+    clean = render_markdown(info(), GroupBy.LANGUAGE, group_cases(OWN_CASES, GroupBy.LANGUAGE))
+    assert "Scoring failed" not in clean
+
+
 def test_own_runs_are_labelled_development_cases() -> None:
     groups = group_cases(OWN_CASES, GroupBy.LANGUAGE)
     assert "development cases" in render_markdown(info("own"), GroupBy.LANGUAGE, groups)
@@ -112,12 +134,12 @@ def test_own_runs_are_labelled_development_cases() -> None:
 
 def test_a_pile_b_breakdown_names_no_case() -> None:
     cases = tuple(
-        stored(commission(f"cb-9{n:02d}", RiskClass.HIGH_RISK, "annex_iii_4"), RiskClass.HIGH_RISK)
+        stored(commission(f"cb-test-p{n}", RiskClass.HIGH_RISK, "annex_iii_4"), RiskClass.HIGH_RISK)
         for n in range(3)
     )
     for by in GroupBy:
-        text = render_markdown(info("commission_b"), by, group_cases(cases, by))
-        assert "cb-9" not in text
+        text = render_markdown(info("commission_b"), by, group_cases(cases, by), 1)
+        assert "cb-test" not in text
         assert "made-up system" not in text.lower()
 
 
@@ -157,9 +179,13 @@ def test_cli_refuses_an_unknown_grouping() -> None:
 @pytest.mark.parametrize(
     ("error", "message"),
     [
-        (psycopg.OperationalError(f"connection to {SERVER_NAME} failed"), "database error"),
+        (
+            psycopg.OperationalError(f"connection to {SERVER_NAME} failed"),
+            "database error (OperationalError); check DATABASE_URL",
+        ),
         (records.DatabaseNotConfiguredError("DATABASE_URL is not set"), "DATABASE_URL is not set"),
         (report.RunNotFoundError("no eval run with id x"), "no eval run with id x"),
+        (report.RunRecordError("row 3: stored models are malformed"), "row 3: stored models are"),
         (breakdown.NotAClassificationRunError("run x is a Q&A run"), "run x is a Q&A run"),
     ],
 )
