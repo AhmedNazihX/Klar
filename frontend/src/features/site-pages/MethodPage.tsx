@@ -5,9 +5,22 @@ import { AccuracyFigure } from '@/components/AccuracyFigure'
 import { GlassPanel } from '@/components/GlassPanel'
 import { Placeholder } from '@/components/Placeholder'
 import { PLACEHOLDER_TAGS } from '@/components/placeholder-tags'
+import { longDate } from '@/features/classify/dates'
+import { useLanguage } from '@/hooks/use-language'
 import { SITE_ACCURACY, type SiteAccuracy } from '@/lib/accuracy'
 
 import { InfoRows, InfoSection, InfoText, PageIntro, type InfoRow } from './SitePageParts'
+
+/** The report's address when it is an https URL the page may link to (checked with `new URL()`,
+ *  frontend-security.md); anything else is a path in the repository. */
+function publicUrl(report: string): string | null {
+  try {
+    const url = new URL(report)
+    return url.protocol === 'https:' ? url.href : null
+  } catch {
+    return null
+  }
+}
 
 function MetricTile({
   value,
@@ -107,18 +120,23 @@ function ScoreSection(): JSX.Element {
   )
 }
 
-function LimitsSection(): JSX.Element {
+function LimitsSection({ accuracy }: { accuracy: SiteAccuracy }): JSX.Element {
   const { t } = useTranslation()
   const rows: InfoRow[] = [
     {
       key: 'size',
       label: t('sitePages.method.limits.size'),
-      text: <Trans i18nKey="sitePages.method.limits.sizeText" components={PLACEHOLDER_TAGS} />,
+      text:
+        accuracy.scored_cases === null ? (
+          <Trans i18nKey="sitePages.method.limits.sizeText" components={PLACEHOLDER_TAGS} />
+        ) : (
+          t('sitePages.method.limits.sizeTextMeasured', { cases: accuracy.scored_cases.count })
+        ),
     },
     {
       key: 'labels',
       label: t('sitePages.method.limits.labels'),
-      text: <Trans i18nKey="sitePages.method.limits.labelsText" components={PLACEHOLDER_TAGS} />,
+      text: t('sitePages.method.limits.labelsText'),
     },
     {
       key: 'guidance',
@@ -143,13 +161,47 @@ function LimitsSection(): JSX.Element {
   )
 }
 
-function ResultsSection(): JSX.Element {
+/** The final report: a link when accuracy.json holds its public URL, else its repository path. */
+function ReportLink({ report }: { report: string | null }): JSX.Element {
   const { t } = useTranslation()
+  if (report === null) {
+    return <Placeholder>{t('sitePages.method.results.reportPh')}</Placeholder>
+  }
+  const href = publicUrl(report)
+  if (href === null) {
+    return (
+      <Trans
+        i18nKey="sitePages.method.results.reportPath"
+        values={{ path: report }}
+        components={{ path: <code className="font-mono text-label" /> }}
+      />
+    )
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-lens-blue hover:underline"
+    >
+      {t('sitePages.method.results.reportLink')}
+    </a>
+  )
+}
+
+function ResultsSection({ accuracy }: { accuracy: SiteAccuracy }): JSX.Element {
+  const { t } = useTranslation()
+  const language = useLanguage()
   const rows: InfoRow[] = [
     {
       key: 'lastRun',
       label: t('sitePages.method.results.lastRun'),
-      text: <Placeholder>{t('sitePages.method.results.lastRunPh')}</Placeholder>,
+      text:
+        accuracy.run_date === null ? (
+          <Placeholder>{t('sitePages.method.results.lastRunPh')}</Placeholder>
+        ) : (
+          longDate(accuracy.run_date, language)
+        ),
     },
     {
       key: 'lawVersion',
@@ -159,7 +211,7 @@ function ResultsSection(): JSX.Element {
     {
       key: 'report',
       label: t('sitePages.method.results.report'),
-      text: <Placeholder>{t('sitePages.method.results.reportPh')}</Placeholder>,
+      text: <ReportLink report={accuracy.report} />,
     },
   ]
   return (
@@ -172,7 +224,8 @@ function ResultsSection(): JSX.Element {
 /**
  * How Klar is measured (artboard `Method`, INIT › Evaluation): the test set, the four figures,
  * how a case is scored, the method's limits (national penalty rules out of scope, decision 026
- * item 1) and the run the figures come from. Every unknown is a marked placeholder.
+ * item 1) and the run the figures come from, all read from accuracy.json (P27). Every unknown is a
+ * marked placeholder.
  */
 export function MethodPage({ accuracy = SITE_ACCURACY }: { accuracy?: SiteAccuracy }): JSX.Element {
   const { t } = useTranslation()
@@ -181,13 +234,21 @@ export function MethodPage({ accuracy = SITE_ACCURACY }: { accuracy?: SiteAccura
       <PageIntro title={t('site.page.method')} lead={t('sitePages.method.lead')} />
       <InfoSection title={t('sitePages.method.set.title')}>
         <InfoText>
-          <Trans i18nKey="sitePages.method.set.text" components={PLACEHOLDER_TAGS} />
+          {accuracy.own_cases === null ? (
+            <Trans i18nKey="sitePages.method.set.text" components={PLACEHOLDER_TAGS} />
+          ) : (
+            <Trans
+              i18nKey="sitePages.method.set.textMeasured"
+              values={{ ownCases: accuracy.own_cases.count }}
+              components={PLACEHOLDER_TAGS}
+            />
+          )}
         </InfoText>
       </InfoSection>
       <CountSection accuracy={accuracy} />
       <ScoreSection />
-      <LimitsSection />
-      <ResultsSection />
+      <LimitsSection accuracy={accuracy} />
+      <ResultsSection accuracy={accuracy} />
     </>
   )
 }

@@ -1,6 +1,42 @@
 {
-  "risk_class_accuracy": null,
-  "false_low_risk_rate": null,
-  "citations_exist": null,
-  "head_to_head": null
+  "risk_class_accuracy": {
+    "value": 0.6578947368421053,
+    "run_id": "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7"
+  },
+  "false_low_risk_rate": {
+    "value": 0.0,
+    "run_id": "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7"
+  },
+  "citations_exist": {
+    "value": 1.0,
+    "run_id": "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7"
+  },
+  "head_to_head": {
+    "klar": {
+      "value": 0.76,
+      "run_id": "592089b8-1585-4f8f-a108-9d4ebbe8f38a"
+    },
+    "checker": {
+      "value": 0.84,
+      "run_id": "592089b8-1585-4f8f-a108-9d4ebbe8f38a"
+    },
+    "checker_name": "EU AI Act Compliance Checker",
+    "cases": 25
+  },
+  "scored_cases": {
+    "count": 152,
+    "run_id": "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7"
+  },
+  "own_cases": {
+    "count": 88,
+    "run_id": "d520e689-5c8b-463c-9155-42b2d7a2ab02"
+  },
+  "run_date": "2026-10-15",
+  "run_ids": [
+    "31baa80c-f3bc-4eaf-93d0-4280b5fa14e7",
+    "d520e689-5c8b-463c-9155-42b2d7a2ab02",
+    "592089b8-1585-4f8f-a108-9d4ebbe8f38a"
+  ],
+  "report": "eval/reports/final.md",
+  "note": "Commission figures from W1's full run 1 of 2, the user's choice of 2026-10-15; eval/reports/final.md gives both runs (run 2: 3ed735c1-b796-421b-a01e-5d36faa93851)."
 }

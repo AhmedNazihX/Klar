@@ -68,14 +68,16 @@ class Source(BaseModel):
 
 
 def _eurlex(
-    doc_id: str, celex: str, title: str, status: DocStatus, version: str
+    doc_id: str, celex: str, titles: tuple[str, str], status: DocStatus, version: str
 ) -> tuple[Source, ...]:
-    """The EN and DE XHTML versions of one EUR-Lex document, fetched from Cellar."""
+    """The EN and DE XHTML versions of one EUR-Lex document, fetched from Cellar; `titles` is
+    the (English, German) title pair."""
+    title_of: dict[Language, str] = dict(zip(LANGUAGES, titles, strict=True))
     return tuple(
         Source(
             id=doc_id,
             language=lang,
-            title=title,
+            title=title_of[lang],
             kind="html",
             status=status,
             version=version,
@@ -96,17 +98,22 @@ def _commission_pdf(
     page: str,
     en: int,
     de: int | None,
+    title_de: str | None = None,
 ) -> tuple[Source, ...]:
     """The EN and DE versions of a Commission PDF; `en`/`de` are its document numbers.
 
-    `de=None` means the German Commission page links only the English PDF.
+    `de=None` means the German Commission page links only the English PDF; its absent German
+    entry keeps the English title. A published German PDF needs its German title, `title_de`.
     """
+    if (de is None) != (title_de is None):
+        raise ValueError(f"{doc_id}: a German PDF number goes with a German title, and only then")
     numbers: dict[Language, int | None] = {"en": en, "de": de}
+    title_of: dict[Language, str] = {"en": title, "de": title_de or title}
     return tuple(
         Source(
             id=doc_id,
             language=lang,
-            title=title,
+            title=title_of[lang],
             kind="pdf",
             status=status,
             version=version,
@@ -138,18 +145,30 @@ HIGH_RISK_TITLE = "Draft Commission Guidelines on the classification of high-ris
 HIGH_RISK_DATE = "2026-05-19"
 
 SOURCES: tuple[Source, ...] = (
-    *_eurlex("ai-act", "32024R1689", "Regulation (EU) 2024/1689 (AI Act)", "law", "2024-07-12"),
+    *_eurlex(
+        "ai-act",
+        "32024R1689",
+        ("Regulation (EU) 2024/1689 (AI Act)", "Verordnung (EU) 2024/1689 (KI-Verordnung)"),
+        "law",
+        "2024-07-12",
+    ),
     *_eurlex(
         "omnibus",
         "32026R1744",
-        "Regulation (EU) 2026/1744 (Digital Omnibus on AI)",
+        (
+            "Regulation (EU) 2026/1744 (Digital Omnibus on AI)",
+            "Verordnung (EU) 2026/1744 (digitaler Omnibus zur KI)",
+        ),
         "law",
         "2026-07-24",
     ),
     *_eurlex(
         "ai-act-consolidated",
         "02024R1689-20260727",
-        "AI Act, consolidated text as of 27 July 2026",
+        (
+            "AI Act, consolidated text as of 27 July 2026",
+            "KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026",
+        ),
         "consolidated",
         "2026-07-27",
     ),
@@ -161,6 +180,7 @@ SOURCES: tuple[Source, ...] = (
         DEFINITION_PAGE,
         en=112455,
         de=118628,
+        title_de="Leitlinien der Kommission zur Definition eines KI-Systems",
     ),
     *_commission_pdf(
         "guide-prohibited",
@@ -170,6 +190,7 @@ SOURCES: tuple[Source, ...] = (
         PROHIBITED_PAGE,
         en=112367,
         de=118661,
+        title_de="Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz",
     ),
     *_commission_pdf(
         "guide-high-risk-general",

@@ -23,7 +23,7 @@ documents:
   fetched_at: '2026-09-27T17:31:29Z'
 - id: ai-act
   language: de
-  title: Regulation (EU) 2024/1689 (AI Act)
+  title: Verordnung (EU) 2024/1689 (KI-Verordnung)
   kind: html
   status: law
   version: '2024-07-12'
@@ -57,7 +57,7 @@ documents:
   fetched_at: '2026-09-27T17:31:36Z'
 - id: omnibus
   language: de
-  title: Regulation (EU) 2026/1744 (Digital Omnibus on AI)
+  title: Verordnung (EU) 2026/1744 (digitaler Omnibus zur KI)
   kind: html
   status: law
   version: '2026-07-24'
@@ -91,7 +91,7 @@ documents:
   fetched_at: '2026-09-27T17:31:42Z'
 - id: ai-act-consolidated
   language: de
-  title: AI Act, consolidated text as of 27 July 2026
+  title: KI-Verordnung, konsolidierte Fassung vom 27. Juli 2026
   kind: html
   status: consolidated
   version: '2026-07-27'
@@ -125,7 +125,7 @@ documents:
   fetched_at: '2026-09-27T17:31:51Z'
 - id: guide-definition
   language: de
-  title: Commission Guidelines on the definition of an AI system
+  title: Leitlinien der Kommission zur Definition eines KI-Systems
   kind: pdf
   status: final
   version: '2025-02-06'
@@ -159,7 +159,7 @@ documents:
   fetched_at: '2026-09-27T17:31:58Z'
 - id: guide-prohibited
   language: de
-  title: Commission Guidelines on prohibited AI practices
+  title: Leitlinien der Kommission zu verbotenen Praktiken der künstlichen Intelligenz
   kind: pdf
   status: final
   version: '2025-02-04'

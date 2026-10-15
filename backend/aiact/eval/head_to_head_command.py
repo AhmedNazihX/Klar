@@ -88,7 +88,7 @@ def check(
     """Validate the answer sheet against the draw and say how many cases and spot-checks are
     run."""
     with _errors_exit():
-        _, filled = _checked(draw_file, sheet)
+        _, filled = checked_sheet(draw_file, sheet)
     run = sum(entry.is_run for entry in filled.cases)
     spot_checks = head_to_head_sheet.spot_checks_run(filled)
     wanted = head_to_head_sheet.SPOT_CHECK_COUNT
@@ -130,7 +130,7 @@ def render(
     comes from that stored run (read from DATABASE_URL) and is saved to --engine-file, else it
     comes from --engine-file when that exists, else it stays empty."""
     with _errors_exit():
-        drawn, filled = _checked(draw_file, sheet)
+        drawn, filled = checked_sheet(draw_file, sheet)
         cases = head_to_head_report.current_cases(drawn)
         if run_id is not None:
             engine = _engine_column(run_id, drawn)
@@ -157,7 +157,7 @@ def _engine_column(run_id: UUID, drawn: head_to_head.Draw) -> head_to_head_repor
         raise typer.Exit(code=1) from error
 
 
-def _checked(
+def checked_sheet(
     draw_file: Path, sheet: Path
 ) -> tuple[head_to_head.Draw, head_to_head_sheet.HeadToHeadSheet]:
     """The draw and the sheet, checked against each other; screenshots sit next to the sheet."""

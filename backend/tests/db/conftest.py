@@ -16,6 +16,8 @@ import pytest
 from tests.conftest import database_url_for_tests as _database_url
 
 CONNECT_TIMEOUT_SECONDS = 3
+REQUIRE_CORPUS_ENV = "AIACT_REQUIRE_CORPUS"
+"""Set by CI's isolation job, which loads the corpus: a missing corpus fails, never skips."""
 
 
 @pytest.fixture(scope="session")
@@ -42,6 +44,24 @@ def db(db_connection: psycopg.Connection) -> Iterator[psycopg.Connection]:
     """The shared connection inside a transaction that is always rolled back after the test."""
     with rolled_back(db_connection) as connection:
         yield connection
+
+
+@pytest.fixture
+def corpus(db: psycopg.Connection) -> psycopg.Connection:
+    """The corpus `aiact corpus load` wrote (the three AI Act texts at least), inside the
+    rolled-back test transaction. Skipped when it isn't loaded, and failed instead in CI's
+    isolation job, which loads it and sets AIACT_REQUIRE_CORPUS. A module that plants its own
+    test corpus defines its own `corpus`."""
+    loaded = db.execute(
+        "select count(distinct doc_key) from documents "
+        "where doc_key in ('ai-act', 'ai-act-consolidated', 'omnibus')"
+    ).fetchone()
+    if loaded is None or loaded[0] < 3:
+        reason = "the corpus isn't loaded; run `aiact corpus load`"
+        if os.environ.get(REQUIRE_CORPUS_ENV):
+            pytest.fail(reason, pytrace=False)
+        pytest.skip(reason)
+    return db
 
 
 @contextmanager
